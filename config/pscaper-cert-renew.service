@@ -1,0 +1,8 @@
+[Unit]
+Description=Renew pscaper public-site TLS certificate
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/bin/certbot renew --config-dir /home/ubuntu/pscaper/data/letsencrypt --work-dir /home/ubuntu/pscaper/data/letsencrypt-work --logs-dir /home/ubuntu/pscaper/logs/letsencrypt --quiet --deploy-hook "/usr/bin/systemctl reload nginx"

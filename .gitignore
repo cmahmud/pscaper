@@ -8,3 +8,5 @@ recovery/
 *.log
 __pycache__/
 *.pyc
+logs/
+site/.well-known/acme-challenge/

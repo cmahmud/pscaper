@@ -22,6 +22,9 @@ Go-based public-proxy feed harvester, independent validator, scoring engine, his
   config/sources.json           configured public-list sources
   config/pscaper.service        canonical systemd unit
   config/pscaper-nginx.conf     dedicated public-IP callback virtual host
+  config/pscaper-site-nginx.conf public dashboard, read-only APIs and export gateway
+  config/pscaper-cert-renew.*   project-scoped TLS renewal service/timer
+  site/index.html               static dashboard served by the Go process
   scripts/                      setup, audit and historical scripts
   .env                          secrets and server-specific settings (gitignored)
   data/                         snapshot, journal and local TLS cert (gitignored)
@@ -35,6 +38,8 @@ Outside the tree, only symlinks register the unit and the separate Nginx virtual
 
 - `/etc/systemd/system/pscaper.service` -> `/home/ubuntu/pscaper/config/pscaper.service`
 - `/etc/nginx/sites-enabled/zz-pscaper` -> `/home/ubuntu/pscaper/config/pscaper-nginx.conf`
+- `/etc/nginx/sites-enabled/pscaper-site` -> `/home/ubuntu/pscaper/config/pscaper-site-nginx.conf`
+- `/etc/systemd/system/pscaper-cert-renew.{service,timer}` -> project-local TLS unit files
 
 ## Operations on the VPS
 
@@ -69,6 +74,47 @@ Nginx supplies `X-Real-IP` from the actual remote connection. The Go server trus
 
 The management API listens on **127.0.0.1:8788 only**. Do **not** expose it to the internet: it includes privileged harvest/export controls.
 
+## Public dashboard, API and HTTPS
+
+The production website is https://proxy.syndrid.com/ and is backed by the same
+Go process on loopback via a **separate Nginx hostname**. The static dashboard
+resides in `site/index.html`; public endpoints exposed via Nginx are:
+
+- `GET /` — dark, responsive live dashboard (sanitized, no raw proxies)
+- `GET /api/live` — counts, worker health, protocol coverage without proxy or source identities
+- `GET /api/history` — 30-second in-memory samples, rolling 24 hours, restart resets series
+- `GET /api/v1/proxies?tier=alive&protocol=all&format=json&limit=1000` —
+  public read-only proxy API, accepts alive/gold, http/https/socks4/socks5,
+  JSON or TXT, limited to 5,000 per request
+- `GET /pool/{alive|gold|historical}/{filename}.txt` — strictly allowlisted
+  read-only export files for the GitHub Actions publisher
+- `GET /pool/stats.json` — current exported machine telemetry
+
+The service management API remains bound only to `127.0.0.1:8788`; privileged
+harvest/export paths are **not** public. Nginx routes no other paths.
+
+Let's Encrypt hostname certificate + private key live inside
+`/home/ubuntu/pscaper/data/letsencrypt` (not committed). Project-local
+`pscaper-cert-renew.timer` performs twice-daily renew checks and reloads
+Nginx after a successful renewal. The HTTP-01 challenge uses the app's
+`site/.well-known/acme-challenge/` route; it does not need access to
+other webroot folders.
+
+## Automated GitHub pool publishing (no VPS credentials)
+
+`cmahmud/pscaper` is the application-source repository.
+`cmahmud/proxies` is the separate, public proxy-data repository. Its
+`.github/workflows/pscaper-sync.yml` runs every 30 minutes and can be
+manually dispatched. The repo's own GitHub Actions `GITHUB_TOKEN` (scoped
+to `contents:write`) fetches the 14 read-only exports from this site,
+validates and merges the historical lists, and commits changed data to
+`cmahmud/proxies/main`. It requires **no VPS GitHub token or deploy key**.
+The original scraper's automatic server-side Git pushing remains disabled
+to avoid unauthorized pushes or mixing source and generated data.
+
+View run history:
+https://github.com/cmahmud/proxies/actions/workflows/pscaper-sync.yml
+
 ## Source-quality workflow
 
 `python3 scripts/audit-sources.py` performs a bounded parallel download of the feed URLs and reports HTTP status plus parseable public IPv4/port samples under `recovery/feed-audit.json`. This is a **format and availability audit**, not a claim that the proxies are working. Only the app's callback validator determines the live pool. Data sources change or disappear; re-run the audit when pruning or expanding sources.
@@ -82,7 +128,7 @@ The management API listens on **127.0.0.1:8788 only**. Do **not** expose it to t
 - `exports/historical/ever-gold.txt`: proxy has qualified as Gold at least once.
 - `exports/stats.json`: last export's point-in-time counters.
 
-Automatic Git pushing is **disabled** until separate server-side GitHub credentials are supplied. Keep exported proxy lists in `cmahmud/proxies` or another dedicated data repository, not `cmahmud/pscaper`. The GitHub connector can commit application **source** from ChatGPT without writing credentials onto the server.
+Automatic **VPS-side** Git pushing remains intentionally disabled. GitHub Actions inside `cmahmud/proxies` now publishes the changing data every 30 minutes without requiring credentials on the VPS. Do not point the exporting engine at the source repository.
 
 ## Safety and limitations
 

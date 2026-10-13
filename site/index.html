@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#080d18"><meta name="description" content="pscaper live proxy discovery and validation intelligence">
+<title>pscaper — Live Proxy Intelligence</title>
+<style>
+:root {color-scheme:dark;--bg:#080d18;--panel:#10192a;--panel2:#141e32;--line:#25324a;--muted:#8d9ab3;--text:#edf2ff;--teal:#52e5c2;--blue:#7d9eff;}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse 80% 50% at 65% -10%,#203050 0%,transparent 80%),var(--bg);color:var(--text);font:15px/1.6 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+a{color:inherit;text-decoration:none}.shell{max-width:1220px;margin:auto;padding:28px 32px 65px}.top{display:flex;align-items:center;justify-content:space-between;padding-bottom:46px}.brand{display:flex;align-items:center;gap:12px;font-weight:760;font-size:20px;letter-spacing:-.6px}.mark{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:linear-gradient(130deg,#73efd0,#5f92fb);color:#091525;font-weight:950;font-size:23px}.nav{display:flex;align-items:center;gap:24px;color:var(--muted);font-size:13px}.nav a:hover{color:#fff}.status{display:flex;gap:8px;align-items:center;border:1px solid #2d664f;color:#8de8c4;background:#13302b;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:650}.dot{width:7px;height:7px;border-radius:50%;background:#52e5c2;box-shadow:0 0 9px #52e5c2}
+.eyebrow{display:flex;gap:10px;align-items:center;color:#83cbbd;letter-spacing:2.1px;text-transform:uppercase;font-size:11px;font-weight:800;margin-bottom:10px}.eyebrow:before{content:"";height:1px;width:28px;background:#83cbbd}
+h1{font-size:clamp(37px,5vw,67px);letter-spacing:-2.8px;line-height:1.06;margin:0;font-weight:790}h1 em{color:#68e7ca;font-style:normal}
+.lead{margin-top:21px;color:#a6b3cb;max-width:685px;line-height:1.8;font-size:16px}.hero{margin-bottom:43px}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}.metric,.card{background:linear-gradient(165deg,rgba(26,39,62,.93),rgba(13,22,39,.96));border:1px solid var(--line);border-radius:17px}.metric{padding:25px 24px}.metric .k{font-size:11px;text-transform:uppercase;letter-spacing:1.1px;color:var(--muted);font-weight:800}.metric .v{font-size:clamp(26px,3.3vw,39px);font-weight:750;line-height:1.2;letter-spacing:-1.6px;margin:10px 0 6px;font-variant-numeric:tabular-nums}.metric .foot{font-size:12px;color:#8794aa}.metric.featured{background:linear-gradient(135deg,rgba(24,69,72,.8),rgba(15,25,43,.95));border-color:#397969}.metric.featured .v{color:#70f1cf}
+.row{display:grid;grid-template-columns:1.75fr 1fr;gap:13px;margin-top:13px}.card{padding:25px}.cardtitle{display:flex;justify-content:space-between;align-items:center;gap:15px}.card h2{font-size:16px;margin:0;font-weight:720;letter-spacing:-.25px}.mini{font-size:11px;color:var(--muted);letter-spacing:.3px}.chart{margin-top:25px;height:236px;position:relative;border-bottom:1px solid #29354b;background:repeating-linear-gradient(0deg,transparent,transparent 58px,#26344a7a 59px,#26344a7a 60px)}.chart svg{width:100%;height:100%;overflow:visible}.chartnote{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;margin-top:15px}
+.proto{display:flex;flex-direction:column;gap:21px;margin-top:28px}.protoitem{display:grid;grid-template-columns:80px 1fr 66px;align-items:center;gap:12px;font-size:13px;font-weight:650}.bar{height:9px;background:#263349;border-radius:50px;overflow:hidden}.fill{height:100%;width:0;background:linear-gradient(90deg,#5696ec,#6ce7c7);border-radius:50px;transition:width .7s}.pnum{text-align:right;color:#b7c3d9;font-variant-numeric:tabular-nums}
+.bottom{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:13px}.detail{margin-top:16px;display:grid;grid-template-columns:1fr auto;gap:8px;font-size:13px;color:var(--muted)}.detail b{color:#d9e4f7;font-weight:640;font-variant-numeric:tabular-nums}.cta{margin-top:18px;display:inline-flex;padding:8px 13px;border:1px solid #385f67;border-radius:9px;color:#8cddd6;font-size:12px;font-weight:670}.cta:hover{background:#173a40}.footline{margin-top:29px;display:flex;justify-content:space-between;gap:15px;font-size:12px;color:#697993;border-top:1px solid #1f2c41;padding-top:21px}
+@media(max-width:870px){.metrics{grid-template-columns:repeat(2,1fr)}.row{grid-template-columns:1fr}.bottom{grid-template-columns:1fr}.nav a{display:none}}
+@media(max-width:520px){.shell{padding:21px 16px 40px}.metrics{gap:9px}.metric{padding:17px 14px}.metric .v{font-size:29px}.metric .k{font-size:9px}.card{padding:20px}.top{padding-bottom:33px}.status{padding:4px 8px}.lead{font-size:14px}}
+</style></head>
+<body><div class="shell">
+<header class="top"><div class="brand"><span class="mark">p</span>pscaper<span style="color:#74849c;font-weight:400">/ intelligence</span></div><nav class="nav"><a href="#telemetry">Telemetry</a><a href="#protocols">Protocols</a><a href="#api">API</a><span class="status" id="status"><span class="dot"></span><span id="statuslabel">Connecting</span></span></nav></header>
+<main>
+<section class="hero"><div class="eyebrow">Network intelligence · live telemetry</div><h1>Know which proxies<br><em>actually work.</em></h1><p class="lead">Continuously collecting, independently validating, and scoring public proxy endpoints. Live scanner health, protocol coverage, and historical discovery—without exposing endpoint identities in the dashboard.</p></section>
+<section class="metrics" aria-label="Key metrics">
+<div class="metric featured"><div class="k">Alive now</div><div class="v" id="alive">—</div><div class="foot">Passed live validation</div></div>
+<div class="metric"><div class="k">Gold tier</div><div class="v" id="gold">—</div><div class="foot">Repeatedly verified</div></div>
+<div class="metric"><div class="k">Discovered</div><div class="v" id="total">—</div><div class="foot">Distinct known endpoints</div></div>
+<div class="metric"><div class="k">Ever alive</div><div class="v" id="ever">—</div><div class="foot">Passed at least once</div></div>
+</section>
+<section class="row" id="telemetry"><div class="card"><div class="cardtitle"><h2>Live health trend</h2><span class="mini">30-second samples · rolling 24 hours</span></div><div class="chart" id="chart"><svg id="chartsvg" viewBox="0 0 760 220" preserveAspectRatio="none" role="img" aria-label="Number of validated proxies over time"><defs><linearGradient id="area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#59e7c4" stop-opacity=".29"/><stop offset="1" stop-color="#59e7c4" stop-opacity="0"/></linearGradient></defs><path id="chartarea" fill="url(#area)" d=""/><path id="chartline" fill="none" stroke="#58e4c4" stroke-width="3" stroke-linejoin="round" d=""/></svg></div><div class="chartnote"><span id="chartleft">History accumulating</span><span id="chartright">Live</span></div></div>
+<div class="card" id="protocols"><div class="cardtitle"><h2>Protocol coverage</h2><span class="mini">Alive endpoints</span></div><div class="proto" id="protobars">
+<div class="protoitem"><span>HTTP</span><div class="bar"><div class="fill" id="bhttp"></div></div><span class="pnum" id="nhttp">—</span></div>
+<div class="protoitem"><span>HTTPS</span><div class="bar"><div class="fill" id="bhttps"></div></div><span class="pnum" id="nhttps">—</span></div>
+<div class="protoitem"><span>SOCKS4</span><div class="bar"><div class="fill" id="bsocks4"></div></div><span class="pnum" id="nsocks4">—</span></div>
+<div class="protoitem"><span>SOCKS5</span><div class="bar"><div class="fill" id="bsocks5"></div></div><span class="pnum" id="nsocks5">—</span></div>
+</div></div></section>
+<section class="bottom"><div class="card"><div class="cardtitle"><h2>Collector activity</h2><span class="mini">Scanner process</span></div><div class="detail"><span>Configured feeds</span><b id="feeds">—</b><span>Feeds reporting errors</span><b id="errors">—</b><span>Checks completed</span><b id="checked">—</b><span>Queue depth</span><b id="queue">—</b><span>Workers</span><b id="workers">—</b></div></div>
+<div class="card" id="api"><div class="cardtitle"><h2>Read-only API</h2><span class="mini">Public interface</span></div><p style="font-size:13px;color:#a1aec6;margin-top:18px">Use the validated proxy pool programmatically. Filter by protocol or trust tier. Management controls remain private.</p>
+<div style="font:12px/1.75 ui-monospace,SFMono-Regular,monospace;color:#93d8cb;background:#090f1e;padding:13px;border:1px solid #27354a;border-radius:9px;word-break:break-word">GET /api/v1/proxies?<br>tier=alive&amp;protocol=all&amp;limit=100</div><a class="cta" href="/api/v1/proxies?tier=alive&protocol=all&format=json&limit=10" target="_blank" rel="noopener">Explore API ↗</a></div></section>
+</main><footer class="footline"><span>pscaper · Public proxy intelligence</span><span id="updated">Waiting for first sample</span></footer>
+</div>
+<script>
+const fmt = n => typeof n==="number"?new Intl.NumberFormat('en-US').format(n):'—';
+const $=id=>document.getElementById(id);
+function plot(pts){const s=pts.filter(p=>typeof p.alive==='number');if(!s.length)return;
+const max=Math.max(10,...s.map(p=>p.alive)),min=Math.min(0,...s.map(p=>p.alive));
+const y=v=>198-(v-min)/(max-min||1)*174;const x=i=>s.length===1?0:i/(s.length-1)*760;
+const d=s.map((p,i)=>(i?'L':'M')+x(i).toFixed(2)+' '+y(p.alive).toFixed(2)).join(' ');
+$('chartline').setAttribute('d',d);$('chartarea').setAttribute('d',d+' L'+x(s.length-1)+' 220 L'+x(0)+' 220 Z');
+$('chartleft').textContent=s.length<3?'Collecting live samples':new Date(s[0].time).toLocaleTimeString();
+$('chartright').textContent='Now · '+fmt(s[s.length-1].alive)+' alive';
+}
+async function tick(){try{const r=await fetch('/api/live',{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);const d=await r.json();
+for(const [id,key] of Object.entries({alive:'alive',gold:'gold',total:'total',ever:'ever_alive',feeds:'source_feeds',errors:'source_errors',checked:'checked',queue:'queue',workers:'workers'})) $(id).textContent=fmt(d[key]);
+const ps=d.alive_protocols||{};const total=Math.max(1,...Object.values(ps));
+for(const k of ['http','https','socks4','socks5']){$('n'+k).textContent=fmt(ps[k]||0);$('b'+k).style.width=(100*(ps[k]||0)/total).toFixed(2)+'%'}
+$('statuslabel').textContent='System online';$('status').style.color='#8de8c4';
+$('updated').textContent='Updated '+new Date().toLocaleTimeString();
+}catch(e){$('statuslabel').textContent='Telemetry unavailable';$('status').style.color='#ffbaa4'}}
+async function history(){try{const r=await fetch('/api/history',{cache:'no-store'});if(r.ok)plot(await r.json())}catch(e){}}
+tick();history();setInterval(tick,15000);setInterval(history,30000);
+</script>
+</body></html>

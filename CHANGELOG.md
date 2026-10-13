@@ -1,3 +1,11 @@
+## October 2026 — public dashboard and GitHub Actions recovery
+
+- Recreated `proxy.syndrid.com` live dashboard under `site/index.html`, using a distinct Nginx virtual host without changing the existing sites.
+- Added sanitized public telemetry and a bounded, read-only `/api/v1/proxies` API; no admin endpoints are published.
+- Served allowlisted /pool exports for the separate `cmahmud/proxies` GitHub Actions publisher.
+- Issued a Let's Encrypt certificate under the project directory and added a renewable systemd timer.
+- Replaced server-side Git pushing with scheduled GitHub Actions syncing every 30 minutes, using scoped GitHub-managed authentication.
+
 ## October 2026 — pscaper VPS recovery and deployment
 
 - Migrated restored Go application from prior project name to pscaper.

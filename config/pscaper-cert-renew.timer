@@ -1,0 +1,9 @@
+[Unit]
+Description=Twice-daily pscaper TLS renewal check
+[Timer]
+OnCalendar=*-*-* 04,16:15:00 UTC
+RandomizedDelaySec=15m
+Persistent=true
+Unit=pscaper-cert-renew.service
+[Install]
+WantedBy=timers.target
