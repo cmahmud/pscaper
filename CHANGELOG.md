@@ -1,3 +1,12 @@
+## October 2026 — 30-second publishing
+
+- Local export snapshots refreshed every 30 seconds.
+- VPS systemd publisher timer fires every 30 seconds.
+- Actual proxy-list changes are required before creating a Git commit,
+  preventing timestamp-only churn.
+- Verified repository-scoped SSH deploy key; GitHub Actions remains a
+  manual fallback rather than a competing periodic publisher.
+
 ## October 2026 — compact live monitor and five-minute publishing
 
 - Redesigned dashboard as a charcoal, dense one-screen monitor on standard desktops:

@@ -118,50 +118,32 @@ so information is not clipped. Motion honors `prefers-reduced-motion`.
 - A full app restart resets the scanner event counters and chart memory; this
   does **not** remove persistent pool records or their historical history.
 
-### GitHub data publishing health
+### GitHub data publishing — 30-second VPS schedule
 
-The existing `cmahmud/proxies` GitHub Actions workflow now has a five-minute
-scheduled interval. GitHub can delay or skip scheduled runs; verify actual
-`schedule` events at
+The **active** VPS publisher uses a repository-scoped SSH deploy key with
+write access only to `cmahmud/proxies`. Its dedicated systemd timer runs
+at seconds 00 and 30 every minute. Each run fetches the latest data-repo
+state and compares actual proxy lists; it skips the commit if those lists
+are unchanged. The SSH deploy key, staging checkout and exports stay under
+`/home/ubuntu/pscaper/`. No personal GitHub token is needed.
+
+The application also refreshes its local exports every 30 seconds
+(`PSCAPER_EXPORT_INTERVAL=30s`). The website still polls every 5 seconds.
+
+```bash
+systemctl status pscaper-publish.timer
+systemctl list-timers pscaper-publish.timer
+journalctl -u pscaper-publish.service -n 30 --no-pager
+```
+
+The workflow at
 https://github.com/cmahmud/proxies/actions/workflows/pscaper-sync.yml
-before assuming updates occur.
+is **manual fallback only**; its scheduled trigger was disabled to avoid
+competing writers. The Go application's built-in Git push is disabled;
+only the isolated publisher writes to the proxy-data repository.
 
-A more deterministic **VPS-initiated** publisher is also prepared entirely
-inside `/home/ubuntu/pscaper/` with an **SSH deploy key scoped to
-`cmahmud/proxies`**, rather than a broad GitHub personal token. It is
-intentionally not enabled until the repository owner explicitly grants the
-public key **write access** to that one data repository:
-
-1. Open https://github.com/cmahmud/proxies/settings/keys and click
-   **Add deploy key**. Set title `pscaper-vps-publisher`, paste the contents
-   of `data/publisher/github_ed25519.pub`, and check **Allow write access**.
-   Do not copy/share the private key.
-2. On the VPS run `cd /home/ubuntu/pscaper && ./scripts/enable-publisher.sh`.
-   This verifies GitHub's repo-specific authentication, runs the publisher once
-   and only then enables the local five-minute systemd timer.
-3. Check `systemctl status pscaper-publish.timer` and
-   `journalctl -u pscaper-publish.service -n 30`.
-
-Publishing uses an isolated shallow/sparse checkout under
-`data/publisher/repository`, keeps all historical entries, and never writes
-credentials to the application source repo. Once the timer is successful,
-disable the redundant GitHub Actions schedule (or keep it as a fallback, with
-possible competing commits handled by the publish script).
-
-## Automated GitHub pool publishing (no VPS credentials)
-
-`cmahmud/pscaper` is the application-source repository.
-`cmahmud/proxies` is the separate, public proxy-data repository. Its
-`.github/workflows/pscaper-sync.yml` is configured to run every five minutes and can be
-manually dispatched. The repo's own GitHub Actions `GITHUB_TOKEN` (scoped
-to `contents:write`) fetches the 14 read-only exports from this site,
-validates and merges the historical lists, and commits changed data to
-`cmahmud/proxies/main`. It requires **no VPS GitHub token or deploy key**.
-The original scraper's automatic server-side Git pushing remains disabled
-to avoid unauthorized pushes or mixing source and generated data.
-
-View run history:
-https://github.com/cmahmud/proxies/actions/workflows/pscaper-sync.yml
+Fast publishing generates large repository histories if proxy lists keep
+changing. Monitor repository size and API/push errors periodically.
 
 ## Source-quality workflow
 
@@ -176,7 +158,7 @@ https://github.com/cmahmud/proxies/actions/workflows/pscaper-sync.yml
 - `exports/historical/ever-gold.txt`: proxy has qualified as Gold at least once.
 - `exports/stats.json`: last export's point-in-time counters.
 
-Automatic **VPS-side** Git pushing remains intentionally disabled. GitHub Actions inside `cmahmud/proxies` now is configured to publish the changing data every five minutes without requiring credentials on the VPS. Do not point the exporting engine at the source repository.
+The dedicated VPS publisher is active at 30-second intervals. The Go engine built-in Git push remains disabled; never point proxy-data publishing at the application source repository.
 
 ## Safety and limitations
 

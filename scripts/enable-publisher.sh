@@ -9,7 +9,7 @@ KNOWN="$ROOT/data/publisher/known_hosts"
  echo "Project publisher key not found" >&2;exit 1;
 }
 export GIT_SSH_COMMAND="ssh -i $KEY -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$KNOWN -o BatchMode=yes -o ConnectTimeout=12"
-check="$(ssh -T git@github.com 2>&1 || true)"
+check="$(ssh -T -i "$KEY" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$KNOWN" -o BatchMode=yes -o ConnectTimeout=12 git@github.com 2>&1 || true)"
 if ! grep -q 'Hi cmahmud/proxies! You.ve successfully authenticated' <<< "$check"; then
  echo "GitHub has not authorized the pscaper publisher's deploy key for cmahmud/proxies." >&2
  echo "Add this PUBLIC key under https://github.com/cmahmud/proxies/settings/keys (enable Allow write access):"

@@ -15,7 +15,7 @@ if [[ ! -f "$KEY" || ! -f "$KNOWN" ]]; then
 fi
 # Use only this repository-scoped key, never interactive auth or external credentials.
 export GIT_SSH_COMMAND="ssh -i $KEY -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$KNOWN -o BatchMode=yes -o ConnectTimeout=12"
-auth_output="$(ssh -T git@github.com 2>&1 || true)"
+auth_output="$(ssh -T -i "$KEY" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$KNOWN" -o BatchMode=yes -o ConnectTimeout=12 git@github.com 2>&1 || true)"
 if ! grep -q 'successfully authenticated' <<< "$auth_output"; then
  echo 'Deploy key not installed in cmahmud/proxies with write access yet' >&2
  exit 2
@@ -27,11 +27,13 @@ fi
 git -C "$WORK" fetch -q --depth 1 origin main
 git -C "$WORK" reset -q --hard origin/main
 python3 "$ROOT/scripts/publish-to-github.py" "$SRC" "$WORK"
-git -C "$WORK" add -- alive gold historical stats.json README.md
+# Ignore timestamp-only changes: publish only if actual proxy lists changed.
+git -C "$WORK" add -- alive gold historical
 if git -C "$WORK" diff --cached --quiet; then
- echo 'GitHub pool data unchanged'
+ echo 'No proxy-list changes; skipping GitHub commit'
  exit 0
 fi
+git -C "$WORK" add -- stats.json README.md
 git -C "$WORK" -c user.name='pscaper VPS' \
  -c user.email='264518661+cmahmud@users.noreply.github.com' \
  commit -qm "pscaper pool sync $(date -u +%Y-%m-%dT%H:%M:%SZ)"

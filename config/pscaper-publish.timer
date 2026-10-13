@@ -1,9 +1,10 @@
 [Unit]
-Description=Publish pscaper pool every five minutes
+Description=Publish pscaper pool every 30 seconds
 [Timer]
-OnCalendar=*:0/5
+OnCalendar=*-*-* *:*:00,30
 Persistent=true
-RandomizedDelaySec=25s
+RandomizedDelaySec=0
+AccuracySec=1s
 Unit=pscaper-publish.service
 [Install]
 WantedBy=timers.target
