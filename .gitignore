@@ -1,0 +1,8 @@
+.env
+bin/
+data/
+exports/
+.build-cache/
+.toolchain/
+recovery/
+*.log

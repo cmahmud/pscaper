@@ -1,0 +1,630 @@
+package app
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"log"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"sort"
+	"strings"
+	"sync"
+	"sync/atomic"
+	"time"
+)
+
+type HarvestSummary struct {
+	Sources int
+	Fetched int
+	New     int
+	Queued  int
+}
+
+type Engine struct {
+	cfg       Config
+	store     *Store
+	validator *Validator
+	queue     chan string
+	startedAt time.Time
+	cycleKick chan struct{}
+
+	schedMu         sync.Mutex
+	scheduled       map[string]struct{}
+	sourceMu        sync.RWMutex
+	sources         []SourceStatus
+	sourceFetchMu   sync.Mutex
+	sourceLastFetch map[string]time.Time
+	exportMu        sync.Mutex
+
+	harvests                  atomic.Int64
+	cycles                    atomic.Int64
+	successes                 atomic.Int64
+	failures                  atomic.Int64
+	inFlight                  atomic.Int64
+	newThisHarvest            atomic.Int64
+	queuedThisHarvest         atomic.Int64
+	sourcesFetchedThisHarvest atomic.Int64
+	forceHarvest              atomic.Bool
+	lastHarvest               atomic.Int64
+	lastExport                atomic.Int64
+	lastGitPush               atomic.Int64
+	lastArchive               atomic.Int64
+	lastCycleEnd              atomic.Int64
+	gitStatus                 atomic.Value
+	cyclePhase                atomic.Value
+}
+
+func NewEngine(cfg Config, store *Store) *Engine {
+	_ = store.ImportHistoricalFiles(cfg.ExportDir)
+	store.InitializeHistory(cfg.GoldScore)
+	e := &Engine{
+		cfg:             cfg,
+		store:           store,
+		validator:       NewValidator(cfg),
+		queue:           make(chan string, cfg.QueueSize),
+		startedAt:       time.Now(),
+		cycleKick:       make(chan struct{}, 1),
+		scheduled:       make(map[string]struct{}),
+		sourceLastFetch: make(map[string]time.Time),
+	}
+	e.gitStatus.Store("idle")
+	e.cyclePhase.Store("starting")
+	return e
+}
+
+func (e *Engine) Run(ctx context.Context) error {
+	if err := StartProbeServers(ctx, e.cfg); err != nil {
+		return fmt.Errorf("probe server: %w", err)
+	}
+	for i := 0; i < e.cfg.Workers; i++ {
+		go e.worker(ctx)
+	}
+	go e.flushLoop(ctx)
+	go e.compactLoop(ctx)
+	go e.recheckLoop(ctx)
+	go func() {
+		if err := StartAPIServer(ctx, e.cfg.APIAddr, e); err != nil {
+			log.Printf("api: %v", err)
+		}
+	}()
+
+	if e.cfg.Continuous {
+		go e.continuousLoop(ctx)
+	} else {
+		go e.harvestLoop(ctx)
+		go e.exportLoop(ctx)
+		go func() { _ = e.Harvest(ctx) }()
+		go func() { time.Sleep(4 * time.Second); _ = e.ExportAndPush(ctx) }()
+	}
+
+	<-ctx.Done()
+	_ = e.store.Flush()
+	return nil
+}
+
+func (e *Engine) worker(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case key := <-e.queue:
+			p, ok := e.store.Get(key)
+			if !ok {
+				e.unschedule(key)
+				continue
+			}
+			e.inFlight.Add(1)
+			vctx, cancel := context.WithTimeout(ctx, e.cfg.Timeout+2*time.Second)
+			res := e.validator.Validate(vctx, p)
+			cancel()
+			now := time.Now()
+			if res.OK {
+				e.successes.Add(1)
+			} else {
+				e.failures.Add(1)
+			}
+			_ = e.store.ApplyValidation(key, res.OK, res.Latency, res.ExitIP, res.Error, now, e.cfg.GoldScore)
+			e.inFlight.Add(-1)
+			e.unschedule(key)
+		}
+	}
+}
+
+func (e *Engine) enqueue(key string) bool {
+	e.schedMu.Lock()
+	if _, ok := e.scheduled[key]; ok {
+		e.schedMu.Unlock()
+		return false
+	}
+	e.scheduled[key] = struct{}{}
+	e.schedMu.Unlock()
+	select {
+	case e.queue <- key:
+		return true
+	default:
+		e.unschedule(key)
+		return false
+	}
+}
+
+func (e *Engine) unschedule(key string) {
+	e.schedMu.Lock()
+	delete(e.scheduled, key)
+	e.schedMu.Unlock()
+}
+
+func (e *Engine) scheduledCount() int {
+	e.schedMu.Lock()
+	n := len(e.scheduled)
+	e.schedMu.Unlock()
+	return n
+}
+
+func (e *Engine) shouldQueue(rec ProxyRecord, now time.Time) bool {
+	if rec.LastChecked.IsZero() {
+		return true
+	}
+	if rec.Alive {
+		return now.Sub(rec.LastChecked) >= e.cfg.AliveRecheck
+	}
+	return now.Sub(rec.LastChecked) >= e.cfg.DeadRecheck
+}
+
+func (e *Engine) harvestOnce(ctx context.Context, force bool) (HarvestSummary, error) {
+	sources, err := LoadSources(e.cfg.SourcesFile)
+	if err != nil {
+		return HarvestSummary{}, err
+	}
+	now := time.Now()
+	due := make([]Source, 0, len(sources))
+	e.sourceFetchMu.Lock()
+	for _, src := range sources {
+		last := e.sourceLastFetch[src.Name]
+		if force || last.IsZero() || now.Sub(last) >= src.RefreshInterval() {
+			due = append(due, src)
+			// Reserve the slot before the network fetch so overlapping harvest triggers
+			// cannot stampede the same publisher. Failed feeds are retried on cadence.
+			e.sourceLastFetch[src.Name] = now
+		}
+	}
+	e.sourceFetchMu.Unlock()
+
+	results, statuses := HarvestSources(ctx, due, e.cfg.SourceConcurrency)
+	summary := HarvestSummary{Sources: len(due)}
+	for _, cands := range results {
+		summary.Fetched += len(cands)
+		for _, c := range cands {
+			isNew, rec := e.store.UpsertCandidate(c, now)
+			if isNew {
+				summary.New++
+			}
+			if isNew || e.shouldQueue(rec, now) {
+				if e.enqueue(rec.Key) {
+					summary.Queued++
+				}
+			}
+		}
+	}
+	e.mergeSourceStatuses(statuses)
+	e.harvests.Add(1)
+	e.sourcesFetchedThisHarvest.Store(int64(summary.Sources))
+	e.newThisHarvest.Store(int64(summary.New))
+	e.queuedThisHarvest.Store(int64(summary.Queued))
+	e.lastHarvest.Store(now.Unix())
+	return summary, nil
+}
+
+func (e *Engine) mergeSourceStatuses(statuses []SourceStatus) {
+	if len(statuses) == 0 {
+		return
+	}
+	e.sourceMu.Lock()
+	defer e.sourceMu.Unlock()
+	byName := make(map[string]SourceStatus, len(e.sources)+len(statuses))
+	for _, st := range e.sources {
+		byName[st.Name] = st
+	}
+	for _, st := range statuses {
+		byName[st.Name] = st
+	}
+	e.sources = e.sources[:0]
+	for _, st := range byName {
+		e.sources = append(e.sources, st)
+	}
+}
+
+func (e *Engine) Harvest(ctx context.Context) error {
+	_, err := e.harvestOnce(ctx, true)
+	return err
+}
+
+func (e *Engine) ForceHarvest() {
+	e.forceHarvest.Store(true)
+	e.KickCycle()
+}
+
+func (e *Engine) KickCycle() {
+	select {
+	case e.cycleKick <- struct{}{}:
+	default:
+	}
+}
+
+func (e *Engine) continuousLoop(ctx context.Context) {
+	backoff := time.Duration(0)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
+		e.cyclePhase.Store("harvesting")
+		force := e.forceHarvest.Swap(false)
+		summary, err := e.harvestOnce(ctx, force)
+		if err != nil {
+			log.Printf("harvest: %v", err)
+		}
+
+		e.cyclePhase.Store("validating")
+		if err := e.waitForDrain(ctx); err != nil {
+			return
+		}
+
+		e.cyclePhase.Store("exporting")
+		if err := e.ExportAndPush(ctx); err != nil {
+			log.Printf("export: %v", err)
+		}
+		e.cycles.Add(1)
+		e.lastCycleEnd.Store(time.Now().Unix())
+
+		// If the last harvest produced work, start the next harvest immediately.
+		// A no-work cycle backs off briefly so unchanged public feeds are not hammered
+		// in a zero-benefit tight loop. H/KickCycle bypasses that backoff.
+		if err == nil && (summary.New > 0 || summary.Queued > 0) {
+			backoff = 0
+			e.cyclePhase.Store("cycling")
+			continue
+		}
+		if backoff == 0 {
+			backoff = e.cfg.CycleBackoffMin
+		} else {
+			backoff *= 2
+			if backoff > e.cfg.CycleBackoffMax {
+				backoff = e.cfg.CycleBackoffMax
+			}
+		}
+		e.cyclePhase.Store("idle-backoff")
+		t := time.NewTimer(backoff)
+		select {
+		case <-ctx.Done():
+			t.Stop()
+			return
+		case <-e.cycleKick:
+			if !t.Stop() {
+				<-t.C
+			}
+			backoff = 0
+		case <-t.C:
+		}
+	}
+}
+
+func (e *Engine) waitForDrain(ctx context.Context) error {
+	t := time.NewTicker(200 * time.Millisecond)
+	defer t.Stop()
+	for {
+		if e.scheduledCount() == 0 {
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-t.C:
+		}
+	}
+}
+
+func (e *Engine) harvestLoop(ctx context.Context) {
+	t := time.NewTicker(e.cfg.HarvestInterval)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+			if _, err := e.harvestOnce(ctx, false); err != nil {
+				log.Printf("harvest: %v", err)
+			}
+		}
+	}
+}
+
+func (e *Engine) recheckLoop(ctx context.Context) {
+	t := time.NewTicker(time.Minute)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+			now := time.Now()
+			records := e.store.Snapshot()
+			for _, p := range records {
+				if e.shouldQueue(p, now) {
+					e.enqueue(p.Key)
+				}
+			}
+		}
+	}
+}
+
+func (e *Engine) compactLoop(ctx context.Context) {
+	t := time.NewTicker(30 * time.Minute)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+			if err := e.store.Compact(); err != nil {
+				log.Printf("state compact: %v", err)
+			}
+		}
+	}
+}
+
+func (e *Engine) flushLoop(ctx context.Context) {
+	t := time.NewTicker(e.cfg.FlushInterval)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+			if err := e.store.Flush(); err != nil {
+				log.Printf("db flush: %v", err)
+			}
+		}
+	}
+}
+
+func (e *Engine) exportLoop(ctx context.Context) {
+	t := time.NewTicker(e.cfg.ExportInterval)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+			if err := e.ExportAndPush(ctx); err != nil {
+				log.Printf("export: %v", err)
+			}
+		}
+	}
+}
+
+func (e *Engine) ExportAndPush(ctx context.Context) error {
+	e.exportMu.Lock()
+	defer e.exportMu.Unlock()
+	counts, err := e.store.Export(e.cfg.ExportDir, e.cfg.GoldScore)
+	if err != nil {
+		return err
+	}
+	now := time.Now()
+	e.lastExport.Store(now.Unix())
+	stats := e.Stats()
+	b, _ := json.MarshalIndent(stats, "", "  ")
+	b = append(b, '\n')
+	if err := atomicWrite(filepath.Join(e.cfg.ExportDir, "stats.json"), b); err != nil {
+		return err
+	}
+	if e.archiveDue(now) {
+		if err := archivePool(e.cfg.ExportDir, now); err != nil {
+			log.Printf("archive: %v", err)
+		} else {
+			e.lastArchive.Store(now.Unix())
+		}
+	}
+	readme := fmt.Sprintf("# pscaper validated proxy pool\n\n## Current pool\n\n- Alive now: %d\n- Gold now: %d\n- HTTP: %d alive / %d gold\n- HTTPS: %d alive / %d gold\n- SOCKS4: %d alive / %d gold\n- SOCKS5: %d alive / %d gold\n\n## Historical pool\n\n- Discovered: %d\n- Ever alive: %d\n- Ever gold: %d\n\n`alive/` is the current passing pool. `gold/` is the current repeatedly verified, higher-scoring subset. `historical/` is append-only and does not remove a proxy just because it later goes offline. `archive/` stores periodic snapshots of the current combined alive/gold pools.\n", counts["alive"], counts["gold"], counts["alive_http"], counts["gold_http"], counts["alive_https"], counts["gold_https"], counts["alive_socks4"], counts["gold_socks4"], counts["alive_socks5"], counts["gold_socks5"], counts["discovered"], counts["ever_alive"], counts["ever_gold"])
+	_ = atomicWrite(filepath.Join(e.cfg.ExportDir, "README.md"), []byte(readme))
+	if !e.cfg.GitPush {
+		e.gitStatus.Store("disabled")
+		return nil
+	}
+	if _, err := os.Stat(filepath.Join(e.cfg.ExportDir, ".git")); err != nil {
+		e.gitStatus.Store("not configured")
+		return nil
+	}
+	pushed, err := gitPush(ctx, e.cfg.ExportDir, e.cfg.GitRemote, e.cfg.GitBranch)
+	if err != nil {
+		e.gitStatus.Store("error: " + truncate(err.Error(), 120))
+		return err
+	}
+	if pushed {
+		e.lastGitPush.Store(time.Now().Unix())
+		e.gitStatus.Store("pushed")
+	} else {
+		e.gitStatus.Store("no pool changes")
+	}
+	return nil
+}
+
+func (e *Engine) archiveDue(now time.Time) bool {
+	if e.cfg.ArchiveInterval <= 0 {
+		return false
+	}
+	last := e.lastArchive.Load()
+	return last == 0 || now.Sub(time.Unix(last, 0)) >= e.cfg.ArchiveInterval
+}
+
+func archivePool(dir string, now time.Time) error {
+	dayDir := filepath.Join(dir, "archive", now.UTC().Format("2006-01-02"))
+	if err := os.MkdirAll(dayDir, 0o755); err != nil {
+		return err
+	}
+	stamp := now.UTC().Format("150405")
+	for _, kind := range []string{"alive", "gold"} {
+		src := filepath.Join(dir, kind, "all.txt")
+		b, err := os.ReadFile(src)
+		if err != nil {
+			return err
+		}
+		dst := filepath.Join(dayDir, stamp+"-"+kind+".txt")
+		if err := atomicWrite(dst, b); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func gitPush(ctx context.Context, dir, remote, branch string) (bool, error) {
+	cctx, cancel := context.WithTimeout(ctx, 90*time.Second)
+	defer cancel()
+	run := func(args ...string) (string, error) {
+		cmd := exec.CommandContext(cctx, "git", args...)
+		cmd.Dir = dir
+		out, err := cmd.CombinedOutput()
+		return strings.TrimSpace(string(out)), err
+	}
+	if out, err := run("add", "-A"); err != nil {
+		return false, fmt.Errorf("git add: %s: %w", out, err)
+	}
+	changed, err := run("diff", "--cached", "--name-only")
+	if err != nil {
+		return false, fmt.Errorf("git diff: %s: %w", changed, err)
+	}
+	if strings.TrimSpace(changed) == "" {
+		return false, nil
+	}
+	poolChanged := false
+	for _, name := range strings.Split(changed, "\n") {
+		name = strings.TrimSpace(name)
+		if strings.HasPrefix(name, "alive/") || strings.HasPrefix(name, "gold/") || strings.HasPrefix(name, "historical/") || strings.HasPrefix(name, "archive/") {
+			poolChanged = true
+			break
+		}
+	}
+	if !poolChanged {
+		_, _ = run("reset", "--quiet")
+		_, _ = run("checkout", "--", "stats.json", "README.md")
+		return false, nil
+	}
+	msg := "proxy pool update " + time.Now().UTC().Format("2006-01-02T15:04:05Z")
+	if out, err := run("commit", "-m", msg); err != nil {
+		return false, fmt.Errorf("git commit: %s: %w", out, err)
+	}
+	if out, err := run("push", remote, "HEAD:"+branch); err != nil {
+		return false, fmt.Errorf("git push: %s: %w", out, err)
+	}
+	return true, nil
+}
+
+func (e *Engine) Stats() Stats {
+	records := e.store.Snapshot()
+	st := Stats{
+		Protocols:                 map[string]int{},
+		AliveProtocols:            map[string]int{},
+		GoldProtocols:             map[string]int{},
+		Queue:                     len(e.queue),
+		InFlight:                  e.inFlight.Load(),
+		Workers:                   e.cfg.Workers,
+		Harvests:                  e.harvests.Load(),
+		Cycles:                    e.cycles.Load(),
+		NewThisHarvest:            e.newThisHarvest.Load(),
+		QueuedThisHarvest:         e.queuedThisHarvest.Load(),
+		SourcesFetchedThisHarvest: e.sourcesFetchedThisHarvest.Load(),
+		StartedAt:                 e.startedAt,
+	}
+	if v := e.cyclePhase.Load(); v != nil {
+		st.CyclePhase, _ = v.(string)
+	}
+	for _, p := range records {
+		st.Total++
+		st.Protocols[p.Protocol]++
+		if !p.LastChecked.IsZero() {
+			st.Checked++
+		}
+		if p.Alive {
+			st.Alive++
+			st.AliveProtocols[p.Protocol]++
+		} else {
+			st.DeadNow++
+		}
+		if p.EverAlive || p.Successes > 0 {
+			st.EverAlive++
+		} else {
+			st.NeverAlive++
+		}
+		if p.EverGold {
+			st.EverGold++
+		}
+		if p.Gold(e.cfg.GoldScore) {
+			st.Gold++
+			st.GoldProtocols[p.Protocol]++
+		}
+	}
+	st.Successes = e.successes.Load()
+	st.Failures = e.failures.Load()
+	st.LastHarvest = unixTime(e.lastHarvest.Load())
+	st.LastExport = unixTime(e.lastExport.Load())
+	st.LastGitPush = unixTime(e.lastGitPush.Load())
+	st.LastArchive = unixTime(e.lastArchive.Load())
+	st.LastCycleEnd = unixTime(e.lastCycleEnd.Load())
+	if v := e.gitStatus.Load(); v != nil {
+		st.GitStatus, _ = v.(string)
+	}
+	e.sourceMu.RLock()
+	st.SourceStatus = append([]SourceStatus(nil), e.sources...)
+	e.sourceMu.RUnlock()
+	st.SourceFeeds = len(st.SourceStatus)
+	now := time.Now()
+	for _, src := range st.SourceStatus {
+		if src.Error != "" {
+			st.SourceErrors++
+		}
+		if src.NextFetch.IsZero() || !src.NextFetch.After(now) {
+			st.SourcesDue++
+		}
+	}
+	sort.Slice(st.SourceStatus, func(i, j int) bool { return st.SourceStatus[i].Name < st.SourceStatus[j].Name })
+	return st
+}
+
+func (e *Engine) Top(limit int, protocol string, goldOnly bool) []ProxyRecord {
+	if limit < 1 {
+		limit = 20
+	}
+	if limit > 1000 {
+		limit = 1000
+	}
+	protocol = normalizeProtocol(protocol)
+	r := e.store.Snapshot()
+	out := r[:0]
+	for _, p := range r {
+		if !p.Alive {
+			continue
+		}
+		if protocol != "" && p.Protocol != protocol {
+			continue
+		}
+		if goldOnly && !p.Gold(e.cfg.GoldScore) {
+			continue
+		}
+		out = append(out, p)
+	}
+	SortRecords(out)
+	if len(out) > limit {
+		out = out[:limit]
+	}
+	return out
+}
+
+func unixTime(v int64) time.Time {
+	if v <= 0 {
+		return time.Time{}
+	}
+	return time.Unix(v, 0)
+}
