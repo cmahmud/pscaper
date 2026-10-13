@@ -1,3 +1,16 @@
+## October 2026 — pscaper VPS recovery and deployment
+
+- Migrated restored Go application from prior project name to pscaper.
+- Replaced 19 unavailable/empty feeds and added 31 independently sampled, working feeds (118 configured).
+- Capped per-feed candidate admission to 2,000 by default to protect the 2-core VPS.
+- Restored historical `all-discovered.txt` import compatibility.
+- Avoided journal churn on unchanged duplicate candidates.
+- Optimized historical TXT serialization with linear-time `strings.Join`.
+- Added bounded feed auditing and validation tests for gateway forwarding.
+- Routed public callbacks through the existing 80/443 Nginx ingress, leaving management loopback-only.
+- Added self-contained systemd/Nginx configurations under `/home/ubuntu/pscaper/config/`.
+- Kept runtime data, exports, credentials, certificates and build artifacts outside Git tracking.
+
 # Changelog
 
 ## 1.3.1 — 2026-08-22

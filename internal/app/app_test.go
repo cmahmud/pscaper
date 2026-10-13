@@ -1,6 +1,9 @@
 package app
 
 import (
+	"context"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,6 +18,7 @@ func TestParseCandidate(t *testing.T) {
 	}{
 		{"1.2.3.4:8080", "http", "http", "1.2.3.4", 8080},
 		{"socks5://8.8.8.8:1080", "http", "socks5", "8.8.8.8", 1080},
+		{"45.225.89.145:999:Ecuador", "http", "http", "45.225.89.145", 999},
 	}
 	for _, tc := range cases {
 		c, ok := parseCandidate(tc.line, tc.hint, "test")
@@ -184,9 +188,9 @@ func TestFreshStoreImportsHistoricalExport(t *testing.T) {
 	everAlive := "http://8.8.8.8:8080\nsocks5://1.1.1.1:1080\n"
 	everGold := "socks5://1.1.1.1:1080\n"
 	for name, body := range map[string]string{
-		"discovered.txt": discovered,
-		"ever-alive.txt": everAlive,
-		"ever-gold.txt":  everGold,
+		"all-discovered.txt": discovered,
+		"ever-alive.txt":     everAlive,
+		"ever-gold.txt":      everGold,
 	} {
 		if err := os.WriteFile(filepath.Join(exportDir, "historical", name), []byte(body), 0o644); err != nil {
 			t.Fatal(err)
@@ -216,5 +220,45 @@ func TestFreshStoreImportsHistoricalExport(t *testing.T) {
 	}
 	if byKey["https://9.9.9.9:3128"].EverAlive {
 		t.Fatalf("discovered-only proxy should not be ever-alive: %+v", byKey["https://9.9.9.9:3128"])
+	}
+}
+
+// Test source-level bounded harvests to protect 2-core deployments from huge feeds.
+func TestSourceCandidateLimit(t *testing.T) {
+	if n := (Source{}).CandidateLimit(); n != 2000 {
+		t.Fatalf("default cap %d", n)
+	}
+	if n := (Source{MaxCandidates: 250}).CandidateLimit(); n != 250 {
+		t.Fatalf("override cap %d", n)
+	}
+	if n := (Source{MaxCandidates: 500000}).CandidateLimit(); n != 10000 {
+		t.Fatalf("max cap %d", n)
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("8.8.8.8:80\n1.1.1.1:81\n9.9.9.9:82\n"))
+	}))
+	defer server.Close()
+	got, err := fetchSource(context.Background(), server.Client(), Source{URL: server.URL, Protocol: "http", Name: "test", MaxCandidates: 2})
+	if err != nil || len(got) != 2 {
+		t.Fatalf("capped result len=%d err=%v", len(got), err)
+	}
+}
+
+// Nginx is the only trusted source for an externally observed exit IP.
+func TestProbeClientIP(t *testing.T) {
+	req := httptest.NewRequest("GET", "/probe/test", nil)
+	req.RemoteAddr = "127.0.0.1:1234"
+	req.Header.Set("X-Real-IP", "9.9.9.9")
+	if got := probeClientIP(req); got != "9.9.9.9" {
+		t.Fatalf("trusted gateway: %q", got)
+	}
+	req.RemoteAddr = "8.8.8.8:1234"
+	if got := probeClientIP(req); got != "8.8.8.8" {
+		t.Fatalf("untrusted header: %q", got)
+	}
+	req.RemoteAddr = "127.0.0.1:1234"
+	req.Header.Set("X-Real-IP", "192.168.1.1")
+	if got := probeClientIP(req); got != "127.0.0.1" {
+		t.Fatalf("private header: %q", got)
 	}
 }

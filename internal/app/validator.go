@@ -268,13 +268,27 @@ func dialSOCKS4(ctx context.Context, proxyAddr, targetAddr string, timeout time.
 	return conn, nil
 }
 
+// probeClientIP trusts the proxy-facing real-IP header only for requests from
+// our loopback Nginx gateway, never from an arbitrary public client.
+func probeClientIP(r *http.Request) string {
+	host, _, _ := net.SplitHostPort(r.RemoteAddr)
+	peer := net.ParseIP(host)
+	if peer != nil && peer.IsLoopback() {
+		if forwarded := net.ParseIP(r.Header.Get("X-Real-IP")); forwarded != nil &&
+			forwarded.IsGlobalUnicast() && !forwarded.IsPrivate() {
+			return forwarded.String()
+		}
+	}
+	return host
+}
+
 func StartProbeServers(ctx context.Context, cfg Config) error {
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/probe/"+cfg.ProbeToken {
 			http.NotFound(w, r)
 			return
 		}
-		host, _, _ := net.SplitHostPort(r.RemoteAddr)
+		host := probeClientIP(r)
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Cache-Control", "no-store")
 		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "ip": host, "ts": time.Now().UTC()})

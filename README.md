@@ -1,113 +1,91 @@
-# pscaper 1.3
+# pscaper
 
-pscaper is a high-concurrency public-proxy feed harvester, validator, scorer, exporter, and terminal dashboard. It consumes explicitly configured public proxy-list feeds; it does **not** scan arbitrary Internet address ranges for open proxy ports.
+Go-based public-proxy feed harvester, independent validator, scoring engine, historical exports, localhost management API, and terminal dashboard. This is the **application source** repository, not the automatically changing proxy-list repository.
 
-## v1.3: wide-source harvester
+## Deployment status and sources
 
-v1.3 expands the bundled configuration to **106 protocol feeds from 31 independent public-list publishers/origins**. The engine still deduplicates by `protocol://IP:PORT`, so pulling the same proxy from ten publishers does not inflate `DISCOVERED`.
+- Latest recovered application version: **1.3.1** (with October 2026 deployment hardening).
+- **118 configured, independently tested feed URLs** after replacing 19 empty, unusable, or 404 sources and adding 31 working URLs from nine additional publishers.
+- Feed protocols: HTTP, HTTPS, SOCKS4, SOCKS5. Source-specific refresh schedules are retained.
+- Sources are only *candidates*; a candidate is not **alive** until it passes the application's outbound-forwarding callback probe.
+- At most **2,000 candidates per source fetch** by default (or up to 10,000 with per-source `max_candidates`); prevents huge aggregate lists overwhelming small servers.
+- Historical proxy totals recovered from `cmahmud/proxies` (223,440 discovered, 49,559 ever-alive, 1,587 ever-Gold at restoration). Historical TXT files are under `exports/historical/` and not tracked here.
+- Verified working upstream examples: [ProxyScrape](https://github.com/ProxyScrape/free-proxy-list), [Litport](https://github.com/litportnet/free-proxy-list), [Proxio](https://github.com/proxio-io/proxy-list), [Moleway](https://github.com/Moleway/Free-Proxy-List) and additional independently checked publishers in `config/sources.json`.
 
-The source catalog includes fast-refresh feeds, hourly feeds, daily feeds, and several very large aggregate feeds. Every configured proxy is independently checked through pscaper's own probe before it can enter `alive/` or `gold/`.
-
-### Per-source scheduling
-
-Each source now carries its own `refresh_seconds` value. Continuous mode no longer re-downloads all 106 endpoints every few seconds.
-
-Typical flow:
-
-```text
-source updated every 5m  -> fetch when its 5m cadence is due
-source updated every 30m -> fetch when its 30m cadence is due
-hourly source            -> fetch hourly
-daily source             -> fetch daily
-
-any due source(s)
-  -> ingest + dedupe
-  -> validate NEW/DUE candidates
-  -> export current + historical pools
-  -> push changed pools to private GitHub
-  -> continue forever
-```
-
-`H` in the TUI is an explicit **force-all-sources** action and bypasses those cadences.
-
-### Large-feed support
-
-`Source` entries can set `max_bytes_mb`. Normal feeds default to 16 MiB; the huge aggregate feeds bundled in v1.3 are allowed up to 64 MiB. The fresh-install defaults are also raised to:
+## Paths
 
 ```text
-PSCAPER_SOURCE_CONCURRENCY=24
-PSCAPER_QUEUE_SIZE=3000000
-PSCAPER_WORKERS=3000
+/home/ubuntu/pscaper/
+  bin/pscaper                   compiled ARM64 app (untracked)
+  cmd/pscaper/                  Go entrypoint
+  internal/app/                 harvesting, validator, store, API, terminal UI
+  config/sources.json           configured public-list sources
+  config/pscaper.service        canonical systemd unit
+  config/pscaper-nginx.conf     dedicated public-IP callback virtual host
+  scripts/                      setup, audit and historical scripts
+  .env                          secrets and server-specific settings (gitignored)
+  data/                         snapshot, journal and local TLS cert (gitignored)
+  exports/                      live and append-only historical lists (gitignored)
+  logs/                         service logs (gitignored)
+  recovery/                     offline backups and feed audits (gitignored)
+  .toolchain/ and .build-cache/ local Go compiler and build caches (gitignored)
 ```
 
-The v1.3 upgrade changes the existing 12-source-concurrency / 200000-queue defaults only when those exact old defaults are still present. Custom values are left alone.
+Outside the tree, only symlinks register the unit and the separate Nginx virtual host:
 
-## TUI additions
+- `/etc/systemd/system/pscaper.service` -> `/home/ubuntu/pscaper/config/pscaper.service`
+- `/etc/nginx/sites-enabled/zz-pscaper` -> `/home/ubuntu/pscaper/config/pscaper-nginx.conf`
 
-The dashboard now includes source scheduling telemetry:
-
-```text
-SOURCE FEEDS     106   FETCHED/HRV       17   DUE    0   ERR    1
-```
-
-Each displayed source also shows when it becomes due again. This makes it clear that the endless engine is still active even when no publisher is currently due for another download.
-
-Main counters remain:
-
-```text
-DISCOVERED    all unique protocol://IP:PORT records known
-ALIVE NOW     currently passing validation
-GOLD NOW      current repeatedly verified/high-score subset
-EVER ALIVE    succeeded at least once
-EVER GOLD     qualified as Gold at least once
-DEAD NOW      currently failing
-```
-
-## Private GitHub export
-
-The v1.2 history layout is preserved:
-
-```text
-alive/                         current passing pool
-gold/                          current Gold pool
-historical/
-  all-discovered.txt           every unique record ever discovered
-  ever-alive.txt               every record that ever passed
-  ever-gold.txt                every record that ever became Gold
-archive/YYYY-MM-DD/            periodic current-pool snapshots
-stats.json
-README.md
-```
-
-Existing history, Git credentials, repo configuration, proxy state, and probe settings are preserved by the v1.3 upgrade.
-
-## TUI
+## Operations on the VPS
 
 ```bash
-set -a
-source .env
-set +a
-./bin/pscaper tui
+cd /home/ubuntu/pscaper
+sudo systemctl status pscaper
+sudo systemctl restart pscaper
+curl -fsS http://127.0.0.1:8788/health
+curl -fsS http://127.0.0.1:8788/api/stats
+curl -fsS 'http://127.0.0.1:8788/api/top?limit=10'
+curl -fsS -X POST http://127.0.0.1:8788/api/action/export
+python3 scripts/audit-sources.py
+tail -n 30 logs/pscaper.log
 ```
 
-Keys:
+The terminal UI is available via `set -a; source .env; set +a; ./bin/pscaper tui`. Local `go test ./...` and `go build -o bin/pscaper ./cmd/pscaper` work with the project's Go toolchain at `.toolchain/go/bin/go` when Go is not globally installed.
 
-```text
-H     force all configured sources now
-E/P   export + private-GitHub push now
-Q     close the TUI (the systemd engine keeps running)
+To regenerate and test:
+
+```bash
+cd /home/ubuntu/pscaper
+export GOCACHE="$PWD/.build-cache/go-build" GOMODCACHE="$PWD/.build-cache/gomod" GOPATH="$PWD/.build-cache/gopath" GOENV=off GOTOOLCHAIN=local
+.toolchain/go/bin/go test ./...
+CGO_ENABLED=0 .toolchain/go/bin/go build -trimpath -ldflags='-s -w' -o bin/pscaper ./cmd/pscaper
 ```
 
-## Important first-run behavior
+## Probe and network design
 
-The first v1.3 service start treats every configured publisher as due. Because the new catalog includes very large aggregate lists, `DISCOVERED` and `QUEUED` can jump sharply and the first validation cycle can take much longer than v1.2. That is intentional. Subsequent downloads follow each source's own refresh cadence.
+The VPS cloud ingress permits 80 and 443 but not dedicated callback ports 8787/8789. Nginx has a **separate server_name matching only the VPS public IPv4**. Only paths under `/probe/` are forwarded to the local HTTP probe; all other paths in that virtual host return 404. The HTTPS callback is terminated by a self-signed **probe-only** certificate stored under `data/tls/`. Other named virtual hosts such as `files.syndrid.com` are left unchanged.
 
-## Security
+Nginx supplies `X-Real-IP` from the actual remote connection. The Go server trusts that header only when the connecting peer is loopback. Callback tokens are generated into the ignored `.env`, not committed.
 
-Public proxies are untrusted. Do not route passwords, session cookies, API keys, banking traffic, or other secrets through them. pscaper does not include credential interception, TLS MITM, Internet-wide open-proxy scanning, or anti-abuse bypass logic.
+The management API listens on **127.0.0.1:8788 only**. Do **not** expose it to the internet: it includes privileged harvest/export controls.
 
-## GitHub export visibility and attribution
+## Source-quality workflow
 
-`setup-github.sh` supports either a private or public export repository. Set `PSCAPER_GITHUB_VISIBILITY=public` when the generated pool is intentionally public. Future export commits are authored with the authenticated GitHub account's ID-based `noreply` address by default, so GitHub can associate qualifying commits with that account without exposing a personal email address. Override `PSCAPER_GIT_AUTHOR_NAME` or `PSCAPER_GIT_AUTHOR_EMAIL` only when needed.
+`python3 scripts/audit-sources.py` performs a bounded parallel download of the feed URLs and reports HTTP status plus parseable public IPv4/port samples under `recovery/feed-audit.json`. This is a **format and availability audit**, not a claim that the proxies are working. Only the app's callback validator determines the live pool. Data sources change or disappear; re-run the audit when pruning or expanding sources.
 
-The management API remains bound to `127.0.0.1` by default. A public website should consume the exported files or a separate read-only publication layer rather than expose the management API.
+## Historical exports
+
+- `exports/alive/`: currently passing proxies.
+- `exports/gold/`: repeatedly verified, higher-scoring proxies.
+- `exports/historical/all-discovered.txt`: every previously discovered proxy.
+- `exports/historical/ever-alive.txt`: proxy has passed at least once.
+- `exports/historical/ever-gold.txt`: proxy has qualified as Gold at least once.
+- `exports/stats.json`: last export's point-in-time counters.
+
+Automatic Git pushing is **disabled** until separate server-side GitHub credentials are supplied. Keep exported proxy lists in `cmahmud/proxies` or another dedicated data repository, not `cmahmud/pscaper`. The GitHub connector can commit application **source** from ChatGPT without writing credentials onto the server.
+
+## Safety and limitations
+
+Free public proxies are untrusted, unstable and may intercept unencrypted traffic. **Never route authentication, personal or financial data through them.** The engine only reads configured public feeds (no internet-wide port scans). A working-proxy count is time-sensitive. Gold requires repeat validation, so it can initially be zero even if some Alive proxies have passed.
+
+Previous source revisions and the original v1.3.0 Git bundle remain backed up locally in `recovery/`.

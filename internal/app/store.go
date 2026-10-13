@@ -105,12 +105,19 @@ func (s *Store) UpsertCandidate(c Candidate, now time.Time) (bool, ProxyRecord) 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if p, ok := s.records[key]; ok {
-		p.LastSeen = now
+		changed := false
+		if p.LastSeen.IsZero() || now.Sub(p.LastSeen) >= 30*time.Minute {
+			p.LastSeen = now
+			changed = true
+		}
 		if c.Source != "" && !contains(p.Sources, c.Source) {
 			p.Sources = append(p.Sources, c.Source)
 			sort.Strings(p.Sources)
+			changed = true
 		}
-		s.dirty[key] = struct{}{}
+		if changed {
+			s.dirty[key] = struct{}{}
+		}
 		return false, *p
 	}
 	p := &ProxyRecord{Key: key, Host: c.Host, Port: c.Port, Protocol: c.Protocol, Sources: []string{c.Source}, FirstSeen: now, LastSeen: now}
@@ -179,6 +186,7 @@ func (s *Store) ImportHistoricalFiles(dir string) error {
 		everAlive bool
 		everGold  bool
 	}{
+		{"all-discovered.txt", false, false},
 		{"discovered.txt", false, false},
 		{"ever-alive.txt", true, false},
 		{"ever-gold.txt", true, true},
@@ -460,11 +468,7 @@ func joinLines(v []string) string {
 	if len(v) == 0 {
 		return ""
 	}
-	out := ""
-	for _, x := range v {
-		out += x + "\n"
-	}
-	return out
+	return strings.Join(v, "\n") + "\n"
 }
 func contains(v []string, s string) bool {
 	for _, x := range v {

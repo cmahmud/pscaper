@@ -114,24 +114,6 @@
     "refresh_seconds": 600
   },
   {
-    "name": "thenasty-http",
-    "url": "https://raw.githubusercontent.com/thenasty1337/free-proxy-list/main/data/latest/types/http/proxies.txt",
-    "protocol": "http",
-    "refresh_seconds": 21600
-  },
-  {
-    "name": "thenasty-socks4",
-    "url": "https://raw.githubusercontent.com/thenasty1337/free-proxy-list/main/data/latest/types/socks4/proxies.txt",
-    "protocol": "socks4",
-    "refresh_seconds": 21600
-  },
-  {
-    "name": "thenasty-socks5",
-    "url": "https://raw.githubusercontent.com/thenasty1337/free-proxy-list/main/data/latest/types/socks5/proxies.txt",
-    "protocol": "socks5",
-    "refresh_seconds": 21600
-  },
-  {
     "name": "mzyui-http",
     "url": "https://raw.githubusercontent.com/mzyui/proxy-list/main/http.txt",
     "protocol": "http",
@@ -220,24 +202,6 @@
     "url": "https://vakhov.github.io/fresh-proxy-list/socks5.txt",
     "protocol": "socks5",
     "refresh_seconds": 600
-  },
-  {
-    "name": "gproxynet-http",
-    "url": "https://raw.githubusercontent.com/gproxynet/free-proxy-list/main/http.txt",
-    "protocol": "http",
-    "refresh_seconds": 1800
-  },
-  {
-    "name": "gproxynet-socks4",
-    "url": "https://raw.githubusercontent.com/gproxynet/free-proxy-list/main/socks4.txt",
-    "protocol": "socks4",
-    "refresh_seconds": 1800
-  },
-  {
-    "name": "gproxynet-socks5",
-    "url": "https://raw.githubusercontent.com/gproxynet/free-proxy-list/main/socks5.txt",
-    "protocol": "socks5",
-    "refresh_seconds": 1800
   },
   {
     "name": "prxchk-http",
@@ -356,36 +320,6 @@
     "protocol": "socks5",
     "refresh_seconds": 3600,
     "max_bytes_mb": 32
-  },
-  {
-    "name": "openproxyhub-http-absolute",
-    "url": "https://raw.githubusercontent.com/openproxyhub/proxy-exports/main/http_absolute.txt",
-    "protocol": "http",
-    "refresh_seconds": 300
-  },
-  {
-    "name": "openproxyhub-http-connect",
-    "url": "https://raw.githubusercontent.com/openproxyhub/proxy-exports/main/http_connect.txt",
-    "protocol": "https",
-    "refresh_seconds": 300
-  },
-  {
-    "name": "openproxyhub-https-tls",
-    "url": "https://raw.githubusercontent.com/openproxyhub/proxy-exports/main/https_proxy_tls.txt",
-    "protocol": "https",
-    "refresh_seconds": 300
-  },
-  {
-    "name": "openproxyhub-socks4",
-    "url": "https://raw.githubusercontent.com/openproxyhub/proxy-exports/main/socks4.txt",
-    "protocol": "socks4",
-    "refresh_seconds": 300
-  },
-  {
-    "name": "openproxyhub-socks5",
-    "url": "https://raw.githubusercontent.com/openproxyhub/proxy-exports/main/socks5.txt",
-    "protocol": "socks5",
-    "refresh_seconds": 300
   },
   {
     "name": "vpslab-http",
@@ -524,34 +458,6 @@
     "max_bytes_mb": 64
   },
   {
-    "name": "naeamwen-http",
-    "url": "https://raw.githubusercontent.com/Naeamwen/proxy-list/main/http.txt",
-    "protocol": "http",
-    "refresh_seconds": 3600,
-    "max_bytes_mb": 32
-  },
-  {
-    "name": "naeamwen-https",
-    "url": "https://raw.githubusercontent.com/Naeamwen/proxy-list/main/https.txt",
-    "protocol": "https",
-    "refresh_seconds": 3600,
-    "max_bytes_mb": 32
-  },
-  {
-    "name": "naeamwen-socks4",
-    "url": "https://raw.githubusercontent.com/Naeamwen/proxy-list/main/socks4.txt",
-    "protocol": "socks4",
-    "refresh_seconds": 3600,
-    "max_bytes_mb": 32
-  },
-  {
-    "name": "naeamwen-socks5",
-    "url": "https://raw.githubusercontent.com/Naeamwen/proxy-list/main/socks5.txt",
-    "protocol": "socks5",
-    "refresh_seconds": 3600,
-    "max_bytes_mb": 32
-  },
-  {
     "name": "clarketm-http",
     "url": "https://raw.githubusercontent.com/clarketm/proxy-list/master/proxy-list-raw.txt",
     "protocol": "http",
@@ -600,34 +506,6 @@
     "refresh_seconds": 900
   },
   {
-    "name": "argh94-http",
-    "url": "https://raw.githubusercontent.com/Argh94/Proxy-List/main/http.txt",
-    "protocol": "http",
-    "refresh_seconds": 3600,
-    "max_bytes_mb": 32
-  },
-  {
-    "name": "argh94-https",
-    "url": "https://raw.githubusercontent.com/Argh94/Proxy-List/main/https.txt",
-    "protocol": "https",
-    "refresh_seconds": 3600,
-    "max_bytes_mb": 32
-  },
-  {
-    "name": "argh94-socks4",
-    "url": "https://raw.githubusercontent.com/Argh94/Proxy-List/main/socks4.txt",
-    "protocol": "socks4",
-    "refresh_seconds": 3600,
-    "max_bytes_mb": 32
-  },
-  {
-    "name": "argh94-socks5",
-    "url": "https://raw.githubusercontent.com/Argh94/Proxy-List/main/socks5.txt",
-    "protocol": "socks5",
-    "refresh_seconds": 3600,
-    "max_bytes_mb": 32
-  },
-  {
     "name": "xyzs996-http",
     "url": "https://raw.githubusercontent.com/xyzs996/free-proxy-health-list/main/http.txt",
     "protocol": "http",
@@ -651,5 +529,191 @@
     "url": "https://raw.githubusercontent.com/adasd223/http-proxy-list-2026/main/socks5.txt",
     "protocol": "socks5",
     "refresh_seconds": 86400
+  },
+  {
+    "name": "litport-http",
+    "url": "https://raw.githubusercontent.com/litportnet/free-proxy-list/live/proxies/http.txt",
+    "protocol": "http",
+    "refresh_seconds": 600
+  },
+  {
+    "name": "litport-https",
+    "url": "https://raw.githubusercontent.com/litportnet/free-proxy-list/live/proxies/https.txt",
+    "protocol": "https",
+    "refresh_seconds": 600
+  },
+  {
+    "name": "litport-socks4",
+    "url": "https://raw.githubusercontent.com/litportnet/free-proxy-list/live/proxies/socks4.txt",
+    "protocol": "socks4",
+    "refresh_seconds": 600
+  },
+  {
+    "name": "litport-socks5",
+    "url": "https://raw.githubusercontent.com/litportnet/free-proxy-list/live/proxies/socks5.txt",
+    "protocol": "socks5",
+    "refresh_seconds": 600
+  },
+  {
+    "name": "proxio-http",
+    "url": "https://raw.githubusercontent.com/proxio-io/proxy-list/main/http.txt",
+    "protocol": "http",
+    "refresh_seconds": 1800
+  },
+  {
+    "name": "proxio-https",
+    "url": "https://raw.githubusercontent.com/proxio-io/proxy-list/main/https.txt",
+    "protocol": "https",
+    "refresh_seconds": 1800
+  },
+  {
+    "name": "proxio-socks4",
+    "url": "https://raw.githubusercontent.com/proxio-io/proxy-list/main/socks4.txt",
+    "protocol": "socks4",
+    "refresh_seconds": 1800
+  },
+  {
+    "name": "proxio-socks5",
+    "url": "https://raw.githubusercontent.com/proxio-io/proxy-list/main/socks5.txt",
+    "protocol": "socks5",
+    "refresh_seconds": 1800
+  },
+  {
+    "name": "moleway-http",
+    "url": "https://raw.githubusercontent.com/Moleway/Free-Proxy-List/main/http.txt",
+    "protocol": "http",
+    "refresh_seconds": 1800
+  },
+  {
+    "name": "moleway-https",
+    "url": "https://raw.githubusercontent.com/Moleway/Free-Proxy-List/main/https.txt",
+    "protocol": "https",
+    "refresh_seconds": 1800
+  },
+  {
+    "name": "moleway-socks4",
+    "url": "https://raw.githubusercontent.com/Moleway/Free-Proxy-List/main/socks4.txt",
+    "protocol": "socks4",
+    "refresh_seconds": 1800
+  },
+  {
+    "name": "moleway-socks5",
+    "url": "https://raw.githubusercontent.com/Moleway/Free-Proxy-List/main/socks5.txt",
+    "protocol": "socks5",
+    "refresh_seconds": 1800
+  },
+  {
+    "name": "jetkai-http",
+    "url": "https://raw.githubusercontent.com/jetkai/proxy-list/main/online-proxies/txt/proxies-http.txt",
+    "protocol": "http",
+    "refresh_seconds": 3600
+  },
+  {
+    "name": "jetkai-https",
+    "url": "https://raw.githubusercontent.com/jetkai/proxy-list/main/online-proxies/txt/proxies-https.txt",
+    "protocol": "https",
+    "refresh_seconds": 3600
+  },
+  {
+    "name": "jetkai-socks4",
+    "url": "https://raw.githubusercontent.com/jetkai/proxy-list/main/online-proxies/txt/proxies-socks4.txt",
+    "protocol": "socks4",
+    "refresh_seconds": 3600
+  },
+  {
+    "name": "jetkai-socks5",
+    "url": "https://raw.githubusercontent.com/jetkai/proxy-list/main/online-proxies/txt/proxies-socks5.txt",
+    "protocol": "socks5",
+    "refresh_seconds": 3600
+  },
+  {
+    "name": "shiftytr-http",
+    "url": "https://raw.githubusercontent.com/ShiftyTR/Proxy-List/master/http.txt",
+    "protocol": "http",
+    "refresh_seconds": 3600
+  },
+  {
+    "name": "shiftytr-https",
+    "url": "https://raw.githubusercontent.com/ShiftyTR/Proxy-List/master/https.txt",
+    "protocol": "https",
+    "refresh_seconds": 3600
+  },
+  {
+    "name": "shiftytr-socks4",
+    "url": "https://raw.githubusercontent.com/ShiftyTR/Proxy-List/master/socks4.txt",
+    "protocol": "socks4",
+    "refresh_seconds": 3600
+  },
+  {
+    "name": "shiftytr-socks5",
+    "url": "https://raw.githubusercontent.com/ShiftyTR/Proxy-List/master/socks5.txt",
+    "protocol": "socks5",
+    "refresh_seconds": 3600
+  },
+  {
+    "name": "rdavydov-http",
+    "url": "https://raw.githubusercontent.com/rdavydov/proxy-list/main/proxies/http.txt",
+    "protocol": "http",
+    "refresh_seconds": 900
+  },
+  {
+    "name": "rdavydov-socks4",
+    "url": "https://raw.githubusercontent.com/rdavydov/proxy-list/main/proxies/socks4.txt",
+    "protocol": "socks4",
+    "refresh_seconds": 900
+  },
+  {
+    "name": "rdavydov-socks5",
+    "url": "https://raw.githubusercontent.com/rdavydov/proxy-list/main/proxies/socks5.txt",
+    "protocol": "socks5",
+    "refresh_seconds": 900
+  },
+  {
+    "name": "mmpx12-http",
+    "url": "https://raw.githubusercontent.com/mmpx12/proxy-list/master/http.txt",
+    "protocol": "http",
+    "refresh_seconds": 1800
+  },
+  {
+    "name": "mmpx12-https",
+    "url": "https://raw.githubusercontent.com/mmpx12/proxy-list/master/https.txt",
+    "protocol": "https",
+    "refresh_seconds": 1800
+  },
+  {
+    "name": "mmpx12-socks4",
+    "url": "https://raw.githubusercontent.com/mmpx12/proxy-list/master/socks4.txt",
+    "protocol": "socks4",
+    "refresh_seconds": 1800
+  },
+  {
+    "name": "mmpx12-socks5",
+    "url": "https://raw.githubusercontent.com/mmpx12/proxy-list/master/socks5.txt",
+    "protocol": "socks5",
+    "refresh_seconds": 1800
+  },
+  {
+    "name": "proxy4parsing-http",
+    "url": "https://raw.githubusercontent.com/proxy4parsing/proxy-list/main/http.txt",
+    "protocol": "http",
+    "refresh_seconds": 1800
+  },
+  {
+    "name": "aliila-http",
+    "url": "https://raw.githubusercontent.com/ALIILAPRO/Proxy/main/http.txt",
+    "protocol": "http",
+    "refresh_seconds": 1800
+  },
+  {
+    "name": "aliila-socks4",
+    "url": "https://raw.githubusercontent.com/ALIILAPRO/Proxy/main/socks4.txt",
+    "protocol": "socks4",
+    "refresh_seconds": 1800
+  },
+  {
+    "name": "aliila-socks5",
+    "url": "https://raw.githubusercontent.com/ALIILAPRO/Proxy/main/socks5.txt",
+    "protocol": "socks5",
+    "refresh_seconds": 1800
   }
 ]

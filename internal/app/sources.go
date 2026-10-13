@@ -22,6 +22,7 @@ type Source struct {
 	Protocol       string `json:"protocol"`
 	RefreshSeconds int    `json:"refresh_seconds,omitempty"`
 	MaxBytesMB     int    `json:"max_bytes_mb,omitempty"`
+	MaxCandidates  int    `json:"max_candidates,omitempty"`
 }
 
 func (s Source) RefreshInterval() time.Duration {
@@ -29,6 +30,18 @@ func (s Source) RefreshInterval() time.Duration {
 		return 5 * time.Minute
 	}
 	return time.Duration(s.RefreshSeconds) * time.Second
+}
+
+// CandidateLimit caps the number of records admitted from any single feed.
+// Avoid monopolizing a small VPS with million-line aggregate lists.
+func (s Source) CandidateLimit() int {
+	if s.MaxCandidates <= 0 {
+		return 2000
+	}
+	if s.MaxCandidates > 10000 {
+		return 10000
+	}
+	return s.MaxCandidates
 }
 
 func (s Source) MaxBytes() int64 {
@@ -146,6 +159,9 @@ func fetchSource(ctx context.Context, client *http.Client, src Source) ([]Candid
 		}
 		if c, ok := parseCandidate(line, src.Protocol, src.Name); ok {
 			out = append(out, c)
+			if len(out) >= src.CandidateLimit() {
+				break
+			}
 		}
 	}
 	return out, s.Err()
@@ -172,6 +188,13 @@ func parseCandidate(line, hint, source string) (Candidate, bool) {
 	fields := strings.FieldsFunc(line, func(r rune) bool { return r == ' ' || r == '\t' || r == ',' || r == ';' || r == '|' })
 	for _, f := range fields {
 		f = strings.TrimSpace(strings.Trim(f, "[](){}<>\"'"))
+		// Some public lists append metadata, e.g. 1.2.3.4:8080:Country.
+		// Only apply this shortcut to IPv4 literals; keep IPv6 host:port handling.
+		if parts := strings.SplitN(f, ":", 3); len(parts) == 3 && net.ParseIP(parts[0]) != nil {
+			if port, err := strconv.Atoi(parts[1]); err == nil && validEndpoint(parts[0], port) && proto != "" {
+				return Candidate{Host: parts[0], Port: port, Protocol: proto, Source: source}, true
+			}
+		}
 		host, portStr, err := net.SplitHostPort(f)
 		if err != nil {
 			idx := strings.LastIndex(f, ":")

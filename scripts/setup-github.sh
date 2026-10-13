@@ -6,6 +6,12 @@ if [[ $# -ne 1 || "$1" != */* ]]; then
   exit 2
 fi
 REPO="$1"
+if [[ "${REPO##*/}" == "pscaper" ]]; then
+  echo "Refusing to use the application source repository for changing proxy-pool exports." >&2
+  echo "Use a separate proxy-data repository (for example cmahmud/proxies)." >&2
+  exit 2
+fi
+
 set -a
 source "$ROOT/.env"
 set +a

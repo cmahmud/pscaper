@@ -6,3 +6,5 @@ exports/
 .toolchain/
 recovery/
 *.log
+__pycache__/
+*.pyc
