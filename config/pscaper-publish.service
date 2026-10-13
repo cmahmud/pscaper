@@ -1,0 +1,16 @@
+[Unit]
+Description=Publish pscaper proxy data to GitHub (repository deploy key)
+After=network-online.target pscaper.service
+Wants=network-online.target
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/pscaper
+ExecStart=/home/ubuntu/pscaper/scripts/publish-to-github.sh
+TimeoutStartSec=200
+Nice=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=/home/ubuntu/pscaper

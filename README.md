@@ -100,11 +100,59 @@ Nginx after a successful renewal. The HTTP-01 challenge uses the app's
 `site/.well-known/acme-challenge/` route; it does not need access to
 other webroot folders.
 
+## Fast live dashboard and publishing recovery (October 2026)
+
+The public dashboard is a desktop-fit, charcoal network monitor using lightweight
+vanilla CSS/SVG/JavaScript (no framework or extra browser downloads). At standard
+desktop widths and a viewport height of 660px or greater, the entire screen is
+displayed without scrolling at 100% zoom. Smaller/mobile viewports remain scrollable
+so information is not clipped. Motion honors `prefers-reduced-motion`.
+
+- `GET /api/live` exposes cumulative `newly_alive`, `lost_alive`, and
+  `newly_discovered` scanner events (reset on app restart). Browser computes
+  independent green new/recovered and red lost proxy deltas every 5 seconds.
+- Live values are cached server-side for four seconds to avoid an expensive
+  per-visitor scan of the historic records on the two-core VPS.
+- Client-side SVG trends update every five seconds, and server keeps one hour of
+  five-second time-series snapshots.
+- A full app restart resets the scanner event counters and chart memory; this
+  does **not** remove persistent pool records or their historical history.
+
+### GitHub data publishing health
+
+The existing `cmahmud/proxies` GitHub Actions workflow now has a five-minute
+scheduled interval. GitHub can delay or skip scheduled runs; verify actual
+`schedule` events at
+https://github.com/cmahmud/proxies/actions/workflows/pscaper-sync.yml
+before assuming updates occur.
+
+A more deterministic **VPS-initiated** publisher is also prepared entirely
+inside `/home/ubuntu/pscaper/` with an **SSH deploy key scoped to
+`cmahmud/proxies`**, rather than a broad GitHub personal token. It is
+intentionally not enabled until the repository owner explicitly grants the
+public key **write access** to that one data repository:
+
+1. Open https://github.com/cmahmud/proxies/settings/keys and click
+   **Add deploy key**. Set title `pscaper-vps-publisher`, paste the contents
+   of `data/publisher/github_ed25519.pub`, and check **Allow write access**.
+   Do not copy/share the private key.
+2. On the VPS run `cd /home/ubuntu/pscaper && ./scripts/enable-publisher.sh`.
+   This verifies GitHub's repo-specific authentication, runs the publisher once
+   and only then enables the local five-minute systemd timer.
+3. Check `systemctl status pscaper-publish.timer` and
+   `journalctl -u pscaper-publish.service -n 30`.
+
+Publishing uses an isolated shallow/sparse checkout under
+`data/publisher/repository`, keeps all historical entries, and never writes
+credentials to the application source repo. Once the timer is successful,
+disable the redundant GitHub Actions schedule (or keep it as a fallback, with
+possible competing commits handled by the publish script).
+
 ## Automated GitHub pool publishing (no VPS credentials)
 
 `cmahmud/pscaper` is the application-source repository.
 `cmahmud/proxies` is the separate, public proxy-data repository. Its
-`.github/workflows/pscaper-sync.yml` runs every 30 minutes and can be
+`.github/workflows/pscaper-sync.yml` is configured to run every five minutes and can be
 manually dispatched. The repo's own GitHub Actions `GITHUB_TOKEN` (scoped
 to `contents:write`) fetches the 14 read-only exports from this site,
 validates and merges the historical lists, and commits changed data to
@@ -128,7 +176,7 @@ https://github.com/cmahmud/proxies/actions/workflows/pscaper-sync.yml
 - `exports/historical/ever-gold.txt`: proxy has qualified as Gold at least once.
 - `exports/stats.json`: last export's point-in-time counters.
 
-Automatic **VPS-side** Git pushing remains intentionally disabled. GitHub Actions inside `cmahmud/proxies` now publishes the changing data every 30 minutes without requiring credentials on the VPS. Do not point the exporting engine at the source repository.
+Automatic **VPS-side** Git pushing remains intentionally disabled. GitHub Actions inside `cmahmud/proxies` now is configured to publish the changing data every five minutes without requiring credentials on the VPS. Do not point the exporting engine at the source repository.
 
 ## Safety and limitations
 

@@ -1,3 +1,17 @@
+## October 2026 — compact live monitor and five-minute publishing
+
+- Redesigned dashboard as a charcoal, dense one-screen monitor on standard desktops:
+  slim heading, four live metrics, SVG trend, protocol bars and scanner health.
+- Added subtle chromatic animation, smooth value transitions, green/red event
+  badges, live 5-second polling and reduced-motion accessibility.
+- Exposed accurate cumulative validation transitions and bounded the cost of
+  public telemetry with a four-second shared cache.
+- Raised GitHub Actions publishing cadence to five minutes and documented how
+  to verify actual scheduled runs.
+- Prepared an independent five-minute VPS publisher using a
+  `cmahmud/proxies`-scoped SSH deploy key; requires the repo owner to authorize
+  write access before enabling the timer.
+
 ## October 2026 — public dashboard and GitHub Actions recovery
 
 - Recreated `proxy.syndrid.com` live dashboard under `site/index.html`, using a distinct Nginx virtual host without changing the existing sites.

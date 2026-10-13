@@ -1,0 +1,9 @@
+[Unit]
+Description=Publish pscaper pool every five minutes
+[Timer]
+OnCalendar=*:0/5
+Persistent=true
+RandomizedDelaySec=25s
+Unit=pscaper-publish.service
+[Install]
+WantedBy=timers.target

@@ -56,10 +56,18 @@ func StartAPIServer(ctx context.Context, addr string, e *Engine) error {
 		writeJSON(w, map[string]any{"ok": true, "app": "pscaper", "time": time.Now().UTC()})
 	})
 	mux.HandleFunc("GET /api/stats", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, e.Stats()) })
-	// Public, sanitized dashboard telemetry; never reveal feed URLs, proxy identities or control routes.
+	// Cache costly whole-pool statistics across visitors (2-core VPS).
+	var liveMu sync.Mutex
+	var liveAt time.Time
+	var liveCache map[string]any
 	live := func() map[string]any {
+		liveMu.Lock()
+		defer liveMu.Unlock()
+		if liveCache != nil && time.Since(liveAt) < 4*time.Second {
+			return liveCache
+		}
 		s := e.Stats()
-		return map[string]any{
+		current := map[string]any{
 			"time": time.Now().UTC(), "total": s.Total, "alive": s.Alive,
 			"gold": s.Gold, "checked": s.Checked, "ever_alive": s.EverAlive,
 			"ever_gold": s.EverGold, "alive_protocols": s.AliveProtocols,
@@ -67,7 +75,12 @@ func StartAPIServer(ctx context.Context, addr string, e *Engine) error {
 			"source_feeds": s.SourceFeeds, "source_errors": s.SourceErrors,
 			"last_harvest": s.LastHarvest, "last_export": s.LastExport,
 			"harvests": s.Harvests, "uptime_seconds": int64(time.Since(s.StartedAt).Seconds()),
+			"newly_alive": e.newlyAlive.Load(), "lost_alive": e.lostAlive.Load(),
+			"newly_discovered": e.newlyDiscovered.Load(),
 		}
+		liveCache = current
+		liveAt = time.Now()
+		return current
 	}
 	mux.HandleFunc("GET /api/live", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, live()) })
 	type historyPoint struct {
@@ -77,20 +90,24 @@ func StartAPIServer(ctx context.Context, addr string, e *Engine) error {
 		Queue int       `json:"queue"`
 	}
 	var hmu sync.RWMutex
-	history := make([]historyPoint, 0, 2880) // 24 hours at 30-second sampling
+	history := make([]historyPoint, 0, 720) // 1 hour sampled every 5 sec
 	sample := func() {
-		s := e.Stats()
+		d := live()
+		now := time.Now().UTC()
+		alive, _ := d["alive"].(int)
+		gold, _ := d["gold"].(int)
+		queue, _ := d["queue"].(int)
 		hmu.Lock()
-		history = append(history, historyPoint{Time: time.Now().UTC(), Alive: s.Alive, Gold: s.Gold, Queue: s.Queue})
-		if len(history) > 2880 {
-			copy(history, history[len(history)-2880:])
-			history = history[:2880]
+		history = append(history, historyPoint{Time: now, Alive: alive, Gold: gold, Queue: queue})
+		if len(history) > 720 {
+			copy(history, history[len(history)-720:])
+			history = history[:720]
 		}
 		hmu.Unlock()
 	}
 	sample()
 	go func() {
-		t := time.NewTicker(30 * time.Second)
+		t := time.NewTicker(5 * time.Second)
 		defer t.Stop()
 		for {
 			select {

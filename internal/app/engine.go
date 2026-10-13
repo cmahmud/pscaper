@@ -42,6 +42,9 @@ type Engine struct {
 	cycles                    atomic.Int64
 	successes                 atomic.Int64
 	failures                  atomic.Int64
+	newlyAlive                atomic.Int64
+	lostAlive                 atomic.Int64
+	newlyDiscovered           atomic.Int64
 	inFlight                  atomic.Int64
 	newThisHarvest            atomic.Int64
 	queuedThisHarvest         atomic.Int64
@@ -122,8 +125,14 @@ func (e *Engine) worker(ctx context.Context) {
 			now := time.Now()
 			if res.OK {
 				e.successes.Add(1)
+				if !p.Alive {
+					e.newlyAlive.Add(1)
+				}
 			} else {
 				e.failures.Add(1)
+				if p.Alive {
+					e.lostAlive.Add(1)
+				}
 			}
 			_ = e.store.ApplyValidation(key, res.OK, res.Latency, res.ExitIP, res.Error, now, e.cfg.GoldScore)
 			e.inFlight.Add(-1)
@@ -199,6 +208,7 @@ func (e *Engine) harvestOnce(ctx context.Context, force bool) (HarvestSummary, e
 			isNew, rec := e.store.UpsertCandidate(c, now)
 			if isNew {
 				summary.New++
+				e.newlyDiscovered.Add(1)
 			}
 			if isNew || e.shouldQueue(rec, now) {
 				if e.enqueue(rec.Key) {

@@ -1,64 +1,213 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#080d18"><meta name="description" content="pscaper live proxy discovery and validation intelligence">
-<title>pscaper — Live Proxy Intelligence</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101113">
+<meta name="description" content="pscaper — live public proxy telemetry">
+<title>pscaper — Live Monitor</title>
 <style>
-:root {color-scheme:dark;--bg:#080d18;--panel:#10192a;--panel2:#141e32;--line:#25324a;--muted:#8d9ab3;--text:#edf2ff;--teal:#52e5c2;--blue:#7d9eff;}
-*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse 80% 50% at 65% -10%,#203050 0%,transparent 80%),var(--bg);color:var(--text);font:15px/1.6 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-a{color:inherit;text-decoration:none}.shell{max-width:1220px;margin:auto;padding:28px 32px 65px}.top{display:flex;align-items:center;justify-content:space-between;padding-bottom:46px}.brand{display:flex;align-items:center;gap:12px;font-weight:760;font-size:20px;letter-spacing:-.6px}.mark{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:linear-gradient(130deg,#73efd0,#5f92fb);color:#091525;font-weight:950;font-size:23px}.nav{display:flex;align-items:center;gap:24px;color:var(--muted);font-size:13px}.nav a:hover{color:#fff}.status{display:flex;gap:8px;align-items:center;border:1px solid #2d664f;color:#8de8c4;background:#13302b;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:650}.dot{width:7px;height:7px;border-radius:50%;background:#52e5c2;box-shadow:0 0 9px #52e5c2}
-.eyebrow{display:flex;gap:10px;align-items:center;color:#83cbbd;letter-spacing:2.1px;text-transform:uppercase;font-size:11px;font-weight:800;margin-bottom:10px}.eyebrow:before{content:"";height:1px;width:28px;background:#83cbbd}
-h1{font-size:clamp(37px,5vw,67px);letter-spacing:-2.8px;line-height:1.06;margin:0;font-weight:790}h1 em{color:#68e7ca;font-style:normal}
-.lead{margin-top:21px;color:#a6b3cb;max-width:685px;line-height:1.8;font-size:16px}.hero{margin-bottom:43px}
-.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}.metric,.card{background:linear-gradient(165deg,rgba(26,39,62,.93),rgba(13,22,39,.96));border:1px solid var(--line);border-radius:17px}.metric{padding:25px 24px}.metric .k{font-size:11px;text-transform:uppercase;letter-spacing:1.1px;color:var(--muted);font-weight:800}.metric .v{font-size:clamp(26px,3.3vw,39px);font-weight:750;line-height:1.2;letter-spacing:-1.6px;margin:10px 0 6px;font-variant-numeric:tabular-nums}.metric .foot{font-size:12px;color:#8794aa}.metric.featured{background:linear-gradient(135deg,rgba(24,69,72,.8),rgba(15,25,43,.95));border-color:#397969}.metric.featured .v{color:#70f1cf}
-.row{display:grid;grid-template-columns:1.75fr 1fr;gap:13px;margin-top:13px}.card{padding:25px}.cardtitle{display:flex;justify-content:space-between;align-items:center;gap:15px}.card h2{font-size:16px;margin:0;font-weight:720;letter-spacing:-.25px}.mini{font-size:11px;color:var(--muted);letter-spacing:.3px}.chart{margin-top:25px;height:236px;position:relative;border-bottom:1px solid #29354b;background:repeating-linear-gradient(0deg,transparent,transparent 58px,#26344a7a 59px,#26344a7a 60px)}.chart svg{width:100%;height:100%;overflow:visible}.chartnote{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;margin-top:15px}
-.proto{display:flex;flex-direction:column;gap:21px;margin-top:28px}.protoitem{display:grid;grid-template-columns:80px 1fr 66px;align-items:center;gap:12px;font-size:13px;font-weight:650}.bar{height:9px;background:#263349;border-radius:50px;overflow:hidden}.fill{height:100%;width:0;background:linear-gradient(90deg,#5696ec,#6ce7c7);border-radius:50px;transition:width .7s}.pnum{text-align:right;color:#b7c3d9;font-variant-numeric:tabular-nums}
-.bottom{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:13px}.detail{margin-top:16px;display:grid;grid-template-columns:1fr auto;gap:8px;font-size:13px;color:var(--muted)}.detail b{color:#d9e4f7;font-weight:640;font-variant-numeric:tabular-nums}.cta{margin-top:18px;display:inline-flex;padding:8px 13px;border:1px solid #385f67;border-radius:9px;color:#8cddd6;font-size:12px;font-weight:670}.cta:hover{background:#173a40}.footline{margin-top:29px;display:flex;justify-content:space-between;gap:15px;font-size:12px;color:#697993;border-top:1px solid #1f2c41;padding-top:21px}
-@media(max-width:870px){.metrics{grid-template-columns:repeat(2,1fr)}.row{grid-template-columns:1fr}.bottom{grid-template-columns:1fr}.nav a{display:none}}
-@media(max-width:520px){.shell{padding:21px 16px 40px}.metrics{gap:9px}.metric{padding:17px 14px}.metric .v{font-size:29px}.metric .k{font-size:9px}.card{padding:20px}.top{padding-bottom:33px}.status{padding:4px 8px}.lead{font-size:14px}}
-</style></head>
-<body><div class="shell">
-<header class="top"><div class="brand"><span class="mark">p</span>pscaper<span style="color:#74849c;font-weight:400">/ intelligence</span></div><nav class="nav"><a href="#telemetry">Telemetry</a><a href="#protocols">Protocols</a><a href="#api">API</a><span class="status" id="status"><span class="dot"></span><span id="statuslabel">Connecting</span></span></nav></header>
-<main>
-<section class="hero"><div class="eyebrow">Network intelligence · live telemetry</div><h1>Know which proxies<br><em>actually work.</em></h1><p class="lead">Continuously collecting, independently validating, and scoring public proxy endpoints. Live scanner health, protocol coverage, and historical discovery—without exposing endpoint identities in the dashboard.</p></section>
-<section class="metrics" aria-label="Key metrics">
-<div class="metric featured"><div class="k">Alive now</div><div class="v" id="alive">—</div><div class="foot">Passed live validation</div></div>
-<div class="metric"><div class="k">Gold tier</div><div class="v" id="gold">—</div><div class="foot">Repeatedly verified</div></div>
-<div class="metric"><div class="k">Discovered</div><div class="v" id="total">—</div><div class="foot">Distinct known endpoints</div></div>
-<div class="metric"><div class="k">Ever alive</div><div class="v" id="ever">—</div><div class="foot">Passed at least once</div></div>
+:root{color-scheme:dark;--bg:#0c0d0f;--card:#18191c;--card-hi:#1e2024;--border:#303136;--border-soft:#26282b;--text:#f4f4f5;--muted:#858890;--green:#7de9aa;--red:#ff7c83;--aqua:#78e0d8;--violet:#b49eff}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;background:var(--bg);color:var(--text);font-family:Inter,"SF Pro Display","Helvetica Neue",ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums;overflow:hidden}
+button,a{font:inherit}a{text-decoration:none;color:inherit}button{cursor:pointer}
+::selection{background:#6bd9b755;color:#fff}
+.shell{width:min(1536px,100%);height:100dvh;min-height:610px;margin:0 auto;padding:17px 23px 13px;display:grid;grid-template-rows:47px 62px 107px minmax(0,1fr) 27px;gap:11px}
+.header{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}
+.logo{position:relative;display:grid;place-items:center;flex:none;width:34px;height:34px;border-radius:11px;background:linear-gradient(130deg,#8df6b7 0%,#79e1e3 49%,#ba92ff 100%);color:#111316;font-size:21px;font-weight:900;letter-spacing:-2px;box-shadow:0 0 20px #7de9aa17}
+.logo:after{content:"";position:absolute;inset:-3px;border-radius:14px;border:1px solid #9ceece35;pointer-events:none}
+.wordmark{font-size:20px;font-weight:790;letter-spacing:-.8px}.brand-sub{font:10px/1.2 ui-monospace,SFMono-Regular,monospace;letter-spacing:.13em;color:#73787f;border-left:1px solid #494b4e;padding-left:12px;white-space:nowrap}
+.header-right{display:flex;gap:18px;align-items:center}.headlink{color:#999aa0;font-size:11px;letter-spacing:.06em;font-weight:650;transition:color .2s}.headlink:hover{color:#eafdf5}
+.on{display:flex;gap:8px;align-items:center;border:1px solid #376a55;border-radius:7px;padding:7px 10px;color:#9be8bd;background:#18291f;font-size:10px;font-weight:750;letter-spacing:.05em;white-space:nowrap}
+.on .led{height:6px;width:6px;border-radius:50%;background:#75e6a0;box-shadow:0 0 9px #75e6a0;animation:breath 2.3s ease-in-out infinite}
+.on.offline{color:#ffb4b4;background:#2b1a1e;border-color:#60363a}.on.offline .led{background:#fe757e;box-shadow:none;animation:none}
+.intro{display:flex;align-items:center;justify-content:space-between;gap:20px;min-width:0;border-top:1px solid #27282b;padding-top:7px}
+.title-group{min-width:0}
+.eyebrow{font:600 10px/1.4 ui-monospace,SFMono-Regular,monospace;letter-spacing:.16em;color:#a0a4a9;text-transform:uppercase}
+h1{font-weight:650;font-size:clamp(26px,2.8vw,38px);letter-spacing:-1.6px;line-height:1.17;margin:3px 0 0}
+h1 span{color:#7ee4af}
+.session{display:flex;align-items:center;gap:8px;color:#90949b;font:10px/1.4 ui-monospace,monospace;text-align:right}
+.session .vertical{border-left:1px solid #34363a;height:23px}.session strong{color:#c8cdd1;font-weight:700}
+.kpis{display:grid;grid-template-columns:1.13fr 1fr 1fr 1fr;gap:10px;min-height:0}
+.metric,.panel{position:relative;min-width:0;overflow:hidden;border:1px solid var(--border);border-radius:12px;background:linear-gradient(160deg,#1c1d21,#17181b);isolation:isolate}
+.metric{padding:13px 17px 11px;display:flex;flex-direction:column;justify-content:space-between;transition:border-color .2s,transform .2s}
+.metric:hover,.panel:hover{border-color:#505259}
+.metric.primary{background:linear-gradient(145deg,#222c27,#191e1c 55%,#1b1d1f);border-color:#476353}
+.metric.primary:before{content:"";position:absolute;top:-80px;right:-60px;width:170px;height:170px;border-radius:50%;filter:blur(48px);background:#58e5a313;z-index:-1;pointer-events:none}
+.kpihead{display:flex;justify-content:space-between;align-items:center;gap:5px;white-space:nowrap;font:700 10px/1.4 ui-monospace,SFMono-Regular,monospace;letter-spacing:.085em;color:#a0a3a8}
+.kpihead .hint{font-size:9px;color:#74777c;font-weight:550;letter-spacing:0}
+.kpival{font-size:clamp(25px,2.9vw,43px);line-height:1.08;font-weight:710;letter-spacing:-1.8px;white-space:nowrap;transition:color .3s}
+.primary .kpival{color:#91e8ad}.kpival.flashup{color:#8bf5ab}.kpival.flashdown{color:#ff8b8e}
+.kpifoot{display:flex;align-items:center;gap:7px;min-height:17px;color:#777b80;font:600 10px/1.2 ui-monospace,monospace}
+.kpipill{display:inline-flex;align-items:center;justify-content:center;min-width:40px;border-radius:4px;padding:2px 4px;background:#28382e;color:#8ef1b1;font-size:10px;font-weight:800;transition:all .2s}
+.kpipill.negative{background:#382326;color:#ff9299}.kpipill.neutral{background:#292a2e;color:#9da0a7}
+.board{display:grid;grid-template-columns:minmax(0,1.84fr) minmax(285px,.86fr);gap:11px;min-height:0}
+.panel{display:flex;flex-direction:column;padding:15px 18px}
+.chartpanel{background:linear-gradient(165deg,#1c1e22,#17181a)}
+.panelhead{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:24px}
+.panelhead h2{font-size:13px;font-weight:690;letter-spacing:-.15px;margin:0}
+.tag{font:600 9px/1.3 ui-monospace,monospace;color:#777d85;letter-spacing:.06em}
+.live{display:flex;align-items:center;gap:6px;color:#9ce9bb;font:700 10px/1.2 ui-monospace,monospace;letter-spacing:.1em}.live i{display:block;width:5px;height:5px;background:#7be6a4;border-radius:50%;box-shadow:0 0 8px #7be6a4;animation:breath 2s infinite}
+.chartrow{display:flex;align-items:center;gap:13px;margin-top:15px}
+.livebig{font-size:29px;letter-spacing:-1.2px;font-weight:730;line-height:1}.chartmuted{font:11px ui-monospace,monospace;color:#888c91}
+.flowchip{font:700 10px/1.4 ui-monospace,monospace;color:var(--green);background:#213328;border:1px solid #2b5740;border-radius:5px;padding:2px 6px}.flowchip.red{color:var(--red);background:#362225;border-color:#583337}
+.graphwrap{min-height:0;flex:1;position:relative;margin-top:16px;background:repeating-linear-gradient(to top,transparent,transparent calc(25% - 1px),#343639 calc(25% - 1px),#343639 25%);border-bottom:1px solid #3b3d40}
+.graphwrap:after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.32;background:linear-gradient(180deg,transparent,transparent 50%,#10111323)}
+#graph{display:block;width:100%;height:100%;overflow:visible}#trace{stroke:#80e9b4;stroke-width:2.35;vector-effect:non-scaling-stroke;fill:none;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 5px #80e9b440)}#tracearea{fill:url(#grad)}#traceend{fill:#9ef9c2;stroke:#18271e;stroke-width:4;vector-effect:non-scaling-stroke}
+.chartfooter{display:flex;justify-content:space-between;align-items:center;color:#777b81;font:10px ui-monospace,monospace;padding-top:11px}
+.rightside{display:grid;grid-template-rows:minmax(0,1.09fr) minmax(0,.91fr);gap:11px;min-height:0}
+.protocols{padding:15px 18px}.plist{display:flex;flex-direction:column;justify-content:space-around;flex:1;gap:7px;padding:10px 0 0}
+.protorow{display:grid;grid-template-columns:58px minmax(0,1fr) 55px;gap:10px;align-items:center;font:700 11px ui-monospace,monospace}
+.pname{color:#bfc2c6}.pval{text-align:right;color:#cfd4d7}
+.track{height:7px;border-radius:5px;background:#323539;overflow:hidden}.track b{display:block;height:100%;width:0;border-radius:5px;background:linear-gradient(90deg,#8bebc1,#91d4e5 54%,#b5a1ff);transition:width .65s cubic-bezier(.2,.8,.2,1);position:relative}.track b:after{content:"";position:absolute;right:0;top:0;height:100%;width:18px;filter:blur(4px);background:#c5f5ff}
+.activity{padding:15px 18px;display:flex;flex-direction:column}
+.activitybody{display:grid;grid-template-columns:1fr 1fr;gap:8px 15px;align-content:center;flex:1}
+.a{min-width:0;border-left:2px solid #35383a;padding-left:10px}.a .alabel{font-size:10px;letter-spacing:.035em;color:#91969c}.a .avalue{font-size:clamp(16px,1.65vw,23px);font-weight:660;letter-spacing:-.6px;line-height:1.25;margin-top:4px}
+.a.good{border-color:#68cc99}.a.good .avalue{color:#a0eac0}.a.loss{border-color:#b65d63}.a.loss .avalue{color:#faa0a7}
+.bottom{display:flex;align-items:center;justify-content:space-between;gap:15px;white-space:nowrap;min-width:0;border-top:1px solid #2b2d30;color:#767a82;font:10px/1 ui-monospace,SFMono-Regular,monospace}
+.bottom .footleft{display:flex;gap:16px;min-width:0}.bottom a{color:#b0b3b8}.bottom a:hover{color:#e4f0ea}.bottom b{font-weight:700;color:#bec2c6}.bottom .update{overflow:hidden;text-overflow:ellipsis}
+.metric:before,.panel:before{pointer-events:none}
+@keyframes breath{0%,100%{opacity:1;box-shadow:0 0 5px #7ae5a3}50%{opacity:.52;box-shadow:0 0 13px #7ae5a3}}
+@keyframes reveal{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes chroma{0%{filter:hue-rotate(0deg)}100%{filter:hue-rotate(360deg)}}
+@keyframes orbit{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:no-preference){
+ .kpis .metric{animation:reveal .6s both}.kpis .metric:nth-child(2){animation-delay:.06s}.kpis .metric:nth-child(3){animation-delay:.12s}.kpis .metric:nth-child(4){animation-delay:.18s}
+ .board>.panel{animation:reveal .6s .16s both}.rightside>.panel{animation:reveal .6s .23s both}
+ .logo{animation:chroma 16s linear infinite}
+ .on .led,.live i{animation:breath 2s infinite}
+}
+@media(min-width:900px) and (min-height:660px){.shell{min-height:0}}
+@media(min-width:900px) and (max-height:760px){.shell{padding:11px 19px 8px;grid-template-rows:41px 50px 96px minmax(0,1fr) 21px;gap:8px}.panel{padding:11px 14px}.metric{padding:10px 15px}.kpival{font-size:32px}.chartrow{margin-top:9px}.graphwrap{margin-top:10px}.chartfooter{padding-top:7px}.protocols,.activity{padding:11px 14px}.intro{padding-top:4px}h1{font-size:29px}}
+@media (min-width:900px) and (max-height:609px){html,body{overflow:auto;height:auto}.shell{height:610px}}
+@media(max-width:899px){html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-height:100dvh;padding:17px 18px;grid-template-rows:auto auto auto auto auto;gap:12px}.intro{padding:12px 0 5px}.board{grid-template-columns:minmax(0,1fr)}.graphwrap{height:280px;flex:initial}.rightside{grid-template-rows:auto auto}.protocols{min-height:200px}.activity{min-height:155px}.bottom{padding-top:12px}.header{min-height:40px}.metric{min-height:112px}}
+@media(max-width:560px){.shell{padding:14px 12px}.header-right{gap:10px}.headlink{display:none}.brand-sub{display:none}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.metric{min-height:103px}.kpival{font-size:30px}.board{grid-template-columns:1fr}.graphwrap{height:220px}.intro h1{font-size:29px}.session{display:none}.chartpanel{min-height:345px}.bottom .footleft{gap:9px}.bottom{font-size:9px}.bottom .update{display:none}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="header">
+ <div class="brand"><div class="logo" aria-hidden="true">p</div><span class="wordmark">pscaper</span><span class="brand-sub">PROXY OBSERVATORY</span></div>
+ <nav class="header-right" aria-label="Links"><a class="headlink" href="https://github.com/cmahmud/pscaper" target="_blank" rel="noopener">SOURCE ↗</a><a class="headlink" href="https://github.com/cmahmud/proxies" target="_blank" rel="noopener">DATA ↗</a><a class="headlink" href="/api/v1/proxies?limit=100" target="_blank" rel="noopener">API ↗</a><span id="on" class="on"><span class="led"></span><span id="onlabel">CONNECTING</span></span></nav>
+</header>
+<div class="intro"><div class="title-group"><div class="eyebrow">Real-time monitoring / public proxies</div><h1>Live <span>network</span> telemetry.</h1></div><div class="session"><span>REFRESH <strong>5s</strong></span><span class="vertical"></span><span>FEEDS <strong id="feeds">—</strong></span></div></div>
+<section class="kpis" aria-label="Current proxy metrics">
+ <article class="metric primary"><div class="kpihead">ALIVE <span class="hint">CURRENT</span></div><div class="kpival" id="alive">—</div><div class="kpifoot"><span id="plus" class="kpipill neutral">+0</span><span id="minus" class="kpipill negative">−0</span><span>this interval</span></div></article>
+ <article class="metric"><div class="kpihead">GOLD <span class="hint">VERIFIED ×2</span></div><div class="kpival" id="gold">—</div><div class="kpifoot"><span id="golddelta" class="kpipill neutral">±0</span><span>net change</span></div></article>
+ <article class="metric"><div class="kpihead">DISCOVERED <span class="hint">TOTAL</span></div><div class="kpival" id="total">—</div><div class="kpifoot"><span id="found" class="kpipill neutral">+0</span><span>new candidates</span></div></article>
+ <article class="metric"><div class="kpihead">EVER ALIVE <span class="hint">HISTORICAL</span></div><div class="kpival" id="ever">—</div><div class="kpifoot"><span id="everdelta" class="kpipill neutral">+0</span><span>new confirmations</span></div></article>
 </section>
-<section class="row" id="telemetry"><div class="card"><div class="cardtitle"><h2>Live health trend</h2><span class="mini">30-second samples · rolling 24 hours</span></div><div class="chart" id="chart"><svg id="chartsvg" viewBox="0 0 760 220" preserveAspectRatio="none" role="img" aria-label="Number of validated proxies over time"><defs><linearGradient id="area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#59e7c4" stop-opacity=".29"/><stop offset="1" stop-color="#59e7c4" stop-opacity="0"/></linearGradient></defs><path id="chartarea" fill="url(#area)" d=""/><path id="chartline" fill="none" stroke="#58e4c4" stroke-width="3" stroke-linejoin="round" d=""/></svg></div><div class="chartnote"><span id="chartleft">History accumulating</span><span id="chartright">Live</span></div></div>
-<div class="card" id="protocols"><div class="cardtitle"><h2>Protocol coverage</h2><span class="mini">Alive endpoints</span></div><div class="proto" id="protobars">
-<div class="protoitem"><span>HTTP</span><div class="bar"><div class="fill" id="bhttp"></div></div><span class="pnum" id="nhttp">—</span></div>
-<div class="protoitem"><span>HTTPS</span><div class="bar"><div class="fill" id="bhttps"></div></div><span class="pnum" id="nhttps">—</span></div>
-<div class="protoitem"><span>SOCKS4</span><div class="bar"><div class="fill" id="bsocks4"></div></div><span class="pnum" id="nsocks4">—</span></div>
-<div class="protoitem"><span>SOCKS5</span><div class="bar"><div class="fill" id="bsocks5"></div></div><span class="pnum" id="nsocks5">—</span></div>
-</div></div></section>
-<section class="bottom"><div class="card"><div class="cardtitle"><h2>Collector activity</h2><span class="mini">Scanner process</span></div><div class="detail"><span>Configured feeds</span><b id="feeds">—</b><span>Feeds reporting errors</span><b id="errors">—</b><span>Checks completed</span><b id="checked">—</b><span>Queue depth</span><b id="queue">—</b><span>Workers</span><b id="workers">—</b></div></div>
-<div class="card" id="api"><div class="cardtitle"><h2>Read-only API</h2><span class="mini">Public interface</span></div><p style="font-size:13px;color:#a1aec6;margin-top:18px">Use the validated proxy pool programmatically. Filter by protocol or trust tier. Management controls remain private.</p>
-<div style="font:12px/1.75 ui-monospace,SFMono-Regular,monospace;color:#93d8cb;background:#090f1e;padding:13px;border:1px solid #27354a;border-radius:9px;word-break:break-word">GET /api/v1/proxies?<br>tier=alive&amp;protocol=all&amp;limit=100</div><a class="cta" href="/api/v1/proxies?tier=alive&protocol=all&format=json&limit=10" target="_blank" rel="noopener">Explore API ↗</a></div></section>
-</main><footer class="footline"><span>pscaper · Public proxy intelligence</span><span id="updated">Waiting for first sample</span></footer>
+<main class="board">
+<section class="panel chartpanel" aria-labelledby="charttitle">
+ <div class="panelhead"><h2 id="charttitle">Validation activity</h2><span class="live"><i></i> LIVE</span></div>
+ <div class="chartrow"><span id="chartvalue" class="livebig">—</span><span class="chartmuted">alive</span><span id="net" class="flowchip">±0</span></div>
+ <div class="graphwrap"><svg id="graph" viewBox="0 0 900 300" preserveAspectRatio="none" role="img" aria-label="Alive proxy count over time"><defs><linearGradient id="grad" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#83e9b2" stop-opacity=".28"/><stop offset="1" stop-color="#83e9b2" stop-opacity="0"/></linearGradient></defs><path id="tracearea" d=""/><path id="trace" d=""/><circle id="traceend" r="4" cx="-20" cy="-20"/></svg></div>
+ <div class="chartfooter"><span id="chartfrom">Session initializing</span><span id="chartto">NOW</span></div>
+</section>
+<div class="rightside">
+<section class="panel protocols" aria-labelledby="protitle"><div class="panelhead"><h2 id="protitle">Protocols</h2><span class="tag">ALIVE</span></div><div class="plist">
+ <div class="protorow"><span class="pname">HTTP</span><div class="track"><b id="bar-http"></b></div><span class="pval" id="num-http">—</span></div>
+ <div class="protorow"><span class="pname">HTTPS</span><div class="track"><b id="bar-https"></b></div><span class="pval" id="num-https">—</span></div>
+ <div class="protorow"><span class="pname">SOCKS4</span><div class="track"><b id="bar-socks4"></b></div><span class="pval" id="num-socks4">—</span></div>
+ <div class="protorow"><span class="pname">SOCKS5</span><div class="track"><b id="bar-socks5"></b></div><span class="pval" id="num-socks5">—</span></div>
+ </div></section>
+<section class="panel activity" aria-labelledby="acttitle"><div class="panelhead"><h2 id="acttitle">Scanner</h2><span class="tag">THIS SESSION</span></div><div class="activitybody">
+ <div class="a good"><div class="alabel">Verified ↑</div><div class="avalue" id="verified">—</div></div>
+ <div class="a loss"><div class="alabel">Lost ↓</div><div class="avalue" id="lost">—</div></div>
+ <div class="a"><div class="alabel">Checks</div><div class="avalue" id="checked">—</div></div>
+ <div class="a"><div class="alabel">Queue</div><div class="avalue" id="queue">—</div></div>
+ </div></section>
+</div>
+</main>
+<footer class="bottom"><div class="footleft"><span>pscaper v1.3.1</span><span>118 FEEDS · <b id="errors">0 ERRORS</b></span><a href="https://github.com/cmahmud/proxies/actions/workflows/pscaper-sync.yml" target="_blank" rel="noopener">GITHUB SYNC ↗</a></div><span id="updated" class="update">CONNECTING...</span></footer>
 </div>
 <script>
-const fmt = n => typeof n==="number"?new Intl.NumberFormat('en-US').format(n):'—';
-const $=id=>document.getElementById(id);
-function plot(pts){const s=pts.filter(p=>typeof p.alive==='number');if(!s.length)return;
-const max=Math.max(10,...s.map(p=>p.alive)),min=Math.min(0,...s.map(p=>p.alive));
-const y=v=>198-(v-min)/(max-min||1)*174;const x=i=>s.length===1?0:i/(s.length-1)*760;
-const d=s.map((p,i)=>(i?'L':'M')+x(i).toFixed(2)+' '+y(p.alive).toFixed(2)).join(' ');
-$('chartline').setAttribute('d',d);$('chartarea').setAttribute('d',d+' L'+x(s.length-1)+' 220 L'+x(0)+' 220 Z');
-$('chartleft').textContent=s.length<3?'Collecting live samples':new Date(s[0].time).toLocaleTimeString();
-$('chartright').textContent='Now · '+fmt(s[s.length-1].alive)+' alive';
+(function(){
+'use strict';
+var get=function(id){return document.getElementById(id)}, nf=new Intl.NumberFormat('en-US'), prev=null, lastTime=0, series=[], ticks=0, requestInFlight=false, sessionOrigin=null, pendingAnimation={};
+var reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var fmt=function(n){return typeof n==='number'?nf.format(n):'—'};
+var pos=function(n){return '+'+fmt(Math.max(0,n))};
+function changeBadge(id,value,signed){
+ var el=get(id),n=Number(value)||0;
+ el.textContent=signed?(n>0?'+'+fmt(n):n<0?'−'+fmt(-n):'±0'):pos(n);
+ el.classList.remove('negative','neutral');
+ if(n<0 && signed)el.classList.add('negative');
+ else if(n===0)el.classList.add('neutral');
 }
-async function tick(){try{const r=await fetch('/api/live',{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);const d=await r.json();
-for(const [id,key] of Object.entries({alive:'alive',gold:'gold',total:'total',ever:'ever_alive',feeds:'source_feeds',errors:'source_errors',checked:'checked',queue:'queue',workers:'workers'})) $(id).textContent=fmt(d[key]);
-const ps=d.alive_protocols||{};const total=Math.max(1,...Object.values(ps));
-for(const k of ['http','https','socks4','socks5']){$('n'+k).textContent=fmt(ps[k]||0);$('b'+k).style.width=(100*(ps[k]||0)/total).toFixed(2)+'%'}
-$('statuslabel').textContent='System online';$('status').style.color='#8de8c4';
-$('updated').textContent='Updated '+new Date().toLocaleTimeString();
-}catch(e){$('statuslabel').textContent='Telemetry unavailable';$('status').style.color='#ffbaa4'}}
-async function history(){try{const r=await fetch('/api/history',{cache:'no-store'});if(r.ok)plot(await r.json())}catch(e){}}
-tick();history();setInterval(tick,15000);setInterval(history,30000);
+function animateValue(id,next){
+ var el=get(id),old=Number(el.dataset.value),had=el.dataset.value!==undefined;
+ if(pendingAnimation[id])cancelAnimationFrame(pendingAnimation[id]);
+ el.dataset.value=String(next);
+ if(reduced||!had||!Number.isFinite(old)||Math.abs(next-old)>200000){el.textContent=fmt(next);return}
+ var start=performance.now(),dur=500;
+ function frame(now){var p=Math.min(1,(now-start)/dur);var eased=1-Math.pow(1-p,3);el.textContent=fmt(Math.round(old+(next-old)*eased));if(p<1)pendingAnimation[id]=requestAnimationFrame(frame);}
+ pendingAnimation[id]=requestAnimationFrame(frame);
+ if(next!==old){el.classList.remove('flashup','flashdown');void el.offsetWidth;el.classList.add(next>old?'flashup':'flashdown');setTimeout(function(){el.classList.remove('flashup','flashdown')},750)}
+}
+function redraw(){
+ if(!series.length)return;
+ var points=series.slice(-720),values=points.map(function(p){return p.v});
+ var low=Math.min.apply(null,values),high=Math.max.apply(null,values),span=Math.max(30,high-low);
+ var ymin=low-span*.15,ymax=high+span*.15,scale=ymax-ymin;
+ var pts=points.map(function(p,i){return {x:points.length===1?900:i*900/(points.length-1),y:270-(p.v-ymin)/scale*230}});
+ var d=pts.map(function(p,i){return (i?'L':'M')+p.x.toFixed(1)+','+p.y.toFixed(1)}).join(' ');
+ get('trace').setAttribute('d',d);
+ get('tracearea').setAttribute('d',d+' L'+pts[pts.length-1].x.toFixed(1)+',300 L'+pts[0].x.toFixed(1)+',300 Z');
+ get('traceend').setAttribute('cx',pts[pts.length-1].x);get('traceend').setAttribute('cy',pts[pts.length-1].y);
+ if(points.length>1)get('chartfrom').textContent=new Date(points[0].t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+ get('chartto').textContent='NOW · '+fmt(values[values.length-1]);
+}
+function addPoint(t,v){
+ if(!Number.isFinite(v))return;
+ var ms=new Date(t).getTime();if(!Number.isFinite(ms))ms=Date.now();
+ if(series.length && ms<=series[series.length-1].t)return;
+ series.push({t:ms,v:v}); if(series.length>720)series=series.slice(-720);redraw();
+}
+async function hydrate(){
+ try{var r=await fetch('/api/history',{cache:'no-store'});if(!r.ok)return;
+ var data=await r.json();if(!Array.isArray(data))return;
+ var m=new Map();series.forEach(function(p){m.set(p.t,p)});
+ data.forEach(function(p){var t=Date.parse(p.time);if(Number.isFinite(t)&&typeof p.alive==='number')m.set(t,{t:t,v:p.alive})});
+ series=Array.from(m.values()).sort(function(a,b){return a.t-b.t}).slice(-720);redraw();
+ }catch(e){}
+}
+function apply(data){
+ if(!data||typeof data.alive!=='number')throw Error('Malformed snapshot');
+ var sessionChanged=sessionOrigin!==null && (data.uptime_seconds<prev?.uptime_seconds || data.newly_alive<prev?.newly_alive);
+ if(sessionChanged){prev=null;series=[]}
+ sessionOrigin=data.uptime_seconds;
+ var plus=prev?Math.max(0,(data.newly_alive||0)-(prev.newly_alive||0)):0;
+ var minus=prev?Math.max(0,(data.lost_alive||0)-(prev.lost_alive||0)):0;
+ var found=prev?Math.max(0,(data.newly_discovered||0)-(prev.newly_discovered||0)):0;
+ var gd=prev?data.gold-prev.gold:0,ed=prev?data.ever_alive-prev.ever_alive:0;
+ ['alive','gold','total'].forEach(function(k){animateValue(k,data[k])});animateValue('ever',data.ever_alive);animateValue('chartvalue',data.alive);
+ changeBadge('plus',plus,false);changeBadge('minus',-minus,true);changeBadge('found',found,false);changeBadge('golddelta',gd,true);changeBadge('everdelta',ed,true);
+ var net=plus-minus;changeBadge('net',net,true);get('net').classList.toggle('red',net<0);
+ get('verified').textContent=pos(data.newly_alive||0);get('lost').textContent='−'+fmt(data.lost_alive||0);
+ get('checked').textContent=fmt(data.checked);get('queue').textContent=fmt(data.queue);get('feeds').textContent=fmt(data.source_feeds);
+ get('errors').textContent=fmt(data.source_errors)+' ERRORS';
+ var protos=data.alive_protocols||{},max=Math.max(1,...Object.values(protos));
+ ['http','https','socks4','socks5'].forEach(function(k){var n=protos[k]||0;get('num-'+k).textContent=fmt(n);get('bar-'+k).style.width=(100*n/max).toFixed(1)+'%'});
+ get('on').classList.remove('offline');get('onlabel').textContent='SYSTEM ONLINE';
+ get('updated').textContent='UPDATED '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+ addPoint(data.time||new Date().toISOString(),data.alive);prev=data;ticks++;
+ if(ticks%6===0)hydrate();
+}
+async function poll(){
+ if(requestInFlight||document.hidden)return;
+ requestInFlight=true;
+ try{var c=new AbortController(),timeout=setTimeout(function(){c.abort()},4500);
+ var r=await fetch('/api/live',{cache:'no-store',signal:c.signal});clearTimeout(timeout);
+ if(!r.ok)throw Error('HTTP '+r.status);
+ apply(await r.json());
+ }catch(e){get('on').classList.add('offline');get('onlabel').textContent='RECONNECTING';get('updated').textContent='RECONNECTING…'}
+ finally{requestInFlight=false}
+}
+poll();setTimeout(hydrate,800);setInterval(poll,5000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden){poll();hydrate()}});
+})();
 </script>
 </body></html>
