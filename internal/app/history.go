@@ -125,3 +125,23 @@ func (h *HistoryLog) Range(since time.Time, max int) []HistoryPoint {
 	}
 	return out
 }
+
+// MergeHourlyHistory preserves chronological ordering when combining
+// persisted samples from before a restart with fresh in-memory samples.
+// Prepending each disk row individually would reverse the old portion and
+// mislead trend calculations based on the earliest returned sample.
+func MergeHourlyHistory(disk, recent []HistoryPoint) []HistoryPoint {
+	if len(recent) == 0 {
+		return append([]HistoryPoint(nil), disk...)
+	}
+	older := make([]HistoryPoint, 0, len(disk))
+	edge := recent[0].Time
+	for _, p := range disk {
+		if p.Time.Before(edge) {
+			older = append(older, p)
+		}
+	}
+	result := make([]HistoryPoint, 0, len(older)+len(recent))
+	result = append(result, older...)
+	return append(result, recent...)
+}

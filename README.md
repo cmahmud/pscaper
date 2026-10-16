@@ -376,6 +376,10 @@ half a worker batch of these recovery attempts per run **after** existing
 Alive priority checks, without starving new discovery. A candidate only
 returns to Alive after another successful signed verification.
 
+A bug that returned pre-restart one-hour history samples in reverse chronological
+order has also been fixed, preserving correct trend calculations across
+restart boundaries.
+
 The dashboard now distinguishes an online scanner from proxy-pool performance
 by showing an independently computed one-hour Alive percentage trend.
 The Scanner's **Attempts** counter counts actual validation attempts during

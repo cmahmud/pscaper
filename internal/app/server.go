@@ -184,15 +184,7 @@ func StartAPIServer(ctx context.Context, addr string, e *Engine) error {
 			hmu.RUnlock()
 			// Merge persisted previous-hour samples after a process restart.
 			disk := hist.Range(time.Now().Add(-time.Hour), 480)
-			if len(points) > 0 {
-				edge := points[0].Time
-				for _, p := range disk {
-					if p.Time.Before(edge) {
-						points = append([]HistoryPoint{p}, points...)
-					}
-				}
-			}
-			writeJSON(w, points)
+			writeJSON(w, MergeHourlyHistory(disk, points))
 		case "24h":
 			writeJSON(w, hist.Range(time.Now().Add(-24*time.Hour), 480))
 		case "7d":

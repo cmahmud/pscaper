@@ -7,6 +7,7 @@
 - Correct the scanner's session attempt count and source-yield presentation.
 - Show one-hour Alive trends separately from system uptime in the one-screen
   charcoal dashboard, preserving original animations and terminal feed.
+- Fix the reverse ordering of persisted one-hour chart history across service restarts.
 - Share a four-second aggregate cache across stats, sources and dashboard
   requests to reduce repeated full database scans.
 - Add tests, verified version bump, new dashboard backup and unified rollback.

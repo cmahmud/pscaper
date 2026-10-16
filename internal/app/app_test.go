@@ -774,3 +774,26 @@ func TestStatsCacheRefreshesWithoutChangingDataSemantics(t *testing.T) {
 		t.Fatal("aggregate cache failed to refresh")
 	}
 }
+
+func TestHourlyHistoryChronologicalAcrossRestart(t *testing.T) {
+	start := time.Now().Add(-time.Hour)
+	d := []HistoryPoint{
+		{Time: start, Alive: 3000},
+		{Time: start.Add(10 * time.Minute), Alive: 2400},
+		{Time: start.Add(20 * time.Minute), Alive: 2100},
+		{Time: start.Add(30 * time.Minute), Alive: 2000},
+	}
+	r := []HistoryPoint{
+		{Time: start.Add(30 * time.Minute), Alive: 2000}, // duplicate merge edge
+		{Time: start.Add(40 * time.Minute), Alive: 2200},
+	}
+	result := MergeHourlyHistory(d, r)
+	if len(result) != 5 || result[0].Alive != 3000 || result[1].Alive != 2400 || result[4].Alive != 2200 {
+		t.Fatalf("history merge must be ordered and deduplicated at edge: %+v", result)
+	}
+	for i := 1; i < len(result); i++ {
+		if result[i].Time.Before(result[i-1].Time) {
+			t.Fatal("hourly history time order regressed")
+		}
+	}
+}
