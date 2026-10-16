@@ -497,3 +497,18 @@ func ensureDir(path string) error {
 	}
 	return os.MkdirAll(path, 0o755)
 }
+
+// AliveRecords copies only currently verified working proxy records. It
+// avoids allocating a full half-million-record database snapshot for each
+// public proxy API query, while preserving each record's snapshot semantics.
+func (s *Store) AliveRecords() []ProxyRecord {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	out := make([]ProxyRecord, 0, 4096)
+	for _, p := range s.records {
+		if p.Alive {
+			out = append(out, *p)
+		}
+	}
+	return out
+}

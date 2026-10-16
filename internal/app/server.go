@@ -17,6 +17,7 @@ import (
 
 func StartAPIServer(ctx context.Context, addr string, e *Engine) error {
 	mux := http.NewServeMux()
+	index := NewProxyIndex(e.store, 8*time.Second)
 	intel := NewASNDatabase("data/intel/ip2asn-v4-u32.tsv.gz")
 	if err := intel.Reload(); err != nil {
 		log.Printf("ASN database unavailable: %v", err)
@@ -35,6 +36,8 @@ func StartAPIServer(ctx context.Context, addr string, e *Engine) error {
 			}
 		}
 	}()
+	registerAPIV2(mux, e, intel, index)
+	registerIntelligenceAPI(ctx, mux, e)
 	// All public routes below are explicitly allowlisted again by Nginx.
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-cache")
@@ -315,7 +318,7 @@ func StartAPIServer(ctx context.Context, addr string, e *Engine) error {
 		if limit > 5000 {
 			limit = 5000
 		}
-		records := e.store.Snapshot()
+		_, records := index.Current()
 		selected := make([]ProxyRecord, 0, limit)
 		for _, p := range records {
 			if !p.Alive || (tier == "gold" && !p.Gold(e.cfg.GoldScore)) {
@@ -342,7 +345,7 @@ func StartAPIServer(ctx context.Context, addr string, e *Engine) error {
 			}
 			selected = append(selected, p)
 		}
-		SortRecords(selected)
+		// Current proxy index is already sorted, preserving v1 semantics.
 		total := len(selected)
 		if len(selected) > limit {
 			selected = selected[:limit]

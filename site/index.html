@@ -142,13 +142,21 @@ h1 span{color:#7ee4af}
 .pool-trend{white-space:nowrap;font-size:10px;font-weight:700;color:#adb4b2}
 .pool-trend.down{color:#eea0a4}.pool-trend.up{color:#99e6b2}
 @media(max-width:1120px){.pool-trend{display:none}}
+
+.intelview{min-height:0;flex:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:space-evenly;gap:9px 12px;padding:7px 2px 0}
+.intelcell{min-width:0;border-left:2px solid #39413f;padding-left:9px;display:flex;flex-direction:column;gap:5px}
+.intelcell span{color:#9ba3a9;font:600 10px ui-monospace,monospace;white-space:nowrap}
+.intelcell strong{font-size:clamp(16px,1.55vw,23px);font-weight:740;line-height:1.1;color:#edf4f0;letter-spacing:-.6px}
+.intelcell .green{color:#9be8b6}.intelcell .red{color:#f0a1a6}
+.intel-caption{grid-column:1/-1;font:9px/1.3 ui-monospace,monospace;color:#858e90;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.charttooltip{position:absolute;top:4px;left:50%;transform:translateX(-50%);z-index:4;padding:6px 9px;background:#101515eb;border:1px solid #597362;border-radius:6px;color:#e0efdf;font:10px ui-monospace,monospace;pointer-events:none;white-space:nowrap;box-shadow:0 5px 15px #0005}
 </style>
 </head>
 <body>
 <div class="shell">
 <header class="header">
  <div class="brand"><div class="logo" aria-hidden="true">p</div><span class="wordmark">pscaper</span><span class="brand-sub">PROXY OBSERVATORY</span></div>
- <nav class="header-right" aria-label="Links"><a class="headlink" href="https://github.com/cmahmud/pscaper" target="_blank" rel="noopener">SOURCE ↗</a><a class="headlink" href="https://github.com/cmahmud/proxies" target="_blank" rel="noopener">DATA ↗</a><a class="headlink" href="/api/v1/proxies?limit=100" target="_blank" rel="noopener">API ↗</a><span id="on" class="on"><span class="led"></span><span id="onlabel">CONNECTING</span></span></nav>
+ <nav class="header-right" aria-label="Links"><a class="headlink" href="https://github.com/cmahmud/pscaper" target="_blank" rel="noopener">SOURCE ↗</a><a class="headlink" href="https://github.com/cmahmud/proxies" target="_blank" rel="noopener">DATA ↗</a><a class="headlink" href="/api/v2/proxies?limit=100" target="_blank" rel="noopener">API ↗</a><span id="on" class="on"><span class="led"></span><span id="onlabel">CONNECTING</span></span></nav>
 </header>
 <div class="intro"><div class="title-group"><div class="eyebrow">Real-time monitoring / public proxies</div><h1>Live <span>network</span> telemetry.</h1></div><div class="session"><span>REFRESH <strong>5s</strong></span><span class="vertical"></span><span>FEEDS <strong id="feeds">—</strong></span><span class="vertical"></span><span>AVG <strong id="latency">—</strong></span><span class="vertical"></span><span id="pool-trend" class="pool-trend" title="Change in confirmed Alive proxies over the last hour. Separate from system uptime.">POOL 1H —</span></div></div>
 <section class="kpis" aria-label="Current proxy metrics">
@@ -161,7 +169,7 @@ h1 span{color:#7ee4af}
 <section class="panel chartpanel" aria-labelledby="charttitle">
  <div class="panelhead"><h2 id="charttitle">Validation activity</h2><div class="tools" role="group" aria-label="Chart time range"><button class="tool" data-range="1h" aria-pressed="true">1H</button><button class="tool" data-range="24h" aria-pressed="false">24H</button><button class="tool" data-range="7d" aria-pressed="false">7D</button><span class="live" style="margin-left:6px"><i></i> LIVE</span></div></div>
  <div class="chartrow"><span id="chartvalue" class="livebig">—</span><span class="chartmuted">alive</span><span id="net" class="flowchip">±0</span></div>
- <div class="graphwrap"><svg id="graph" viewBox="0 0 900 300" preserveAspectRatio="none" role="img" aria-label="Alive proxy count over time"><defs><linearGradient id="grad" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#83e9b2" stop-opacity=".28"/><stop offset="1" stop-color="#83e9b2" stop-opacity="0"/></linearGradient></defs><path id="tracearea" d=""/><path id="trace" d=""/><circle id="traceend" r="4" cx="-20" cy="-20"/></svg></div>
+ <div class="graphwrap"><svg id="graph" viewBox="0 0 900 300" preserveAspectRatio="none" role="img" aria-label="Alive proxy count over time"><defs><linearGradient id="grad" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#83e9b2" stop-opacity=".28"/><stop offset="1" stop-color="#83e9b2" stop-opacity="0"/></linearGradient></defs><path id="tracearea" d=""/><path id="trace" d=""/><circle id="traceend" r="4" cx="-20" cy="-20"/></svg><div class="charttooltip" id="charttooltip" hidden></div></div>
  <div class="chartfooter"><span id="chartfrom">Session initializing</span><span id="chartto">NOW</span></div>
 </section>
 <section class="panel proxyterminal" aria-labelledby="terminaltitle">
@@ -175,12 +183,18 @@ h1 span{color:#7ee4af}
  <div class="term-list" id="term-list" aria-live="off"><div class="term-empty" id="term-empty">Waiting for verified proxies...</div></div>
 </section>
 <div class="rightside">
-<section class="panel protocols" aria-labelledby="protitle"><div class="panelhead"><h2 id="protitle">Coverage</h2><div class="tools" role="group" aria-label="Coverage panel"><button class="tool" data-panel="protocols" aria-pressed="true">PROTOCOLS</button><button class="tool" data-panel="sources" aria-pressed="false">SOURCES</button><button class="tool" data-panel="asgeo" aria-pressed="false" title="Autonomous System registration country, not physical proxy location">AS GEO</button></div></div><div class="plist" id="protocolview">
+<section class="panel protocols" aria-labelledby="protitle"><div class="panelhead"><h2 id="protitle">Coverage</h2><div class="tools" role="group" aria-label="Coverage panel"><button class="tool" data-panel="protocols" aria-pressed="true">PROTOCOLS</button><button class="tool" data-panel="sources" aria-pressed="false">SOURCES</button><button class="tool" data-panel="asgeo" aria-pressed="false" title="Autonomous System registration country, not physical proxy location">AS GEO</button><button class="tool" data-panel="intel" aria-pressed="false" title="Measured validation throughput and reliability">INTEL</button></div></div><div class="plist" id="protocolview">
  <div class="protorow"><span class="pname">HTTP</span><div class="track"><b id="bar-http"></b></div><span class="pval" id="num-http">—</span></div>
  <div class="protorow"><span class="pname">HTTPS</span><div class="track"><b id="bar-https"></b></div><span class="pval" id="num-https">—</span></div>
  <div class="protorow"><span class="pname">SOCKS4</span><div class="track"><b id="bar-socks4"></b></div><span class="pval" id="num-socks4">—</span></div>
  <div class="protorow"><span class="pname">SOCKS5</span><div class="track"><b id="bar-socks5"></b></div><span class="pval" id="num-socks5">—</span></div>
- </div><div class="sourcesview" id="sourceview" hidden><span class="mono-sub">Loading feed yields...</span></div><div class="sourcesview" id="asview" hidden><span class="mono-sub">Loading AS countries...</span></div></section>
+ </div><div class="sourcesview" id="sourceview" hidden><span class="mono-sub">Loading feed yields...</span></div><div class="sourcesview" id="asview" hidden><span class="mono-sub">Loading AS countries...</span></div><div class="intelview" id="intelview" hidden>
+<div class="intelcell"><span>Checks / min</span><strong id="intel-rate">—</strong></div>
+<div class="intelcell"><span>Pass rate</span><strong id="intel-pass">—</strong></div>
+<div class="intelcell"><span>Recovered</span><strong class="green" id="intel-recovered">—</strong></div>
+<div class="intelcell"><span>Confirmed lost</span><strong class="red" id="intel-lost">—</strong></div>
+<div class="intel-caption" id="intel-caption">Measuring validation window…</div>
+</div></section>
 <section class="panel activity" aria-labelledby="acttitle"><div class="panelhead"><h2 id="acttitle">Scanner</h2><span class="tag">THIS SESSION</span></div><div class="activitybody">
  <div class="a good"><div class="alabel" title="Alive activations and recoveries since service start">Activated ↑</div><div class="avalue" id="verified">—</div></div>
  <div class="a loss"><div class="alabel">Lost ↓</div><div class="avalue" id="lost">—</div></div>
@@ -189,13 +203,13 @@ h1 span{color:#7ee4af}
  </div></section>
 </div>
 </main>
-<footer class="bottom"><div class="footleft"><span>pscaper v1.3.2</span><span><span id="feed-total">118 FEEDS</span> · <b id="errors">0 ERRORS</b></span><a class="footer-sync stale" id="publisher-link" href="https://github.com/cmahmud/proxies/commits/main" target="_blank" rel="noopener" title="Latest GitHub publishing status">SYNC CHECKING...</a></div><span id="updated" class="update">CONNECTING...</span></footer>
+<footer class="bottom"><div class="footleft"><span>pscaper v1.4.0</span><span><span id="feed-total">118 FEEDS</span> · <b id="errors">0 ERRORS</b></span><a class="footer-sync stale" id="publisher-link" href="https://github.com/cmahmud/proxies/commits/main" target="_blank" rel="noopener" title="Latest GitHub publishing status">SYNC CHECKING...</a></div><span id="updated" class="update">CONNECTING...</span></footer>
 </div>
 <script>
 (function(){
 'use strict';
 var get=function(id){return document.getElementById(id)}, nf=new Intl.NumberFormat('en-US'), prev=null, lastTime=0, series=[], ticks=0, requestInFlight=false, sessionOrigin=null, pendingAnimation={};
-var period='1h',sourcesLoaded=0,geoLoaded=0,poolTrendChecked=0;
+var period='1h',sourcesLoaded=0,geoLoaded=0,intelLoaded=0,poolTrendChecked=0;
 var reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 var fmt=function(n){return typeof n==='number'?nf.format(n):'—'};
 var pos=function(n){return '+'+fmt(Math.max(0,n))};
@@ -229,6 +243,18 @@ function redraw(){
  if(points.length>1)get('chartfrom').textContent=new Date(points[0].t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
  get('chartto').textContent='NOW · '+fmt(values[values.length-1]);
 }
+// On hover, expose the exact historic sample without introducing a panel.
+var graphwrap=get('graph').parentNode,charttip=get('charttooltip');
+graphwrap.addEventListener('mousemove',function(ev){
+ if(!series.length)return;
+ var rect=graphwrap.getBoundingClientRect(),x=Math.max(0,Math.min(1,(ev.clientX-rect.left)/rect.width));
+ var point=series[Math.round(x*(series.length-1))];
+ if(!point)return;
+ charttip.textContent=new Date(point.t).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})+' · '+fmt(point.v)+' alive';
+ charttip.style.left=(Math.max(70,Math.min(rect.width-70,ev.clientX-rect.left)))+'px';
+ charttip.hidden=false;
+});
+graphwrap.addEventListener('mouseleave',function(){charttip.hidden=true});
 function addPoint(t,v){
  if(!Number.isFinite(v)||period!=='1h')return;
  var ms=new Date(t).getTime();if(!Number.isFinite(ms))ms=Date.now();
@@ -305,6 +331,24 @@ document.querySelectorAll('[data-range]').forEach(function(el){
   hydrate();
  });
 });
+async function loadIntel(){
+ if(get('intelview').hidden || Date.now()-intelLoaded<12000)return;
+ intelLoaded=Date.now();
+ try{
+  var response=await fetch('/api/v2/intelligence',{cache:'no-store'});
+  if(!response.ok)throw Error('No activity data');
+  var x=await response.json();
+  if(x.status!=='ok'){
+    get('intel-caption').textContent='Warming up measurement window…';
+    return;
+  }
+  get('intel-rate').textContent=fmt(x.validation_per_min||0);
+  get('intel-pass').textContent=(Number(x.success_pct)||0).toFixed(1)+'%';
+  get('intel-recovered').textContent='+'+fmt(x.transient_recoveries||0);
+  get('intel-lost').textContent='−'+fmt(x.confirmed_losses||0);
+  get('intel-caption').textContent='Last '+Math.max(1,Math.round((x.window_seconds||0)/60))+' min · confirmed checks only';
+ }catch(e){get('intel-caption').textContent='Intelligence metrics temporarily unavailable'}
+}
 async function loadASN(){
  if(get('asview').hidden)return;
  if(Date.now()-geoLoaded<60000)return;
@@ -325,12 +369,13 @@ async function loadASN(){
 }
 document.querySelectorAll('[data-panel]').forEach(function(el){
  el.addEventListener('click',function(){
-  var mode=el.dataset.panel,isSource=mode==='sources',isGeo=mode==='asgeo';
-  get('sourceview').hidden=!isSource;get('asview').hidden=!isGeo;
-  get('protocolview').hidden=isSource||isGeo;
+  var mode=el.dataset.panel,isSource=mode==='sources',isGeo=mode==='asgeo',isIntel=mode==='intel';
+  get('sourceview').hidden=!isSource;get('asview').hidden=!isGeo;get('intelview').hidden=!isIntel;
+  get('protocolview').hidden=isSource||isGeo||isIntel;
   document.querySelectorAll('[data-panel]').forEach(function(x){x.setAttribute('aria-pressed',String(x===el))});
   if(isSource)loadSources();
   if(isGeo)loadASN();
+  if(isIntel)loadIntel();
  });
 });
 function apply(data){
@@ -355,6 +400,7 @@ function apply(data){
  get('updated').textContent='UPDATED '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
  addPoint(data.time||new Date().toISOString(),data.alive);prev=data;ticks++;
  if(ticks%6===0){hydrate();loadSources();loadASN();refreshPoolTrend();}
+ if(ticks%3===0)loadIntel();
 }
 async function poll(){
  if(requestInFlight||document.hidden)return;

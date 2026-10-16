@@ -1,3 +1,18 @@
+## October 2026 — v1.4.0 API and frontend intelligence
+
+- Added a cached, sorted Alive-only API index shared by v1 and v2 to avoid
+  full-database clone and sort on every read-only proxy request.
+- Added read-only v2 API: strict filter validation, snapshot-bound cursor
+  pages, conditional ETag/304, compact health, and reliability information.
+- Added measured rolling validation throughput/success percentage and
+  recoveries API; compact INTEL tab inside the existing Coverage panel.
+- Added accessible chart-hover sample labels without altering the one-screen
+  desktop layout, Gold animation, or streaming real-proxy terminal.
+- Corrected site Nginx trusted Cloudflare real-IP configuration with
+  official edge ranges, separated per-client rate limits and compression.
+- Added API tests, versioned original-dashboard backup, full rollback
+  script, and a public API v2 developer guide.
+
 ## October 2026 — v1.3.2 pool health and recovery
 
 - Prioritize controlled follow-up checks for recently verified proxies that

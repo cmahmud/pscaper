@@ -12,7 +12,7 @@ import (
 	"pscaper/internal/app"
 )
 
-var version = "1.3.2"
+var version = "1.4.0"
 
 func main() {
 	cmd := "serve"

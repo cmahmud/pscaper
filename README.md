@@ -4,13 +4,44 @@ Go-based public-proxy feed harvester, independent validator, scoring engine, his
 
 ## Deployment status and sources
 
-- Latest recovered application version: **1.3.1** (with October 2026 deployment hardening).
+- Current maintained application version: **1.4.0** (with October 2026 performance and API upgrades); recovered historical base was 1.3.1.
 - **329 configured feed URLs**, including 203 additional audited endpoints from 83 newly represented repository/domain identifiers (previously 126). These are not 329 independent organizations, and they do not guarantee a larger Alive pool; all candidate proxies still undergo independent validation.
 - Feed protocols: HTTP, HTTPS, SOCKS4, SOCKS5. Source-specific refresh schedules are retained.
 - Sources are only *candidates*; a candidate is not **alive** until it passes the application's outbound-forwarding callback probe.
 - Reservoir sampling inspects the bounded upstream feed and retains **2,000 representative candidates** per fetch by default (up to 10,000 with `max_candidates`). This avoids repeatedly collecting only the beginning of huge feeds.
 - Historical proxy totals recovered from `cmahmud/proxies` (223,440 discovered, 49,559 ever-alive, 1,587 ever-Gold at restoration). Historical TXT files are under `exports/historical/` and not tracked here.
 - Verified working upstream examples: [ProxyScrape](https://github.com/ProxyScrape/free-proxy-list), [Litport](https://github.com/litportnet/free-proxy-list), [Proxio](https://github.com/proxio-io/proxy-list), [Moleway](https://github.com/Moleway/Free-Proxy-List) and additional independently checked publishers in `config/sources.json`.
+
+## v1.4.0 — API, backend efficiency and Intelligence frontend
+
+The public proxy APIs v1 and v2 share a short-lived **sorted Alive-only
+index**. Queries no longer clone half a million dead/historical database
+records each time. v1 continues serving the same fields and filtering
+behavior, with fast results from the index. New strict
+`GET /api/v2/proxies` adds stable, snapshot-bound cursor pagination,
+limited pages, validation-history metrics, ETags, conditional HTTP 304
+responses and strict parameter validation. `GET /api/v2/health` exposes a
+compact service health view, while `GET /api/v2/intelligence` reports
+measured rolling validator throughput, success percentage and recoveries.
+See **[API v2 documentation](docs/API_V2.md)** for request syntax, response
+fields, safety semantics and examples.
+
+The dashboard preserves its original charcoal, one-screen desktop layout and
+adds a compact **INTEL** tab in the Coverage panel plus history-chart hover
+readouts. The live proxy terminal, source/ASN tabs and Gold effects remain.
+The previous exact HTML is tracked as
+`site/backups/v132-before-intelligence-20261016.html`.
+
+Only Cloudflare's officially published network ranges are trusted to supply
+a client address. The Nginx site now has **per-client** rate limits in
+separate telemetry, stream and bulk proxy groups, returns HTTP 429 on limits,
+and compresses JSON/text. Other VPS sites and management API restrictions
+are unchanged. Cloudflare's versioned CIDR list needs periodic review.
+
+The previous executable, dashboard and website-specific Nginx config were
+saved under `recovery/api-v2-20261016/` (untracked). To revert the full
+change on the VPS, run `./scripts/rollback-api-v2.sh`. To restore only
+the previous dashboard, run `./scripts/rollback-dashboard.sh v132`.
 
 ## Paths
 
@@ -22,9 +53,11 @@ Go-based public-proxy feed harvester, independent validator, scoring engine, his
   config/sources.json           configured public-list sources
   config/pscaper.service        canonical systemd unit
   config/pscaper-nginx.conf     dedicated public-IP callback virtual host
-  config/pscaper-site-nginx.conf public dashboard, read-only APIs and export gateway
+  config/pscaper-site-nginx.conf public dashboard, rate-limited APIs and export gateway
+  config/cloudflare-realip.conf   trusted CF edge IP ranges for client identity
   config/pscaper-cert-renew.*   project-scoped TLS renewal service/timer
   site/index.html               static dashboard served by the Go process
+  docs/API_V2.md                public API v2, cursor paging and rate limit guide
   scripts/                      setup, audit and historical scripts
   .env                          secrets and server-specific settings (gitignored)
   data/                         snapshot, journal and local TLS cert (gitignored)
