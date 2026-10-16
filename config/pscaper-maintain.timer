@@ -1,0 +1,9 @@
+[Unit]
+Description=Daily pscaper publisher checkout compaction
+[Timer]
+OnCalendar=*-*-* 03:17:00 UTC
+RandomizedDelaySec=15m
+Persistent=true
+Unit=pscaper-maintain.service
+[Install]
+WantedBy=timers.target

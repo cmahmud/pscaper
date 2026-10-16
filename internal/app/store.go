@@ -142,6 +142,13 @@ func (s *Store) ApplyValidation(key string, ok bool, latency time.Duration, exit
 		return errors.New("proxy not found")
 	}
 	p.LastChecked = now
+	p.RecentOutcomes <<= 1
+	if ok {
+		p.RecentOutcomes |= 1
+	}
+	if p.RecentCount < 16 {
+		p.RecentCount++
+	}
 	if ok {
 		p.Alive = true
 		p.EverAlive = true

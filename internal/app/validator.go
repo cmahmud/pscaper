@@ -3,11 +3,14 @@ package app
 import (
 	"bufio"
 	"context"
+	"crypto/hmac"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -17,6 +20,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -77,7 +81,11 @@ func (v *Validator) httpProxy(ctx context.Context, p ProxyRecord, httpsTarget bo
 			scheme = "https"
 			port = v.cfg.ProbeHTTPSPort
 		}
-		target := fmt.Sprintf("%s://%s/probe/%s", scheme, net.JoinHostPort(v.cfg.ProbeHost, strconv.Itoa(port)), v.cfg.ProbeToken)
+		nonce, err := newProbeNonce()
+		if err != nil {
+			return "", err
+		}
+		target := fmt.Sprintf("%s://%s/probe/%s?nonce=%s", scheme, net.JoinHostPort(v.cfg.ProbeHost, strconv.Itoa(port)), v.cfg.ProbeToken, nonce)
 		req, _ := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
 		req.Header.Set("Connection", "close")
 		resp, err := client.Do(req)
@@ -95,7 +103,7 @@ func (v *Validator) httpProxy(ctx context.Context, p ProxyRecord, httpsTarget bo
 			last = fmt.Errorf("probe HTTP %d", resp.StatusCode)
 			continue
 		}
-		if ip, err := parseProbeBody(body); err == nil {
+		if ip, err := parseProbeBody(body, nonce, v.cfg.ProbeSigningKey); err == nil {
 			return ip, nil
 		} else {
 			last = err
@@ -124,7 +132,11 @@ func (v *Validator) dialAndProbe(ctx context.Context, dial func(string, string) 
 	}
 	defer conn.Close()
 	_ = conn.SetDeadline(time.Now().Add(v.cfg.Timeout))
-	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, "http://"+target+"/probe/"+v.cfg.ProbeToken, nil)
+	nonce, err := newProbeNonce()
+	if err != nil {
+		return "", err
+	}
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, "http://"+target+"/probe/"+v.cfg.ProbeToken+"?nonce="+nonce, nil)
 	req.Host = target
 	req.Header.Set("Connection", "close")
 	if err := req.Write(conn); err != nil {
@@ -142,19 +154,40 @@ func (v *Validator) dialAndProbe(ctx context.Context, dial func(string, string) 
 	if resp.StatusCode != 200 {
 		return "", fmt.Errorf("probe HTTP %d", resp.StatusCode)
 	}
-	return parseProbeBody(body)
+	return parseProbeBody(body, nonce, v.cfg.ProbeSigningKey)
 }
 
-func parseProbeBody(body []byte) (string, error) {
+func newProbeNonce() (string, error) {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
+}
+func probeSignature(secret, nonce, ip string) string {
+	mac := hmac.New(sha256.New, []byte(secret))
+	_, _ = mac.Write([]byte(nonce + "|" + ip))
+	return hex.EncodeToString(mac.Sum(nil))
+}
+func parseProbeBody(body []byte, nonce, secret string) (string, error) {
 	var v struct {
-		OK bool   `json:"ok"`
-		IP string `json:"ip"`
+		OK        bool   `json:"ok"`
+		IP        string `json:"ip"`
+		Signature string `json:"signature"`
 	}
 	if err := json.Unmarshal(body, &v); err != nil {
 		return "", fmt.Errorf("bad probe response: %w", err)
 	}
 	if !v.OK || net.ParseIP(v.IP) == nil {
 		return "", fmt.Errorf("invalid probe identity")
+	}
+	supplied, err := hex.DecodeString(v.Signature)
+	if err != nil {
+		return "", fmt.Errorf("invalid probe signature")
+	}
+	expected, _ := hex.DecodeString(probeSignature(secret, nonce, v.IP))
+	if !hmac.Equal(supplied, expected) {
+		return "", fmt.Errorf("unauthenticated probe response")
 	}
 	return v.IP, nil
 }
@@ -288,10 +321,15 @@ func StartProbeServers(ctx context.Context, cfg Config) error {
 			http.NotFound(w, r)
 			return
 		}
+		nonce := r.URL.Query().Get("nonce")
+		if len(nonce) != 32 || strings.Trim(nonce, "0123456789abcdef") != "" {
+			http.Error(w, "invalid challenge", http.StatusBadRequest)
+			return
+		}
 		host := probeClientIP(r)
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Cache-Control", "no-store")
-		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "ip": host, "ts": time.Now().UTC()})
+		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "ip": host, "signature": probeSignature(cfg.ProbeSigningKey, nonce, host), "ts": time.Now().UTC()})
 	})
 	plain := &http.Server{Addr: cfg.ProbeHTTPAddr, Handler: h, ReadHeaderTimeout: 3 * time.Second, IdleTimeout: 2 * time.Second}
 	ln, err := net.Listen("tcp", cfg.ProbeHTTPAddr)

@@ -8,7 +8,7 @@ Go-based public-proxy feed harvester, independent validator, scoring engine, his
 - **118 configured, independently tested feed URLs** after replacing 19 empty, unusable, or 404 sources and adding 31 working URLs from nine additional publishers.
 - Feed protocols: HTTP, HTTPS, SOCKS4, SOCKS5. Source-specific refresh schedules are retained.
 - Sources are only *candidates*; a candidate is not **alive** until it passes the application's outbound-forwarding callback probe.
-- At most **2,000 candidates per source fetch** by default (or up to 10,000 with per-source `max_candidates`); prevents huge aggregate lists overwhelming small servers.
+- Reservoir sampling inspects the bounded upstream feed and retains **2,000 representative candidates** per fetch by default (up to 10,000 with `max_candidates`). This avoids repeatedly collecting only the beginning of huge feeds.
 - Historical proxy totals recovered from `cmahmud/proxies` (223,440 discovered, 49,559 ever-alive, 1,587 ever-Gold at restoration). Historical TXT files are under `exports/historical/` and not tracked here.
 - Verified working upstream examples: [ProxyScrape](https://github.com/ProxyScrape/free-proxy-list), [Litport](https://github.com/litportnet/free-proxy-list), [Proxio](https://github.com/proxio-io/proxy-list), [Moleway](https://github.com/Moleway/Free-Proxy-List) and additional independently checked publishers in `config/sources.json`.
 
@@ -82,10 +82,12 @@ resides in `site/index.html`; public endpoints exposed via Nginx are:
 
 - `GET /` — dark, responsive live dashboard (sanitized, no raw proxies)
 - `GET /api/live` — counts, worker health, protocol coverage without proxy or source identities
-- `GET /api/history` — 30-second in-memory samples, rolling 24 hours, restart resets series
+- `GET /api/history?range=1h|24h|7d` — persisted, bounded telemetry history with 30-second disk samples and finer live one-hour samples; survives restart
 - `GET /api/v1/proxies?tier=alive&protocol=all&format=json&limit=1000` —
   public read-only proxy API, accepts alive/gold, http/https/socks4/socks5,
-  JSON or TXT, limited to 5,000 per request
+  JSON or TXT, limited to 5,000 per request. Optional `min_score`,
+  `max_latency_ms`, and `fresh_minutes` filters
+- `GET /api/sources` — best feeds by recently observed working-proxy yield, without revealing raw feed URLs
 - `GET /pool/{alive|gold|historical}/{filename}.txt` — strictly allowlisted
   read-only export files for the GitHub Actions publisher
 - `GET /pool/stats.json` — current exported machine telemetry
@@ -113,10 +115,11 @@ so information is not clipped. Motion honors `prefers-reduced-motion`.
   independent green new/recovered and red lost proxy deltas every 5 seconds.
 - Live values are cached server-side for four seconds to avoid an expensive
   per-visitor scan of the historic records on the two-core VPS.
-- Client-side SVG trends update every five seconds, and server keeps one hour of
-  five-second time-series snapshots.
-- A full app restart resets the scanner event counters and chart memory; this
-  does **not** remove persistent pool records or their historical history.
+- Client-side SVG trends update every five seconds. A small project-local
+  JSONL store keeps a rolling week of 30-second snapshots across restarts.
+  The chart offers 1H, 24H, and 7D tabs without expanding the desktop layout.
+- A full app restart resets session-only validation event counters,
+  but saved chart history, proxies, and historical exports persist.
 
 ### GitHub data publishing — 30-second VPS schedule
 
@@ -144,6 +147,36 @@ only the isolated publisher writes to the proxy-data repository.
 
 Fast publishing generates large repository histories if proxy lists keep
 changing. Monitor repository size and API/push errors periodically.
+
+## October 2026 quality and reliability upgrades
+
+- Each source's recently observed working-proxy yield is measured and given a
+  smoothed score. After enough observations, successful feeds refresh sooner
+  and low-yield feeds refresh less often. Source health is shown as estimates,
+  not guaranteed success attribution.
+- The recheck scheduler prioritizes currently alive proxies and never-checked
+  candidates, and backs off repeatedly failing, stale entries up to 24 hours.
+- Scoring blends historical and recent outcomes, tracked over up to 16 checks.
+  Gold additionally requires a recent check and (when enough data exists)
+  at least four successes in the last five attempts. Expect Gold counts to
+  fluctuate while old records receive fresh validation.
+- Probe callbacks use an independently generated `PSCAPER_PROBE_SIGNING_KEY`
+  and per-attempt challenge nonce. HMAC-SHA256 ensures untrusted proxies
+  cannot forge the application's callback result merely by copying a JSON
+  response. The signing key is never put in the proxy request or committed.
+- Average latency and number of recently checked alive endpoints are
+  available through the sanitized `/api/live` endpoint.
+- Every 30 seconds, the GitHub publisher saves last-success, attempt,
+  commit SHA, and health status under `data/publisher/status.json`. The
+  dashboard highlights missing/stale publishing.
+- The Git data checkout grew to 4.2 GB in a few days. It was replaced with
+  a verified new shallow sparse checkout. The daily
+  `pscaper-maintain.timer` now performs the same exclusive safe refresh
+  inside `/home/ubuntu/pscaper/data/publisher/`. The source repo and
+  application state are not touched.
+
+Use `systemctl list-timers pscaper-maintain.timer` and
+`journalctl -u pscaper-maintain.service -n 30` to inspect maintenance.
 
 ## Source-quality workflow
 

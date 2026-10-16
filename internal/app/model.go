@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"math"
+	"math/bits"
 	"net"
 	"sort"
 	"strings"
@@ -33,6 +34,8 @@ type ProxyRecord struct {
 	Successes           int       `json:"successes"`
 	Failures            int       `json:"failures"`
 	ConsecutiveFailures int       `json:"consecutive_failures"`
+	RecentOutcomes      uint16    `json:"recent_outcomes,omitempty"`
+	RecentCount         uint8     `json:"recent_count,omitempty"`
 	LatencyMS           int64     `json:"latency_ms"`
 	ExitIP              string    `json:"exit_ip,omitempty"`
 	Alive               bool      `json:"alive"`
@@ -46,7 +49,18 @@ type ProxyRecord struct {
 func (p ProxyRecord) Address() string { return net.JoinHostPort(p.Host, fmt.Sprintf("%d", p.Port)) }
 func (p ProxyRecord) URI() string     { return p.Protocol + "://" + p.Address() }
 func (p ProxyRecord) Gold(threshold float64) bool {
-	return p.Alive && p.Successes >= 2 && p.Score >= threshold
+	if !p.Alive || p.Successes < 2 || p.Score < threshold {
+		return false
+	}
+	// Stale successes do not qualify for the current Gold tier.
+	if p.LastChecked.IsZero() || time.Since(p.LastChecked) > 30*time.Minute {
+		return false
+	}
+	// After collecting five recent results require at least 4 of the last 5.
+	if p.RecentCount >= 5 && bits.OnesCount16(p.RecentOutcomes&0x1f) < 4 {
+		return false
+	}
+	return true
 }
 
 func scoreRecord(p *ProxyRecord, now time.Time) float64 {
@@ -55,6 +69,10 @@ func scoreRecord(p *ProxyRecord, now time.Time) float64 {
 		return 0
 	}
 	successRate := float64(p.Successes) / float64(total)
+	if p.RecentCount >= 4 {
+		recent := float64(bits.OnesCount16(p.RecentOutcomes)) / float64(p.RecentCount)
+		successRate = .4*successRate + .6*recent
+	}
 	reliability := successRate * 45
 
 	lat := float64(p.LatencyMS)
@@ -109,6 +127,8 @@ type Stats struct {
 	Failures                  int64          `json:"failures"`
 	Protocols                 map[string]int `json:"protocols"`
 	AliveProtocols            map[string]int `json:"alive_protocols"`
+	AvgLatencyMS              int64          `json:"avg_latency_ms"`
+	FreshAlive                int            `json:"fresh_alive"`
 	GoldProtocols             map[string]int `json:"gold_protocols"`
 	Queue                     int            `json:"queue"`
 	InFlight                  int64          `json:"in_flight"`
@@ -137,6 +157,10 @@ type SourceStatus struct {
 	LastFetch      time.Time `json:"last_fetch"`
 	Found          int       `json:"found"`
 	Unique         int       `json:"unique"`
+	NewCandidates  int       `json:"new_candidates"`
+	KnownAlive     int       `json:"known_alive"`
+	Fetches        int       `json:"fetches,omitempty"`
+	YieldPct       float64   `json:"yield_pct,omitempty"`
 	Error          string    `json:"error,omitempty"`
 	DurationMS     int64     `json:"duration_ms"`
 	RefreshSeconds int       `json:"refresh_seconds,omitempty"`

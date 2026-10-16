@@ -1,3 +1,17 @@
+## October 2026 — collector intelligence and dashboard 2.0
+
+- Reclaimed over 4 GB of loose Git objects by a verified checkout refresh,
+  added a successful systemd-tested daily maintenance job using the publisher lock.
+- Added HMAC-signed per-validation challenges, separate secret and replay checks.
+- Added reservoir sampling throughout bounded source content and adaptive
+  source yield/refresh metrics, with public top-feed summary.
+- Prioritized reliable/recent proxies and introduced dead-endpoint backoff;
+  implemented recent reliability scoring and stricter fresh Gold.
+- Persisted one week of local aggregate telemetry with 1H/24H/7D ranges.
+- Added last GitHub sync health, range/source tabs, average validation latency,
+  and filterable read-only proxy API to the single-screen dashboard.
+- Preserved all project data and service setup under /home/ubuntu/pscaper.
+
 ## October 2026 — 30-second publishing
 
 - Local export snapshots refreshed every 30 seconds.

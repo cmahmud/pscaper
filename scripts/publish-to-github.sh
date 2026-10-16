@@ -9,6 +9,9 @@ SRC="$ROOT/exports"
 LOCK="$ROOT/data/publisher/publish.lock"
 exec 9>"$LOCK"
 flock -n 9 || { echo 'Publisher already running'; exit 0; }
+# Safe, project-local status for the public dashboard.
+publisher_result=failed
+trap 'python3 "$ROOT/scripts/publisher-health.py" "$publisher_result" || true' EXIT
 if [[ ! -f "$KEY" || ! -f "$KNOWN" ]]; then
  echo 'Missing project-local SSH deploy key or GitHub host fingerprint' >&2
  exit 1
@@ -30,6 +33,7 @@ python3 "$ROOT/scripts/publish-to-github.py" "$SRC" "$WORK"
 # Ignore timestamp-only changes: publish only if actual proxy lists changed.
 git -C "$WORK" add -- alive gold historical
 if git -C "$WORK" diff --cached --quiet; then
+ publisher_result=ok
  echo 'No proxy-list changes; skipping GitHub commit'
  exit 0
 fi
@@ -46,4 +50,5 @@ if ! git -C "$WORK" push -q origin HEAD:main; then
  rebase origin/main
  git -C "$WORK" push -q origin HEAD:main
 fi
+publisher_result=ok
 echo 'Published: '$(git -C "$WORK" rev-parse --short HEAD)

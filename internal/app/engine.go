@@ -178,7 +178,22 @@ func (e *Engine) shouldQueue(rec ProxyRecord, now time.Time) bool {
 	if rec.Alive {
 		return now.Sub(rec.LastChecked) >= e.cfg.AliveRecheck
 	}
-	return now.Sub(rec.LastChecked) >= e.cfg.DeadRecheck
+	// Stale repeatedly failing proxies get exponential backoff,
+	// while recently refreshed source entries retain the normal retry time.
+	delay := e.cfg.DeadRecheck
+	if rec.ConsecutiveFailures >= 3 && now.Sub(rec.LastSeen) > 2*time.Hour {
+		steps := rec.ConsecutiveFailures - 2
+		if steps > 4 {
+			steps = 4
+		}
+		for i := 0; i < steps; i++ {
+			delay *= 2
+		}
+		if delay > 24*time.Hour {
+			delay = 24 * time.Hour
+		}
+	}
+	return now.Sub(rec.LastChecked) >= delay
 }
 
 func (e *Engine) harvestOnce(ctx context.Context, force bool) (HarvestSummary, error) {
@@ -188,18 +203,30 @@ func (e *Engine) harvestOnce(ctx context.Context, force bool) (HarvestSummary, e
 	}
 	now := time.Now()
 	due := make([]Source, 0, len(sources))
+	e.sourceMu.RLock()
+	historical := make(map[string]SourceStatus, len(e.sources))
+	for _, st := range e.sources {
+		historical[st.Name] = st
+	}
+	e.sourceMu.RUnlock()
 	e.sourceFetchMu.Lock()
 	for _, src := range sources {
+		interval := src.RefreshInterval()
+		if h, ok := historical[src.Name]; ok && h.Fetches >= 3 {
+			if h.YieldPct >= 20 && interval > 6*time.Minute {
+				interval = interval / 2
+			}
+			if h.YieldPct < 1 && interval < 2*time.Hour {
+				interval = interval * 2
+			}
+		}
 		last := e.sourceLastFetch[src.Name]
-		if force || last.IsZero() || now.Sub(last) >= src.RefreshInterval() {
+		if force || last.IsZero() || now.Sub(last) >= interval {
 			due = append(due, src)
-			// Reserve the slot before the network fetch so overlapping harvest triggers
-			// cannot stampede the same publisher. Failed feeds are retried on cadence.
 			e.sourceLastFetch[src.Name] = now
 		}
 	}
 	e.sourceFetchMu.Unlock()
-
 	results, statuses := HarvestSources(ctx, due, e.cfg.SourceConcurrency)
 	summary := HarvestSummary{Sources: len(due)}
 	for _, cands := range results {
@@ -237,6 +264,24 @@ func (e *Engine) mergeSourceStatuses(statuses []SourceStatus) {
 		byName[st.Name] = st
 	}
 	for _, st := range statuses {
+		old, seen := byName[st.Name]
+		if seen {
+			st.Fetches = old.Fetches + 1
+		} else {
+			st.Fetches = 1
+		}
+		raw := 0.0
+		if st.Unique > 0 {
+			raw = 100 * float64(st.NewCandidates+st.KnownAlive) / float64(st.Unique)
+			if raw > 100 {
+				raw = 100
+			}
+		}
+		if seen {
+			st.YieldPct = .7*old.YieldPct + .3*raw
+		} else {
+			st.YieldPct = raw
+		}
 		byName[st.Name] = st
 	}
 	e.sources = e.sources[:0]
@@ -362,9 +407,33 @@ func (e *Engine) recheckLoop(ctx context.Context) {
 		case <-t.C:
 			now := time.Now()
 			records := e.store.Snapshot()
+			alive := make([]string, 0, 4096)
+			untested := make([]string, 0, 4096)
+			dead := make([]string, 0, 8192)
 			for _, p := range records {
-				if e.shouldQueue(p, now) {
-					e.enqueue(p.Key)
+				if !e.shouldQueue(p, now) {
+					continue
+				}
+				switch {
+				case p.Alive:
+					alive = append(alive, p.Key)
+				case p.LastChecked.IsZero():
+					untested = append(untested, p.Key)
+				default:
+					dead = append(dead, p.Key)
+				}
+			}
+			// Active proxy freshness first, then new candidates, then aged dead
+			// entries. Harvest still enqueues newly discovered addresses directly.
+			for _, list := range [][]string{alive, untested, dead} {
+				for _, key := range list {
+					if ctx.Err() != nil {
+						return
+					}
+					if len(e.queue) >= cap(e.queue) {
+						break
+					}
+					e.enqueue(key)
 				}
 			}
 		}
@@ -551,6 +620,7 @@ func (e *Engine) Stats() Stats {
 	if v := e.cyclePhase.Load(); v != nil {
 		st.CyclePhase, _ = v.(string)
 	}
+	var latencyTotal, latencyCount int64
 	for _, p := range records {
 		st.Total++
 		st.Protocols[p.Protocol]++
@@ -560,6 +630,13 @@ func (e *Engine) Stats() Stats {
 		if p.Alive {
 			st.Alive++
 			st.AliveProtocols[p.Protocol]++
+			if p.LatencyMS > 0 {
+				latencyTotal += p.LatencyMS
+				latencyCount++
+			}
+			if time.Since(p.LastChecked) <= 15*time.Minute {
+				st.FreshAlive++
+			}
 		} else {
 			st.DeadNow++
 		}
@@ -600,6 +677,9 @@ func (e *Engine) Stats() Stats {
 		}
 	}
 	sort.Slice(st.SourceStatus, func(i, j int) bool { return st.SourceStatus[i].Name < st.SourceStatus[j].Name })
+	if latencyCount > 0 {
+		st.AvgLatencyMS = latencyTotal / latencyCount
+	}
 	return st
 }
 

@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -260,5 +261,115 @@ func TestProbeClientIP(t *testing.T) {
 	req.Header.Set("X-Real-IP", "192.168.1.1")
 	if got := probeClientIP(req); got != "127.0.0.1" {
 		t.Fatalf("private header: %q", got)
+	}
+}
+
+func TestLargeFeedSamplesPastFirstPage(t *testing.T) {
+	var b strings.Builder
+	for i := 1; i <= 5000; i++ {
+		// public-range literals; varied hosts guarantee distinct candidates.
+		b.WriteString("8." + strconv.Itoa((i/65025)%254+1) + "." + strconv.Itoa((i/255)%255) + "." + strconv.Itoa(i%255) + ":8080\n")
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(b.String()))
+	}))
+	defer server.Close()
+	sample, err := fetchSource(context.Background(), server.Client(), Source{URL: server.URL, Name: "big", Protocol: "http", MaxCandidates: 100})
+	if err != nil || len(sample) != 100 {
+		t.Fatalf("sample=%d err=%v", len(sample), err)
+	}
+	extended := false
+	for _, p := range sample {
+		if p.Host == "8.1.0.1" {
+			continue
+		}
+		parts := strings.Split(p.Host, ".")
+		x, _ := strconv.Atoi(parts[2])
+		if x >= 2 {
+			extended = true
+			break
+		}
+	}
+	if !extended {
+		t.Fatal("sampler never reached beyond early feed lines")
+	}
+}
+
+func TestHistorySurvivesRestartAndRange(t *testing.T) {
+	file := filepath.Join(t.TempDir(), "history.jsonl")
+	h := NewHistoryLog(file)
+	now := time.Now().Add(-6 * 31 * time.Second)
+	for i := 0; i < 6; i++ {
+		if err := h.Append(HistoryPoint{Time: now.Add(time.Duration(i) * 31 * time.Second), Alive: i, Gold: i / 2}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	second := NewHistoryLog(file)
+	got := second.Range(now.Add(-time.Minute), 3)
+	if len(got) != 3 || got[0].Alive != 0 || got[2].Alive != 5 {
+		t.Fatalf("unexpected persisted history: %+v", got)
+	}
+	if err := second.Append(HistoryPoint{Time: now.Add(5*31*time.Second + 5*time.Second), Alive: 7}); err != nil {
+		t.Fatal(err)
+	}
+	if n := len(second.Range(now.Add(-time.Minute), 100)); n != 6 {
+		t.Fatalf("duplicate interval written: %d", n)
+	}
+}
+
+func TestSignedProbeRejectsForgedOrReplayedResponses(t *testing.T) {
+	key := "test-signing-secret-that-is-long-enough-to-be-independent"
+	nonce := "0123456789abcdef0123456789abcdef"
+	ip := "8.8.4.4"
+	good := []byte(`{"ok":true,"ip":"8.8.4.4","signature":"` + probeSignature(key, nonce, ip) + `"}`)
+	result, err := parseProbeBody(good, nonce, key)
+	if err != nil || result != ip {
+		t.Fatalf("valid signed probe rejected: %v", err)
+	}
+	for _, candidate := range []struct{ nonce, secret string }{
+		{nonce, "wrong-signing-secret"}, {strings.Repeat("f", 32), key},
+	} {
+		if _, err := parseProbeBody(good, candidate.nonce, candidate.secret); err == nil {
+			t.Fatal("forged or replayed probe accepted")
+		}
+	}
+}
+
+func TestDeadProxyBackoffAndGoldFreshness(t *testing.T) {
+	now := time.Now()
+	e := &Engine{cfg: Config{AliveRecheck: 15 * time.Minute, DeadRecheck: 2 * time.Hour}}
+	dead := ProxyRecord{LastChecked: now.Add(-3 * time.Hour), LastSeen: now.Add(-5 * time.Hour), ConsecutiveFailures: 5}
+	if e.shouldQueue(dead, now) {
+		t.Fatal("repeat failures should back off")
+	}
+	dead.LastChecked = now.Add(-17 * time.Hour)
+	if !e.shouldQueue(dead, now) {
+		t.Fatal("long overdue proxy must retry eventually")
+	}
+	gold := ProxyRecord{Alive: true, Successes: 5, Score: 99, LastChecked: now.Add(-31 * time.Minute)}
+	if gold.Gold(80) {
+		t.Fatal("stale gold proxy still qualified")
+	}
+	gold.LastChecked = now
+	gold.RecentCount = 5
+	gold.RecentOutcomes = 0b00111 // only three recent successes
+	if gold.Gold(80) {
+		t.Fatal("flaky proxy still qualified")
+	}
+	gold.RecentOutcomes = 0b11111
+	if !gold.Gold(80) {
+		t.Fatal("reliable proxy should qualify")
+	}
+}
+
+func TestAdaptiveFeedYieldScoring(t *testing.T) {
+	e := &Engine{}
+	e.mergeSourceStatuses([]SourceStatus{{Name: "high", Unique: 100, NewCandidates: 25, KnownAlive: 20}})
+	e.mergeSourceStatuses([]SourceStatus{{Name: "high", Unique: 100, NewCandidates: 5, KnownAlive: 5}})
+	e.sourceMu.RLock()
+	got := e.sources[0]
+	e.sourceMu.RUnlock()
+	if got.Fetches != 2 || got.YieldPct <= 10 || got.YieldPct >= 45 {
+		t.Fatalf("invalid rolling source effectiveness %+v", got)
 	}
 }

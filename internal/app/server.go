@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -67,10 +69,31 @@ func StartAPIServer(ctx context.Context, addr string, e *Engine) error {
 			return liveCache
 		}
 		s := e.Stats()
-		current := map[string]any{
+		status := map[string]any{"state": "unavailable"}
+		if b, err := os.ReadFile("data/publisher/status.json"); err == nil {
+			var val struct {
+				State       string    `json:"state"`
+				LastSuccess time.Time `json:"last_success"`
+				Commit      string    `json:"commit"`
+				LastAttempt time.Time `json:"last_attempt"`
+			}
+			if json.Unmarshal(b, &val) == nil {
+				age := int64(-1)
+				if !val.LastSuccess.IsZero() {
+					age = int64(time.Since(val.LastSuccess).Seconds())
+				}
+				health := "ok"
+				if val.State != "ok" || age > 120 {
+					health = "stale"
+				}
+				status = map[string]any{"state": health, "age_seconds": age, "last_success": val.LastSuccess, "last_attempt": val.LastAttempt, "commit": val.Commit}
+			}
+		}
+		current := map[string]any{"publishing": status,
 			"time": time.Now().UTC(), "total": s.Total, "alive": s.Alive,
 			"gold": s.Gold, "checked": s.Checked, "ever_alive": s.EverAlive,
 			"ever_gold": s.EverGold, "alive_protocols": s.AliveProtocols,
+			"avg_latency_ms": s.AvgLatencyMS, "fresh_alive": s.FreshAlive,
 			"queue": s.Queue, "in_flight": s.InFlight, "workers": s.Workers,
 			"source_feeds": s.SourceFeeds, "source_errors": s.SourceErrors,
 			"last_harvest": s.LastHarvest, "last_export": s.LastExport,
@@ -82,28 +105,30 @@ func StartAPIServer(ctx context.Context, addr string, e *Engine) error {
 		liveAt = time.Now()
 		return current
 	}
-	mux.HandleFunc("GET /api/live", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, live()) })
-	type historyPoint struct {
-		Time  time.Time `json:"time"`
-		Alive int       `json:"alive"`
-		Gold  int       `json:"gold"`
-		Queue int       `json:"queue"`
-	}
+	mux.HandleFunc("GET /api/live", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store")
+		writeJSON(w, live())
+	})
+	// Five-second in-memory samples plus persistent 30-second snapshots for 7 days.
+	hist := NewHistoryLog("data/telemetry/history.jsonl")
 	var hmu sync.RWMutex
-	history := make([]historyPoint, 0, 720) // 1 hour sampled every 5 sec
+	recent := make([]HistoryPoint, 0, 720)
 	sample := func() {
-		d := live()
-		now := time.Now().UTC()
-		alive, _ := d["alive"].(int)
-		gold, _ := d["gold"].(int)
-		queue, _ := d["queue"].(int)
+		v := live()
+		a, _ := v["alive"].(int)
+		g, _ := v["gold"].(int)
+		q, _ := v["queue"].(int)
+		p := HistoryPoint{Time: time.Now().UTC(), Alive: a, Gold: g, Queue: q}
 		hmu.Lock()
-		history = append(history, historyPoint{Time: now, Alive: alive, Gold: gold, Queue: queue})
-		if len(history) > 720 {
-			copy(history, history[len(history)-720:])
-			history = history[:720]
+		recent = append(recent, p)
+		if len(recent) > 720 {
+			copy(recent, recent[len(recent)-720:])
+			recent = recent[:720]
 		}
 		hmu.Unlock()
+		if err := hist.Append(p); err != nil {
+			log.Printf("history append: %v", err)
+		}
 	}
 	sample()
 	go func() {
@@ -119,10 +144,55 @@ func StartAPIServer(ctx context.Context, addr string, e *Engine) error {
 		}
 	}()
 	mux.HandleFunc("GET /api/history", func(w http.ResponseWriter, r *http.Request) {
-		hmu.RLock()
-		points := append([]historyPoint(nil), history...)
-		hmu.RUnlock()
-		writeJSON(w, points)
+		period := r.URL.Query().Get("range")
+		switch period {
+		case "", "1h":
+			hmu.RLock()
+			points := append([]HistoryPoint(nil), recent...)
+			hmu.RUnlock()
+			// Merge persisted previous-hour samples after a process restart.
+			disk := hist.Range(time.Now().Add(-time.Hour), 480)
+			if len(points) > 0 {
+				edge := points[0].Time
+				for _, p := range disk {
+					if p.Time.Before(edge) {
+						points = append([]HistoryPoint{p}, points...)
+					}
+				}
+			}
+			writeJSON(w, points)
+		case "24h":
+			writeJSON(w, hist.Range(time.Now().Add(-24*time.Hour), 480))
+		case "7d":
+			writeJSON(w, hist.Range(time.Now().Add(-7*24*time.Hour), 480))
+		default:
+			http.Error(w, "invalid range", 400)
+		}
+	})
+	mux.HandleFunc("GET /api/sources", func(w http.ResponseWriter, r *http.Request) {
+		s := e.Stats()
+		type source struct {
+			Name       string  `json:"name"`
+			Found      int     `json:"found"`
+			New        int     `json:"new"`
+			KnownAlive int     `json:"known_alive"`
+			YieldPct   float64 `json:"yield_pct"`
+			Error      bool    `json:"error"`
+		}
+		entries := make([]source, 0, len(s.SourceStatus))
+		for _, v := range s.SourceStatus {
+			entries = append(entries, source{Name: v.Name, Found: v.Unique, New: v.NewCandidates, KnownAlive: v.KnownAlive, YieldPct: v.YieldPct, Error: v.Error != ""})
+		}
+		sort.Slice(entries, func(i, j int) bool {
+			if entries[i].KnownAlive == entries[j].KnownAlive {
+				return entries[i].New > entries[j].New
+			}
+			return entries[i].KnownAlive > entries[j].KnownAlive
+		})
+		if len(entries) > 20 {
+			entries = entries[:20]
+		}
+		writeJSON(w, entries)
 	})
 	mux.HandleFunc("GET /api/v1/proxies", func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()
@@ -134,6 +204,17 @@ func StartAPIServer(ctx context.Context, addr string, e *Engine) error {
 		proto := strings.ToLower(q.Get("protocol"))
 		if proto != "" && proto != "all" && normalizeProtocol(proto) == "" {
 			http.Error(w, "invalid protocol", 400)
+			return
+		}
+		minScore, _ := strconv.ParseFloat(q.Get("min_score"), 64)
+		maxLatency, _ := strconv.Atoi(q.Get("max_latency_ms"))
+		freshMinutes, _ := strconv.Atoi(q.Get("fresh_minutes"))
+		if minScore < 0 || minScore > 100 || maxLatency < 0 || freshMinutes < 0 || freshMinutes > 10080 {
+			http.Error(w, "invalid filter", 400)
+			return
+		}
+		if mode := q.Get("format"); mode != "" && mode != "json" && mode != "txt" {
+			http.Error(w, "invalid format", 400)
 			return
 		}
 		limit, _ := strconv.Atoi(q.Get("limit"))
@@ -150,6 +231,15 @@ func StartAPIServer(ctx context.Context, addr string, e *Engine) error {
 				continue
 			}
 			if proto != "" && proto != "all" && p.Protocol != proto {
+				continue
+			}
+			if p.Score < minScore {
+				continue
+			}
+			if maxLatency > 0 && (p.LatencyMS <= 0 || p.LatencyMS > int64(maxLatency)) {
+				continue
+			}
+			if freshMinutes > 0 && (p.LastChecked.IsZero() || time.Since(p.LastChecked) > time.Duration(freshMinutes)*time.Minute) {
 				continue
 			}
 			selected = append(selected, p)

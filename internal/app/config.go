@@ -22,6 +22,7 @@ type Config struct {
 	ProbeHTTPPort     int
 	ProbeHTTPSPort    int
 	ProbeToken        string
+	ProbeSigningKey   string
 	Workers           int
 	QueueSize         int
 	Timeout           time.Duration
@@ -55,6 +56,7 @@ func LoadConfig() (Config, error) {
 		ProbeHTTPPort:     envInt("PSCAPER_PROBE_HTTP_PORT", 8787),
 		ProbeHTTPSPort:    envInt("PSCAPER_PROBE_HTTPS_PORT", 8789),
 		ProbeToken:        strings.TrimSpace(os.Getenv("PSCAPER_PROBE_TOKEN")),
+		ProbeSigningKey:   strings.TrimSpace(os.Getenv("PSCAPER_PROBE_SIGNING_KEY")),
 		Workers:           envInt("PSCAPER_WORKERS", 3000),
 		QueueSize:         envInt("PSCAPER_QUEUE_SIZE", 3000000),
 		Timeout:           envDuration("PSCAPER_TIMEOUT", 6*time.Second),
@@ -79,6 +81,9 @@ func LoadConfig() (Config, error) {
 			return cfg, err
 		}
 		cfg.ProbeToken = hex.EncodeToString(b)
+	}
+	if len(cfg.ProbeSigningKey) < 32 {
+		return cfg, fmt.Errorf("PSCAPER_PROBE_SIGNING_KEY must be a separate secret of at least 32 characters")
 	}
 	if cfg.ProbeHost == "" {
 		return cfg, fmt.Errorf("PSCAPER_PUBLIC_HOST is required (the VPS public IPv4 or DNS name)")

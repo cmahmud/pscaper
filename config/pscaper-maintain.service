@@ -1,0 +1,16 @@
+[Unit]
+Description=Refresh pscaper publisher Git checkout
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/pscaper
+ExecStart=/home/ubuntu/pscaper/scripts/maintain-publisher.sh
+TimeoutStartSec=300
+Nice=15
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=/home/ubuntu/pscaper

@@ -84,6 +84,23 @@ h1 span{color:#7ee4af}
 @media(max-width:899px){html,body{height:auto;min-height:100%;overflow:auto}.shell{height:auto;min-height:100dvh;padding:17px 18px;grid-template-rows:auto auto auto auto auto;gap:12px}.intro{padding:12px 0 5px}.board{grid-template-columns:minmax(0,1fr)}.graphwrap{height:280px;flex:initial}.rightside{grid-template-rows:auto auto}.protocols{min-height:200px}.activity{min-height:155px}.bottom{padding-top:12px}.header{min-height:40px}.metric{min-height:112px}}
 @media(max-width:560px){.shell{padding:14px 12px}.header-right{gap:10px}.headlink{display:none}.brand-sub{display:none}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.metric{min-height:103px}.kpival{font-size:30px}.board{grid-template-columns:1fr}.graphwrap{height:220px}.intro h1{font-size:29px}.session{display:none}.chartpanel{min-height:345px}.bottom .footleft{gap:9px}.bottom{font-size:9px}.bottom .update{display:none}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+
+/* compact controls, semantic status, and hideable detail without scroll */
+[hidden]{display:none!important}
+.tools{display:flex;align-items:center;gap:5px;flex-wrap:nowrap}
+.tool{border:1px solid #393d40;background:#242629;color:#9fa5a8;font:700 9px/1 ui-monospace,monospace;border-radius:5px;padding:5px 7px;transition:.2s}
+.tool:hover{border-color:#658b78;color:#e8f9ed}
+.tool[aria-pressed="true"]{color:#9df3bf;background:#1c3529;border-color:#528b68}
+.sourcesview{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:space-around;gap:6px;padding-top:10px}
+.sourceitem{display:grid;grid-template-columns:minmax(0,1fr) 55px 58px;gap:7px;align-items:center;font:650 10px ui-monospace,monospace;color:#a6a9ae}
+.sourceitem span:first-child{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.sourceitem .yield{color:#9ae9bd;text-align:right}.sourceitem .counts{text-align:right;color:#b4b9bd}
+.footer-sync{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.footer-sync:before{content:"";width:6px;height:6px;border-radius:50%;background:#73e8a8;box-shadow:0 0 6px #73e8a8}
+.footer-sync.stale{color:#fa959b!important}.footer-sync.stale:before{background:#ff7d83;box-shadow:0 0 6px #ff7d83}
+.mono-sub{font:600 10px ui-monospace,monospace;color:#9ba0a5}
+@media(max-width:1120px){.bottom .footleft{gap:9px}.sourcesview .sourceitem{grid-template-columns:minmax(0,1fr) 44px 44px}}
+@media(max-width:560px){.tool{padding:5px}.sourcesview{min-height:155px}.tools{gap:3px}.footleft{min-width:0}.footer-sync{font-size:9px}}
 </style>
 </head>
 <body>
@@ -92,7 +109,7 @@ h1 span{color:#7ee4af}
  <div class="brand"><div class="logo" aria-hidden="true">p</div><span class="wordmark">pscaper</span><span class="brand-sub">PROXY OBSERVATORY</span></div>
  <nav class="header-right" aria-label="Links"><a class="headlink" href="https://github.com/cmahmud/pscaper" target="_blank" rel="noopener">SOURCE ↗</a><a class="headlink" href="https://github.com/cmahmud/proxies" target="_blank" rel="noopener">DATA ↗</a><a class="headlink" href="/api/v1/proxies?limit=100" target="_blank" rel="noopener">API ↗</a><span id="on" class="on"><span class="led"></span><span id="onlabel">CONNECTING</span></span></nav>
 </header>
-<div class="intro"><div class="title-group"><div class="eyebrow">Real-time monitoring / public proxies</div><h1>Live <span>network</span> telemetry.</h1></div><div class="session"><span>REFRESH <strong>5s</strong></span><span class="vertical"></span><span>FEEDS <strong id="feeds">—</strong></span></div></div>
+<div class="intro"><div class="title-group"><div class="eyebrow">Real-time monitoring / public proxies</div><h1>Live <span>network</span> telemetry.</h1></div><div class="session"><span>REFRESH <strong>5s</strong></span><span class="vertical"></span><span>FEEDS <strong id="feeds">—</strong></span><span class="vertical"></span><span>AVG <strong id="latency">—</strong></span></div></div>
 <section class="kpis" aria-label="Current proxy metrics">
  <article class="metric primary"><div class="kpihead">ALIVE <span class="hint">CURRENT</span></div><div class="kpival" id="alive">—</div><div class="kpifoot"><span id="plus" class="kpipill neutral">+0</span><span id="minus" class="kpipill negative">−0</span><span>this interval</span></div></article>
  <article class="metric"><div class="kpihead">GOLD <span class="hint">VERIFIED ×2</span></div><div class="kpival" id="gold">—</div><div class="kpifoot"><span id="golddelta" class="kpipill neutral">±0</span><span>net change</span></div></article>
@@ -101,18 +118,18 @@ h1 span{color:#7ee4af}
 </section>
 <main class="board">
 <section class="panel chartpanel" aria-labelledby="charttitle">
- <div class="panelhead"><h2 id="charttitle">Validation activity</h2><span class="live"><i></i> LIVE</span></div>
+ <div class="panelhead"><h2 id="charttitle">Validation activity</h2><div class="tools" role="group" aria-label="Chart time range"><button class="tool" data-range="1h" aria-pressed="true">1H</button><button class="tool" data-range="24h" aria-pressed="false">24H</button><button class="tool" data-range="7d" aria-pressed="false">7D</button><span class="live" style="margin-left:6px"><i></i> LIVE</span></div></div>
  <div class="chartrow"><span id="chartvalue" class="livebig">—</span><span class="chartmuted">alive</span><span id="net" class="flowchip">±0</span></div>
  <div class="graphwrap"><svg id="graph" viewBox="0 0 900 300" preserveAspectRatio="none" role="img" aria-label="Alive proxy count over time"><defs><linearGradient id="grad" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#83e9b2" stop-opacity=".28"/><stop offset="1" stop-color="#83e9b2" stop-opacity="0"/></linearGradient></defs><path id="tracearea" d=""/><path id="trace" d=""/><circle id="traceend" r="4" cx="-20" cy="-20"/></svg></div>
  <div class="chartfooter"><span id="chartfrom">Session initializing</span><span id="chartto">NOW</span></div>
 </section>
 <div class="rightside">
-<section class="panel protocols" aria-labelledby="protitle"><div class="panelhead"><h2 id="protitle">Protocols</h2><span class="tag">ALIVE</span></div><div class="plist">
+<section class="panel protocols" aria-labelledby="protitle"><div class="panelhead"><h2 id="protitle">Coverage</h2><div class="tools" role="group" aria-label="Coverage panel"><button class="tool" data-panel="protocols" aria-pressed="true">PROTOCOLS</button><button class="tool" data-panel="sources" aria-pressed="false">SOURCES</button></div></div><div class="plist" id="protocolview">
  <div class="protorow"><span class="pname">HTTP</span><div class="track"><b id="bar-http"></b></div><span class="pval" id="num-http">—</span></div>
  <div class="protorow"><span class="pname">HTTPS</span><div class="track"><b id="bar-https"></b></div><span class="pval" id="num-https">—</span></div>
  <div class="protorow"><span class="pname">SOCKS4</span><div class="track"><b id="bar-socks4"></b></div><span class="pval" id="num-socks4">—</span></div>
  <div class="protorow"><span class="pname">SOCKS5</span><div class="track"><b id="bar-socks5"></b></div><span class="pval" id="num-socks5">—</span></div>
- </div></section>
+ </div><div class="sourcesview" id="sourceview" hidden><span class="mono-sub">Loading feed yields...</span></div></section>
 <section class="panel activity" aria-labelledby="acttitle"><div class="panelhead"><h2 id="acttitle">Scanner</h2><span class="tag">THIS SESSION</span></div><div class="activitybody">
  <div class="a good"><div class="alabel">Verified ↑</div><div class="avalue" id="verified">—</div></div>
  <div class="a loss"><div class="alabel">Lost ↓</div><div class="avalue" id="lost">—</div></div>
@@ -121,12 +138,13 @@ h1 span{color:#7ee4af}
  </div></section>
 </div>
 </main>
-<footer class="bottom"><div class="footleft"><span>pscaper v1.3.1</span><span>118 FEEDS · <b id="errors">0 ERRORS</b></span><a href="https://github.com/cmahmud/proxies/actions/workflows/pscaper-sync.yml" target="_blank" rel="noopener">GITHUB SYNC ↗</a></div><span id="updated" class="update">CONNECTING...</span></footer>
+<footer class="bottom"><div class="footleft"><span>pscaper v1.3.1</span><span>118 FEEDS · <b id="errors">0 ERRORS</b></span><a class="footer-sync stale" id="publisher-link" href="https://github.com/cmahmud/proxies/commits/main" target="_blank" rel="noopener" title="Latest GitHub publishing status">SYNC CHECKING...</a></div><span id="updated" class="update">CONNECTING...</span></footer>
 </div>
 <script>
 (function(){
 'use strict';
 var get=function(id){return document.getElementById(id)}, nf=new Intl.NumberFormat('en-US'), prev=null, lastTime=0, series=[], ticks=0, requestInFlight=false, sessionOrigin=null, pendingAnimation={};
+var period='1h',sourcesLoaded=0;
 var reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 var fmt=function(n){return typeof n==='number'?nf.format(n):'—'};
 var pos=function(n){return '+'+fmt(Math.max(0,n))};
@@ -161,19 +179,70 @@ function redraw(){
  get('chartto').textContent='NOW · '+fmt(values[values.length-1]);
 }
 function addPoint(t,v){
- if(!Number.isFinite(v))return;
+ if(!Number.isFinite(v)||period!=='1h')return;
  var ms=new Date(t).getTime();if(!Number.isFinite(ms))ms=Date.now();
  if(series.length && ms<=series[series.length-1].t)return;
  series.push({t:ms,v:v}); if(series.length>720)series=series.slice(-720);redraw();
 }
 async function hydrate(){
- try{var r=await fetch('/api/history',{cache:'no-store'});if(!r.ok)return;
- var data=await r.json();if(!Array.isArray(data))return;
- var m=new Map();series.forEach(function(p){m.set(p.t,p)});
+ var requested=period;
+ try{
+ var r=await fetch('/api/history?range='+encodeURIComponent(requested),{cache:'no-store'});
+ if(!r.ok)return;
+ var data=await r.json();if(!Array.isArray(data)||requested!==period)return;
+ var m=new Map();
+ if(period==='1h')series.forEach(function(p){m.set(p.t,p)});
  data.forEach(function(p){var t=Date.parse(p.time);if(Number.isFinite(t)&&typeof p.alive==='number')m.set(t,{t:t,v:p.alive})});
- series=Array.from(m.values()).sort(function(a,b){return a.t-b.t}).slice(-720);redraw();
+ series=Array.from(m.values()).sort(function(a,b){return a.t-b.t}).slice(-720);
+ redraw();
  }catch(e){}
 }
+function updatePublisher(p){
+ var node=get('publisher-link');
+ if(!p||p.state!=='ok'||typeof p.age_seconds!=='number'||p.age_seconds<0){
+ node.classList.add('stale');node.textContent='SYNC DELAYED';return;
+ }
+ var age=p.age_seconds;
+ node.classList.remove('stale');
+ node.textContent='GITHUB '+(age>=60?Math.floor(age/60)+'m ':age+'s ')+'AGO ↗';
+ if(p.commit&&/^[0-9a-f]{7,40}$/i.test(p.commit))node.href='https://github.com/cmahmud/proxies/commit/'+p.commit;
+ node.title='Latest successful sync · '+(p.last_success||'')+' · '+(p.commit||'');
+}
+async function loadSources(){
+ if(document.getElementById('sourceview').hidden)return;
+ if(Date.now()-sourcesLoaded<60000)return;
+ try {
+ var response=await fetch('/api/sources',{cache:'no-store'});
+ if(!response.ok)throw Error('Fetch failed');
+ var feeds=await response.json();
+ var view=get('sourceview');view.replaceChildren();
+ feeds.slice(0,5).forEach(function(f){
+  var row=document.createElement('div');row.className='sourceitem';
+  var name=document.createElement('span');name.textContent=f.name||'unknown';name.title=name.textContent;
+  var count=document.createElement('span');count.className='counts';count.textContent=fmt(f.known_alive||0);count.title='Currently validated proxies in source sample';
+  var yieldText=document.createElement('span');yieldText.className='yield';yieldText.textContent=(Number(f.yield_pct)||0).toFixed(1)+'%';yieldText.title='Estimated source yield';
+  row.append(name,count,yieldText);view.append(row);
+ });
+ if(!feeds.length)view.textContent='No source metrics yet';
+ sourcesLoaded=Date.now();
+ }catch(e){get('sourceview').textContent='Source data unavailable'}
+}
+document.querySelectorAll('[data-range]').forEach(function(el){
+ el.addEventListener('click',function(){
+  period=el.dataset.range;series=[];
+  document.querySelectorAll('[data-range]').forEach(function(x){x.setAttribute('aria-pressed',String(x===el))});
+  get('chartfrom').textContent='Loading '+period.toUpperCase()+' history';
+  hydrate();
+ });
+});
+document.querySelectorAll('[data-panel]').forEach(function(el){
+ el.addEventListener('click',function(){
+  var isSource=el.dataset.panel==='sources';
+  get('sourceview').hidden=!isSource;get('protocolview').hidden=isSource;
+  document.querySelectorAll('[data-panel]').forEach(function(x){x.setAttribute('aria-pressed',String(x===el))});
+  if(isSource)loadSources();
+ });
+});
 function apply(data){
  if(!data||typeof data.alive!=='number')throw Error('Malformed snapshot');
  var sessionChanged=sessionOrigin!==null && (data.uptime_seconds<prev?.uptime_seconds || data.newly_alive<prev?.newly_alive);
@@ -189,12 +258,13 @@ function apply(data){
  get('verified').textContent=pos(data.newly_alive||0);get('lost').textContent='−'+fmt(data.lost_alive||0);
  get('checked').textContent=fmt(data.checked);get('queue').textContent=fmt(data.queue);get('feeds').textContent=fmt(data.source_feeds);
  get('errors').textContent=fmt(data.source_errors)+' ERRORS';
+ get('latency').textContent=fmt(data.avg_latency_ms||0)+'ms';updatePublisher(data.publishing);
  var protos=data.alive_protocols||{},max=Math.max(1,...Object.values(protos));
  ['http','https','socks4','socks5'].forEach(function(k){var n=protos[k]||0;get('num-'+k).textContent=fmt(n);get('bar-'+k).style.width=(100*n/max).toFixed(1)+'%'});
  get('on').classList.remove('offline');get('onlabel').textContent='SYSTEM ONLINE';
  get('updated').textContent='UPDATED '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
  addPoint(data.time||new Date().toISOString(),data.alive);prev=data;ticks++;
- if(ticks%6===0)hydrate();
+ if(ticks%6===0){hydrate();loadSources();}
 }
 async function poll(){
  if(requestInFlight||document.hidden)return;

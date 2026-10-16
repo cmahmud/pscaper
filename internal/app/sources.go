@@ -5,7 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"hash/fnv"
 	"io"
+	"math/rand"
 	"net"
 	"net/http"
 	"net/url"
@@ -151,17 +153,33 @@ func fetchSource(ctx context.Context, client *http.Client, src Source) ([]Candid
 	s := bufio.NewScanner(r)
 	buf := make([]byte, 64*1024)
 	s.Buffer(buf, 1024*1024)
-	var out []Candidate
+	// Reservoir sampling reaches addresses beyond the first 2,000 records.
+	// Memory stays bounded even when feeds contain hundreds of thousands.
+	// Seed changes on each source refresh so repeated fetches explore the feed.
+	seedHash := fnv.New64a()
+	_, _ = seedHash.Write([]byte(src.Name))
+	_, _ = seedHash.Write([]byte(strconv.FormatInt(time.Now().UnixNano(), 10)))
+	rng := rand.New(rand.NewSource(int64(seedHash.Sum64())))
+	limit := src.CandidateLimit()
+	out := make([]Candidate, 0, limit)
+	seen := 0
 	for s.Scan() {
 		line := strings.TrimSpace(s.Text())
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
-		if c, ok := parseCandidate(line, src.Protocol, src.Name); ok {
+		c, ok := parseCandidate(line, src.Protocol, src.Name)
+		if !ok {
+			continue
+		}
+		seen++
+		if len(out) < limit {
 			out = append(out, c)
-			if len(out) >= src.CandidateLimit() {
-				break
-			}
+			continue
+		}
+		// Algorithm R: uniform bounded sample of all candidates in the downloaded feed.
+		if pick := rng.Intn(seen); pick < limit {
+			out[pick] = c
 		}
 	}
 	return out, s.Err()
