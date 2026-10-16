@@ -621,7 +621,15 @@ func (e *Engine) Stats() Stats {
 		st.CyclePhase, _ = v.(string)
 	}
 	var latencyTotal, latencyCount int64
+	sourceSeen := make(map[string]int)
+	sourceAlive := make(map[string]int)
 	for _, p := range records {
+		for _, name := range p.Sources {
+			sourceSeen[name]++
+			if p.Alive {
+				sourceAlive[name]++
+			}
+		}
 		st.Total++
 		st.Protocols[p.Protocol]++
 		if !p.LastChecked.IsZero() {
@@ -666,6 +674,13 @@ func (e *Engine) Stats() Stats {
 	e.sourceMu.RLock()
 	st.SourceStatus = append([]SourceStatus(nil), e.sources...)
 	e.sourceMu.RUnlock()
+	for i := range st.SourceStatus {
+		key := st.SourceStatus[i].Name
+		st.SourceStatus[i].KnownAlive = sourceAlive[key]
+		if sourceSeen[key] > 0 {
+			st.SourceStatus[i].YieldPct = 100 * float64(sourceAlive[key]) / float64(sourceSeen[key])
+		}
+	}
 	st.SourceFeeds = len(st.SourceStatus)
 	now := time.Now()
 	for _, src := range st.SourceStatus {

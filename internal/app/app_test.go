@@ -373,3 +373,22 @@ func TestAdaptiveFeedYieldScoring(t *testing.T) {
 		t.Fatalf("invalid rolling source effectiveness %+v", got)
 	}
 }
+
+func TestPublicSourceStatisticsUseCatalogWorkingRecords(t *testing.T) {
+	store, err := OpenStore(filepath.Join(t.TempDir(), "state.json.gz"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	now := time.Now()
+	c := Candidate{Host: "8.8.8.8", Port: 9090, Protocol: "http", Source: "test-feed"}
+	_, p := store.UpsertCandidate(c, now)
+	if err := store.ApplyValidation(p.Key, true, 100*time.Millisecond, "8.8.4.4", "", now, 80); err != nil {
+		t.Fatal(err)
+	}
+	e := &Engine{store: store, sources: []SourceStatus{{Name: "test-feed"}}}
+	st := e.Stats()
+	if len(st.SourceStatus) != 1 || st.SourceStatus[0].KnownAlive != 1 || st.SourceStatus[0].YieldPct != 100 {
+		t.Fatalf("public catalog source quality is inaccurate: %+v", st.SourceStatus)
+	}
+}
