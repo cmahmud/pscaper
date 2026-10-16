@@ -715,5 +715,53 @@
     "url": "https://raw.githubusercontent.com/ALIILAPRO/Proxy/main/socks5.txt",
     "protocol": "socks5",
     "refresh_seconds": 1800
+  },
+  {
+    "name": "proxmint-http",
+    "protocol": "http",
+    "url": "https://raw.githubusercontent.com/proxmint/free-proxy-list/main/proxies/http.txt",
+    "refresh_seconds": 1800
+  },
+  {
+    "name": "proxmint-https",
+    "protocol": "https",
+    "url": "https://raw.githubusercontent.com/proxmint/free-proxy-list/main/proxies/https.txt",
+    "refresh_seconds": 1800
+  },
+  {
+    "name": "proxmint-socks4",
+    "protocol": "socks4",
+    "url": "https://raw.githubusercontent.com/proxmint/free-proxy-list/main/proxies/socks4.txt",
+    "refresh_seconds": 1800
+  },
+  {
+    "name": "proxmint-socks5",
+    "protocol": "socks5",
+    "url": "https://raw.githubusercontent.com/proxmint/free-proxy-list/main/proxies/socks5.txt",
+    "refresh_seconds": 1800
+  },
+  {
+    "name": "relayglass-http",
+    "protocol": "http",
+    "url": "https://raw.githubusercontent.com/relayglass/free-proxy-list/main/protocol/http/http.txt",
+    "refresh_seconds": 600
+  },
+  {
+    "name": "relayglass-socks4",
+    "protocol": "socks4",
+    "url": "https://raw.githubusercontent.com/relayglass/free-proxy-list/main/protocol/socks4/socks4.txt",
+    "refresh_seconds": 600
+  },
+  {
+    "name": "relayglass-socks5",
+    "protocol": "socks5",
+    "url": "https://raw.githubusercontent.com/relayglass/free-proxy-list/main/protocol/socks5/socks5.txt",
+    "refresh_seconds": 600
+  },
+  {
+    "name": "proxyscraper-socks4",
+    "protocol": "socks4",
+    "url": "https://raw.githubusercontent.com/ProxyScraper/ProxyScraper/main/socks4.txt",
+    "refresh_seconds": 1800
   }
 ]

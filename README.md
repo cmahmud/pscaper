@@ -5,7 +5,7 @@ Go-based public-proxy feed harvester, independent validator, scoring engine, his
 ## Deployment status and sources
 
 - Latest recovered application version: **1.3.1** (with October 2026 deployment hardening).
-- **118 configured, independently tested feed URLs** after replacing 19 empty, unusable, or 404 sources and adding 31 working URLs from nine additional publishers.
+- **126 configured feeds** after adding eight more audited URLs (four from Proxmint, three from Relayglass, and one SOCKS4 feed from ProxyScraper) to the previous 118. These are candidate publishers, not proof that every published proxy is alive.
 - Feed protocols: HTTP, HTTPS, SOCKS4, SOCKS5. Source-specific refresh schedules are retained.
 - Sources are only *candidates*; a candidate is not **alive** until it passes the application's outbound-forwarding callback probe.
 - Reservoir sampling inspects the bounded upstream feed and retains **2,000 representative candidates** per fetch by default (up to 10,000 with `max_candidates`). This avoids repeatedly collecting only the beginning of huge feeds.
@@ -82,6 +82,10 @@ resides in `site/index.html`; public endpoints exposed via Nginx are:
 
 - `GET /` — dark, responsive live dashboard (sanitized, no raw proxies)
 - `GET /api/live` — counts, worker health, protocol coverage without proxy or source identities
+- `GET /api/events?after=0&limit=12` — bounded in-memory recent validator
+  results, including the actual public proxy address, protocol, latency,
+  current score, and confirmed new Gold qualification. `after` is the
+  last returned event cursor. Events are live data, never fabricated.
 - `GET /api/history?range=1h|24h|7d` — persisted, bounded telemetry history with 30-second disk samples and finer live one-hour samples; survives restart
 - `GET /api/v1/proxies?tier=alive&protocol=all&format=json&limit=1000` —
   public read-only proxy API, accepts alive/gold, http/https/socks4/socks5,
@@ -204,6 +208,45 @@ The IPv4 feed does not label IPv6 addresses. GeoIP accuracy, exit location,
 anonymity tier, and working against arbitrary external destinations cannot
 be established from ASN data alone. Those require separate controlled
 measurements or an appropriately licensed location database.
+
+## V2 compact one-screen dashboard, proxy terminal, and rollback
+
+The original desktop layout was preserved byte-for-byte before the V2 update
+under `site/backups/v1-original-20261016.html` (SHA-256:
+`e1afdf31795f5998f191972649d11f6439abdcaa108436a63d7761b265c25084`).
+To revert **only the website**, run:
+
+```bash
+cd /home/ubuntu/pscaper
+./scripts/rollback-dashboard.sh
+```
+
+The rollback script first preserves the current dashboard in ignored
+`recovery/ui-rollbacks/`, then copies the known-good original into
+`site/index.html`. The Go app serves this file for each request, so no
+restart or backend/publishing downtime is necessary. The backup is committed
+to the application repository, independent of the VPS runtime.
+
+V2 keeps the four primary metrics and the large chart in the original
+charcoal theme. Below the chart is a low-noise terminal showing **real
+validator results** every ~2.2 seconds using `/api/events`. Rows include
+IP:port, protocol, most recent latency, score, and verified status;
+qualified Gold rows stay muted gold, while **newly qualified Gold** gets
+one short gold shimmer. Pause, Clear, and copy-address interactions are
+local to the browser. This stream has a 512-event server-side buffer,
+up to 40 results per request; it never invents proxy records.
+
+The responsive desktop layout fits one browser viewport without a scrollbar
+at standard desktop height and 100% zoom. Narrow/mobile layouts may scroll
+rather than truncating the interface. Animations respect reduced-motion
+settings.
+
+The source configuration includes eight additional validated-format
+URLs, after removing candidate URLs that returned 404/502 and suppressing
+mirrored publisher duplicates. Being a healthy *feed* means it provides
+parseable addresses; only the pscaper callback validator can classify
+proxies as Alive or Gold. New feeds run with refresh intervals of
+10–30 minutes rather than hammering publishers.
 
 ## Source-quality workflow
 

@@ -1,3 +1,18 @@
+## October 2026 — V2 minimal live terminal and expanded feeds
+
+- Added eight independently sampled candidate feed URLs from Proxmint,
+  Relayglass and ProxyScraper (118 → 126); rejected failed and mirror URLs.
+- Added bounded in-memory streaming validation events and public, allowlisted
+  read-only `/api/events`, with real proxy address/protocol/score/latency and
+  newly qualified Gold transitions.
+- Preserved original website as a byte-exact tracked HTML backup and shipped
+  `scripts/rollback-dashboard.sh` for rapid static-only restoration.
+- Retained original charcoal dashboard, moved to a single-screen 2×2 panel
+  layout, and introduced a compact authentic proxy terminal with optional
+  pause/clear/copy and motion-sensitive Gold shimmer.
+- Kept Go validation performance limits, API protections, separate data
+  repository, and 30-second publishing unchanged.
+
 ## October 2026 — offline ASN enrichment
 
 - Added a compact project-local IPtoASN IPv4 dataset, efficient Go lookup,

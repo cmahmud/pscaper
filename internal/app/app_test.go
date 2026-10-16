@@ -429,3 +429,29 @@ func TestOfflineASNLookupAndDatasetReload(t *testing.T) {
 		t.Fatal("IPv6 incorrectly classified against IPv4 ASN map")
 	}
 }
+
+func TestProxyEventBufferCursorAndGoldTransitions(t *testing.T) {
+	buffer := NewEventBuffer(3)
+	buffer.Add(ProxyEvent{Address: "8.8.8.8:1080", Protocol: "socks5", Score: 91, Kind: "verified", NewlyGold: true})
+	first, last := buffer.Since(0, 10)
+	if len(first) != 1 || last != 1 || !first[0].NewlyGold {
+		t.Fatalf("unexpected initial event: %+v", first)
+	}
+	buffer.Add(ProxyEvent{Address: "1.1.1.1:8080", Protocol: "https", Score: 78, Kind: "verified"})
+	buffer.Add(ProxyEvent{Address: "9.9.9.9:1080", Protocol: "socks5", Score: 0, Kind: "lost"})
+	newer, last := buffer.Since(1, 10)
+	if len(newer) != 2 || newer[1].Kind != "lost" || last != 3 {
+		t.Fatalf("cursor failed %+v %d", newer, last)
+	}
+	buffer.Add(ProxyEvent{Address: "4.4.4.4:443", Protocol: "https", Score: 82, Kind: "verified"})
+	recent, last := buffer.Since(0, 2)
+	if len(recent) != 2 || recent[0].ID != 3 || recent[1].ID != 4 || last != 4 {
+		t.Fatalf("bounded ring failed %+v", recent)
+	}
+	restarted := NewEventBuffer(3)
+	restarted.Add(ProxyEvent{Address: "9.9.9.9:80", Kind: "verified"})
+	reset, last := restarted.Since(999, 3)
+	if len(reset) != 1 || last != 1 {
+		t.Fatalf("restarting server must recover from stale cursor: %+v", reset)
+	}
+}

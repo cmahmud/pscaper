@@ -26,6 +26,7 @@ type Engine struct {
 	cfg       Config
 	store     *Store
 	validator *Validator
+	events    *EventBuffer
 	queue     chan string
 	startedAt time.Time
 	cycleKick chan struct{}
@@ -66,6 +67,7 @@ func NewEngine(cfg Config, store *Store) *Engine {
 		cfg:             cfg,
 		store:           store,
 		validator:       NewValidator(cfg),
+		events:          NewEventBuffer(512),
 		queue:           make(chan string, cfg.QueueSize),
 		startedAt:       time.Now(),
 		cycleKick:       make(chan struct{}, 1),
@@ -134,7 +136,19 @@ func (e *Engine) worker(ctx context.Context) {
 					e.lostAlive.Add(1)
 				}
 			}
-			_ = e.store.ApplyValidation(key, res.OK, res.Latency, res.ExitIP, res.Error, now, e.cfg.GoldScore)
+			if err := e.store.ApplyValidation(key, res.OK, res.Latency, res.ExitIP, res.Error, now, e.cfg.GoldScore); err == nil {
+				if updated, found := e.store.Get(key); found {
+					if res.OK {
+						currentGold := updated.Gold(e.cfg.GoldScore)
+						e.events.Add(ProxyEvent{Time: now.UTC(), Address: updated.Address(),
+							Protocol: updated.Protocol, Score: updated.Score, LatencyMS: updated.LatencyMS,
+							Kind: "verified", Gold: currentGold, NewlyGold: currentGold && !p.Gold(e.cfg.GoldScore)})
+					} else if p.Alive {
+						e.events.Add(ProxyEvent{Time: now.UTC(), Address: updated.Address(),
+							Protocol: updated.Protocol, Score: updated.Score, LatencyMS: updated.LatencyMS, Kind: "lost"})
+					}
+				}
+			}
 			e.inFlight.Add(-1)
 			e.unschedule(key)
 		}

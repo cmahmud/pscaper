@@ -123,6 +123,16 @@ func StartAPIServer(ctx context.Context, addr string, e *Engine) error {
 		liveAt = time.Now()
 		return current
 	}
+	mux.HandleFunc("GET /api/events", func(w http.ResponseWriter, r *http.Request) {
+		after, err := strconv.ParseUint(r.URL.Query().Get("after"), 10, 64)
+		if err != nil {
+			after = 0
+		}
+		limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+		records, last := e.events.Since(after, limit)
+		w.Header().Set("Cache-Control", "no-store")
+		writeJSON(w, map[string]any{"events": records, "cursor": last, "generated_at": time.Now().UTC()})
+	})
 	mux.HandleFunc("GET /api/live", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")
 		writeJSON(w, live())

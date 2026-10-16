@@ -101,6 +101,43 @@ h1 span{color:#7ee4af}
 .mono-sub{font:600 10px ui-monospace,monospace;color:#9ba0a5}
 @media(max-width:1120px){.bottom .footleft{gap:9px}.sourcesview .sourceitem{grid-template-columns:minmax(0,1fr) 44px 44px}}
 @media(max-width:560px){.tool{padding:5px}.sourcesview{min-height:155px}.tools{gap:3px}.footleft{min-width:0}.footer-sync{font-size:9px}}
+
+/* V2: grid preserved on one desktop viewport, terminal remains real-data only */
+.board{display:grid;grid-template-columns:minmax(0,1.82fr) minmax(295px,.86fr);grid-template-rows:minmax(0,1.09fr) minmax(0,.91fr);gap:10px}
+.rightside{display:contents}
+.chartpanel{grid-column:1;grid-row:1}
+.protocols{grid-column:2;grid-row:1}
+.proxyterminal{grid-column:1;grid-row:2;padding:12px 16px;background:linear-gradient(155deg,#17191b,#121416);border-color:#383d3a}
+.activity{grid-column:2;grid-row:2}
+.proxyterminal .panelhead{min-height:24px}
+.term-title{font-family:ui-monospace,SFMono-Regular,monospace;font-size:12px;font-weight:760;letter-spacing:-.1px}
+.term-live{font:700 9px ui-monospace,monospace;color:#8eeabc;display:flex;align-items:center;gap:6px}
+.term-live:before{content:"";width:5px;height:5px;border-radius:50%;background:#88edb2;box-shadow:0 0 7px #88edb2}
+.term-live.off{color:#a0a5a8}
+.term-live.off:before{background:#777;box-shadow:none}
+.term-actions{display:flex;align-items:center;gap:5px}
+.term-list{flex:1;min-height:0;display:flex;flex-direction:column;gap:3px;justify-content:flex-start;overflow:hidden;padding-top:7px}
+.term-row{position:relative;display:grid;grid-template-columns:60px minmax(0,1fr) 58px 53px 46px 51px;align-items:center;gap:7px;flex:none;min-height:23px;padding:4px 7px;background:#1b1e20;border-left:2px solid transparent;border-radius:3px;font:10px/1.2 ui-monospace,SFMono-Regular,monospace;transition:background .35s}
+.term-row .term-time,.term-protocol,.term-lat{color:#8c9597}
+.term-row .term-addr{color:#d3dbd9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.term-row .term-score{text-align:right;color:#9de9b7;font-weight:800}
+.term-row .term-status{text-align:right;color:#8fe6b1;font-weight:750;white-space:nowrap}
+.term-row.gold{border-left-color:#cfa95f;background:linear-gradient(90deg,#362d1e55,#1c1d20 70%)}
+.term-row.gold .term-addr,.term-row.gold .term-score,.term-row.gold .term-status{color:#f2d48f}
+.term-row.lost{border-left-color:#b36068}
+.term-row.lost .term-status,.term-row.lost .term-score{color:#ee989f}
+.term-row.enter{animation:term-enter .38s ease-out both}
+.term-row.gold.burst{animation:term-gold 1.5s ease-out both}
+.term-row.gold.burst:after{content:"✦";position:absolute;right:16%;top:0;color:#ffe7aa;font-size:15px;pointer-events:none;animation:term-spark 1.2s ease-out both}
+.term-empty{color:#848a90;font:11px ui-monospace,monospace;padding-top:13px}
+.termhint{font:9px ui-monospace,monospace;color:#858b8e}
+@keyframes term-enter{from{opacity:0;transform:translateY(-9px)}to{opacity:1;transform:translateY(0)}}
+@keyframes term-gold{0%{box-shadow:none}25%{background:#62502d91;box-shadow:inset 0 0 28px #f6cf694f,0 0 15px #e6c46644}100%{box-shadow:none}}
+@keyframes term-spark{0%{opacity:0;transform:translateX(-55px) scale(.5)}35%{opacity:1}100%{opacity:0;transform:translateX(24px) scale(1.5)}}
+@media(min-width:900px) and (max-height:760px){.proxyterminal{padding:10px 13px}.term-row{min-height:20px;font-size:9px;padding:3px 6px}.term-list{gap:2px}}
+@media(max-width:899px){.board{grid-template-columns:1fr;grid-template-rows:280px 215px 245px 190px}.chartpanel,.protocols,.proxyterminal,.activity{grid-column:1;grid-row:auto}.term-list{gap:5px}.term-row{min-height:26px}}
+@media(max-width:560px){.term-row{grid-template-columns:43px minmax(0,1fr) 43px 35px 45px;gap:5px;font-size:9px}.term-row .term-lat{display:none}.proxyterminal{padding:11px}.termhint{display:none}}
+@media(prefers-reduced-motion:reduce){.term-row.gold.burst,.term-row.gold.burst:after,.term-row.enter{animation:none!important}}
 </style>
 </head>
 <body>
@@ -123,6 +160,16 @@ h1 span{color:#7ee4af}
  <div class="graphwrap"><svg id="graph" viewBox="0 0 900 300" preserveAspectRatio="none" role="img" aria-label="Alive proxy count over time"><defs><linearGradient id="grad" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#83e9b2" stop-opacity=".28"/><stop offset="1" stop-color="#83e9b2" stop-opacity="0"/></linearGradient></defs><path id="tracearea" d=""/><path id="trace" d=""/><circle id="traceend" r="4" cx="-20" cy="-20"/></svg></div>
  <div class="chartfooter"><span id="chartfrom">Session initializing</span><span id="chartto">NOW</span></div>
 </section>
+<section class="panel proxyterminal" aria-labelledby="terminaltitle">
+ <div class="panelhead">
+  <div class="row" style="display:flex;align-items:center;gap:12px">
+   <span class="term-title" id="terminaltitle">›_ Live proxy flow</span>
+   <span class="term-live" id="term-live">VALIDATING</span>
+  </div>
+  <div class="term-actions"><span class="termhint">REAL CHECKS</span><button type="button" class="tool" id="term-pause" aria-pressed="false">PAUSE</button><button type="button" class="tool" id="term-clear">CLEAR</button></div>
+ </div>
+ <div class="term-list" id="term-list" aria-live="off"><div class="term-empty" id="term-empty">Waiting for verified proxies...</div></div>
+</section>
 <div class="rightside">
 <section class="panel protocols" aria-labelledby="protitle"><div class="panelhead"><h2 id="protitle">Coverage</h2><div class="tools" role="group" aria-label="Coverage panel"><button class="tool" data-panel="protocols" aria-pressed="true">PROTOCOLS</button><button class="tool" data-panel="sources" aria-pressed="false">SOURCES</button><button class="tool" data-panel="asgeo" aria-pressed="false" title="Autonomous System registration country, not physical proxy location">AS GEO</button></div></div><div class="plist" id="protocolview">
  <div class="protorow"><span class="pname">HTTP</span><div class="track"><b id="bar-http"></b></div><span class="pval" id="num-http">—</span></div>
@@ -138,7 +185,7 @@ h1 span{color:#7ee4af}
  </div></section>
 </div>
 </main>
-<footer class="bottom"><div class="footleft"><span>pscaper v1.3.1</span><span>118 FEEDS · <b id="errors">0 ERRORS</b></span><a class="footer-sync stale" id="publisher-link" href="https://github.com/cmahmud/proxies/commits/main" target="_blank" rel="noopener" title="Latest GitHub publishing status">SYNC CHECKING...</a></div><span id="updated" class="update">CONNECTING...</span></footer>
+<footer class="bottom"><div class="footleft"><span>pscaper v1.3.1</span><span><span id="feed-total">118 FEEDS</span> · <b id="errors">0 ERRORS</b></span><a class="footer-sync stale" id="publisher-link" href="https://github.com/cmahmud/proxies/commits/main" target="_blank" rel="noopener" title="Latest GitHub publishing status">SYNC CHECKING...</a></div><span id="updated" class="update">CONNECTING...</span></footer>
 </div>
 <script>
 (function(){
@@ -276,7 +323,7 @@ function apply(data){
  changeBadge('plus',plus,false);changeBadge('minus',-minus,true);changeBadge('found',found,false);changeBadge('golddelta',gd,true);changeBadge('everdelta',ed,true);
  var net=plus-minus;changeBadge('net',net,true);get('net').classList.toggle('red',net<0);
  get('verified').textContent=pos(data.newly_alive||0);get('lost').textContent='−'+fmt(data.lost_alive||0);
- get('checked').textContent=fmt(data.checked);get('queue').textContent=fmt(data.queue);get('feeds').textContent=fmt(data.source_feeds);
+ get('checked').textContent=fmt(data.checked);get('queue').textContent=fmt(data.queue);get('feeds').textContent=fmt(data.source_feeds);get('feed-total').textContent=fmt(data.source_feeds)+' FEEDS';
  get('errors').textContent=fmt(data.source_errors)+' ERRORS';
  get('latency').textContent=fmt(data.avg_latency_ms||0)+'ms';updatePublisher(data.publishing);
  var protos=data.alive_protocols||{},max=Math.max(1,...Object.values(protos));
@@ -296,6 +343,60 @@ async function poll(){
  }catch(e){get('on').classList.add('offline');get('onlabel').textContent='RECONNECTING';get('updated').textContent='RECONNECTING…'}
  finally{requestInFlight=false}
 }
+
+// Terminal is fed exclusively by signed, successful server-side validation
+// outcomes. Never render fabricated proxy addresses or Gold statuses.
+var termCursor=0,termPaused=false,termBusy=false,termInitialized=false;
+var termRows=get('term-list');
+function termEvent(ev,animate){
+ if(!ev||!['verified','lost'].includes(ev.kind)||!ev.address||!ev.protocol)return;
+ var row=document.createElement('div');
+ var isGold=ev.kind==='verified'&&ev.gold===true;
+ row.className='term-row'+(isGold?' gold':'')+(ev.kind==='lost'?' lost':'')+(animate?' enter':'')+(animate&&ev.newly_gold===true&&isGold?' burst':'');
+ var checked=new Date(ev.time||Date.now());
+ var time=checked.toLocaleTimeString([],{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+ var entries=[
+  ['term-time',time],['term-addr',String(ev.address)],
+  ['term-protocol',String(ev.protocol).toUpperCase()],
+  ['term-lat',typeof ev.latency_ms==='number'?fmt(ev.latency_ms)+'ms':'—'],
+  ['term-score',typeof ev.score==='number'?ev.score.toFixed(1):'—'],
+  ['term-status',ev.kind==='lost'?'− LOST':isGold?'✦ GOLD':'● ALIVE']
+ ];
+ entries.forEach(function(pair){var sp=document.createElement('span');sp.className=pair[0];sp.textContent=pair[1];if(pair[0]==='term-addr'){sp.title='Click to copy '+pair[1];sp.addEventListener('click',function(){if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(pair[1]).catch(function(){})})}row.append(sp)});
+ if(ev.newly_gold===true&&isGold&&!reduced)row.title='Newly qualified Gold proxy';
+ termRows.prepend(row);
+ while(termRows.children.length>5)termRows.lastElementChild.remove();
+}
+async function termPoll(){
+ if(termBusy||termPaused||document.hidden)return;
+ termBusy=true;
+ try{
+  var ctrl=new AbortController(), timeout=setTimeout(function(){ctrl.abort()},4300);
+  var response=await fetch('/api/events?after='+encodeURIComponent(termCursor)+'&limit=12',{cache:'no-store',signal:ctrl.signal});
+  clearTimeout(timeout);
+  if(!response.ok)throw Error('Event API '+response.status);
+  var data=await response.json(),items=Array.isArray(data.events)?data.events:[];
+  if(Number.isFinite(data.cursor)&&data.cursor<termCursor){
+    termCursor=0;termInitialized=false;termRows.replaceChildren();
+  }
+  if(!termInitialized&&items.length){termRows.replaceChildren();termInitialized=true}
+  // Server returns ascending IDs; prepend in ascending order for newest-first display.
+  items.forEach(function(ev){if(ev.id>termCursor){termEvent(ev,termInitialized)}});
+  if(Number.isFinite(data.cursor))termCursor=Math.max(termCursor,data.cursor);
+  get('term-live').classList.remove('off');
+  get('term-live').textContent='STREAMING';
+ }catch(e){get('term-live').classList.add('off');get('term-live').textContent='RECONNECTING'}
+ finally{termBusy=false}
+}
+get('term-pause').addEventListener('click',function(){
+ termPaused=!termPaused;this.textContent=termPaused?'RESUME':'PAUSE';
+ this.setAttribute('aria-pressed',String(termPaused));get('term-live').textContent=termPaused?'PAUSED':'STREAMING';
+});
+get('term-clear').addEventListener('click',function(){
+ termRows.replaceChildren();termInitialized=false;
+ var placeholder=document.createElement('div');placeholder.className='term-empty';placeholder.textContent='Waiting for the next validation...';termRows.append(placeholder);
+});
+termPoll();setInterval(termPoll,2200);
 poll();setTimeout(hydrate,800);setInterval(poll,5000);
 document.addEventListener('visibilitychange',function(){if(!document.hidden){poll();hydrate()}});
 })();
