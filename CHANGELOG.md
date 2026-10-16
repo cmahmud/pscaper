@@ -1,3 +1,7 @@
+## October 2026 — API release smoke checks
+
+- Added a repeatable read-only API compatibility, pagination and status test.
+
 ## October 2026 — v1.4.2 initial state and responsive dashboard
 
 - Initialize source-status inventory from all configured feeds, preserving

@@ -70,6 +70,8 @@ separate telemetry, stream and bulk proxy groups, returns HTTP 429 on limits,
 and compresses JSON/text. Other VPS sites and management API restrictions
 are unchanged. Cloudflare's versioned CIDR list needs periodic review.
 
+For release checks run `python3 scripts/smoke-api-v2.py`. It verifies pagination, ETags, compatibility, public health and route access.
+
 The previous executable, dashboard and website-specific Nginx config were
 saved under `recovery/api-v2-20261016/` (untracked). To revert the full
 change on the VPS, run `./scripts/rollback-api-v2.sh`. To restore only
