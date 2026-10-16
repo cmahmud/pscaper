@@ -3,12 +3,15 @@ package app
 import (
 	"compress/gzip"
 	"context"
+	"encoding/json"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -370,8 +373,16 @@ func TestAdaptiveFeedYieldScoring(t *testing.T) {
 	e.sourceMu.RLock()
 	got := e.sources[0]
 	e.sourceMu.RUnlock()
-	if got.Fetches != 2 || got.YieldPct <= 10 || got.YieldPct >= 45 {
-		t.Fatalf("invalid rolling source effectiveness %+v", got)
+	if got.Fetches != 2 || got.NovelSeen != 30 || got.NovelConfirmed != 0 || got.VerifiedYieldPct != 0 {
+		t.Fatalf("novelty must not be mistaken for verified quality: %+v", got)
+	}
+	e.creditNewVerifiedSource("high")
+	e.creditNewVerifiedSource("high")
+	e.sourceMu.RLock()
+	got = e.sources[0]
+	e.sourceMu.RUnlock()
+	if got.NovelConfirmed != 2 || got.VerifiedYieldPct < 6 || got.VerifiedYieldPct > 7 {
+		t.Fatalf("new verified proxy attribution failed: %+v", got)
 	}
 }
 
@@ -453,5 +464,255 @@ func TestProxyEventBufferCursorAndGoldTransitions(t *testing.T) {
 	reset, last := restarted.Since(999, 3)
 	if len(reset) != 1 || last != 1 {
 		t.Fatalf("restarting server must recover from stale cursor: %+v", reset)
+	}
+}
+
+func TestPriorityQueuePreservesRechecksWithDiscoveryBacklog(t *testing.T) {
+	e := &Engine{
+		queue: make(chan string, 2), urgent: make(chan string, 2),
+		scheduled: make(map[string]struct{}),
+	}
+	if !e.enqueue("bulk-a") || !e.enqueue("bulk-b") {
+		t.Fatal("could not stage discovery backlog")
+	}
+	if e.enqueue("bulk-c") {
+		t.Fatal("overflowing discovery queue should fail")
+	}
+	if !e.enqueuePriority("known-working", true) {
+		t.Fatal("live recheck blocked by discovery backlog")
+	}
+	if got := <-e.urgent; got != "known-working" {
+		t.Fatalf("wrong priority entry: %s", got)
+	}
+	if e.scheduledCount() != 3 {
+		t.Fatal("queue dedup map corrupted")
+	}
+}
+
+func TestRetryableValidationFailurePolicy(t *testing.T) {
+	for _, v := range []string{
+		"context deadline exceeded", "dial tcp: i/o timeout", "connection reset by peer",
+		"connection refused", "EOF",
+	} {
+		if !retryableValidationFailure(v) {
+			t.Fatalf("transient rejection not retried: %s", v)
+		}
+	}
+	for _, v := range []string{
+		"unauthenticated probe response", "invalid probe signature", "unsupported protocol",
+	} {
+		if retryableValidationFailure(v) {
+			t.Fatalf("unsafe authentication failure retried: %s", v)
+		}
+	}
+}
+
+func TestNovelOriginPersistsAndRecoveredFeedGetsNoFalseNovelty(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "pool.json.gz")
+	st, err := OpenStore(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c := Candidate{Host: "8.8.8.8", Port: 8080, Protocol: "http", Source: "new-feed"}
+	fresh, p := st.UpsertCandidate(c, time.Now())
+	if !fresh || p.OriginSource != "new-feed" {
+		t.Fatalf("incorrect novel source %+v", p)
+	}
+	st.UpsertCandidate(Candidate{Host: "8.8.8.8", Port: 8080, Protocol: "http", Source: "mirror"}, time.Now())
+	got, _ := st.Get(p.Key)
+	if got.OriginSource != "new-feed" {
+		t.Fatal("mirror incorrectly claimed original discovery")
+	}
+	if err = st.Close(); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := OpenStore(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer loaded.Close()
+	again, ok := loaded.Get(p.Key)
+	if !ok || again.OriginSource != "new-feed" {
+		t.Fatalf("source attribution lost across restart: %+v", again)
+	}
+}
+
+func TestConfirmedRetryPreservesPreviouslyAliveProxy(t *testing.T) {
+	var attempts atomic.Int64
+	secret := "unit-test-signing-key-more-than-32-characters"
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if attempts.Add(1) == 1 {
+			http.Error(w, "temporary upstream failure", http.StatusServiceUnavailable)
+			return
+		}
+		nonce := r.URL.Query().Get("nonce")
+		payload, _ := json.Marshal(map[string]any{
+			"ok": true, "ip": "8.8.4.4", "signature": probeSignature(secret, nonce, "8.8.4.4"),
+		})
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write(payload)
+	}))
+	defer srv.Close()
+	host, portStr, _ := net.SplitHostPort(strings.TrimPrefix(srv.URL, "http://"))
+	port, _ := strconv.Atoi(portStr)
+	cfg := Config{Timeout: 2 * time.Second, ProbeHost: "127.0.0.1",
+		ProbeHTTPPort: 8787, ProbeSigningKey: secret, ProbeToken: "test"}
+	engine := &Engine{cfg: cfg, validator: NewValidator(cfg)}
+	p := ProxyRecord{Alive: true, Host: host, Port: port, Protocol: "http"}
+	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+	defer cancel()
+	result, count, confirmed := engine.validateWithConfirmation(ctx, p)
+	if !result.OK || count != 2 || !confirmed || attempts.Load() != 2 {
+		t.Fatalf("transient failure should be recovered: %+v count=%d confirmed=%t attempts=%d",
+			result, count, confirmed, attempts.Load())
+	}
+	if engine.confirming.Load() != 0 {
+		t.Fatal("in-progress suspect counter leaked")
+	}
+}
+
+func TestUnsignedProbeDoesNotReceiveConfirmationRetry(t *testing.T) {
+	var attempts atomic.Int64
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		attempts.Add(1)
+		_, _ = w.Write([]byte(`{"ok":true,"ip":"8.8.4.4","signature":"abcd"}`))
+	}))
+	defer srv.Close()
+	host, portStr, _ := net.SplitHostPort(strings.TrimPrefix(srv.URL, "http://"))
+	port, _ := strconv.Atoi(portStr)
+	cfg := Config{Timeout: 2 * time.Second, ProbeHost: "127.0.0.1",
+		ProbeHTTPPort: 8787, ProbeSigningKey: "unit-test-signing-key-more-than-32-characters", ProbeToken: "test"}
+	e := &Engine{cfg: cfg, validator: NewValidator(cfg)}
+	result, n, confirmed := e.validateWithConfirmation(context.Background(),
+		ProxyRecord{Alive: true, Host: host, Port: port, Protocol: "http"})
+	if result.OK || n != 1 || confirmed || attempts.Load() != 1 {
+		t.Fatalf("invalid signature must not be retried: %+v %d %t", result, n, confirmed)
+	}
+}
+
+func TestHarvestNovelCountersNotInflatedByMirror(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("8.8.8.8:8080\n1.1.1.1:3128\n"))
+	}))
+	defer srv.Close()
+	temp := t.TempDir()
+	sources := []Source{
+		{Name: "feed-a", URL: srv.URL, Protocol: "http"},
+		{Name: "feed-b", URL: srv.URL, Protocol: "http"},
+	}
+	data, _ := json.Marshal(sources)
+	path := filepath.Join(temp, "sources.json")
+	if err := os.WriteFile(path, data, 0600); err != nil {
+		t.Fatal(err)
+	}
+	store, err := OpenStore(filepath.Join(temp, "state.json.gz"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	cfg := Config{SourcesFile: path, SourceConcurrency: 2, QueueSize: 10, Workers: 2,
+		DeadRecheck: time.Hour, AliveRecheck: time.Minute}
+	e := &Engine{cfg: cfg, store: store, queue: make(chan string, 10), urgent: make(chan string, 4),
+		scheduled: make(map[string]struct{}), sourceLastFetch: make(map[string]time.Time)}
+	summary, err := e.harvestOnce(context.Background(), false)
+	if err != nil || summary.New != 2 {
+		t.Fatalf("unexpected harvest %+v %v", summary, err)
+	}
+	e.sourceMu.RLock()
+	defer e.sourceMu.RUnlock()
+	totalNovel := 0
+	for _, st := range e.sources {
+		if st.Unique != 2 {
+			t.Fatalf("source got wrong unique sample count: %+v", st)
+		}
+		totalNovel += st.NewCandidates
+	}
+	if totalNovel != 2 {
+		t.Fatalf("mirror inflated actual novel discoveries: %d", totalNovel)
+	}
+}
+
+func TestContinuousHarvestDoesNotWaitForBackloggedValidation(t *testing.T) {
+	temp := t.TempDir()
+	src := filepath.Join(temp, "empty_sources.json")
+	if err := os.WriteFile(src, []byte("[]"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	store, err := OpenStore(filepath.Join(temp, "db.json.gz"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	cfg := Config{SourcesFile: src, HarvestInterval: time.Hour, QueueSize: 4, Workers: 2}
+	e := &Engine{
+		cfg: cfg, store: store, queue: make(chan string, 4), urgent: make(chan string, 4),
+		scheduled:       map[string]struct{}{"never-drained": {}},
+		sourceLastFetch: make(map[string]time.Time), cycleKick: make(chan struct{}, 1),
+	}
+	e.queue <- "never-drained" // deliberate backlog with no workers
+	e.cyclePhase.Store("starting")
+	ctx, cancel := context.WithCancel(context.Background())
+	finished := make(chan struct{})
+	go func() { defer close(finished); e.continuousLoop(ctx) }()
+	deadline := time.After(2 * time.Second)
+	for e.cycles.Load() == 0 {
+		select {
+		case <-deadline:
+			cancel()
+			<-finished
+			t.Fatal("harvest cycle blocked by validation backlog")
+		case <-time.After(5 * time.Millisecond):
+		}
+	}
+	if e.scheduledCount() != 1 {
+		t.Fatal("test backlog drained unexpectedly")
+	}
+	cancel()
+	select {
+	case <-finished:
+	case <-time.After(time.Second):
+		t.Fatal("harvest did not shut down")
+	}
+}
+
+func TestPersistedOriginEffectivenessSurvivesNewEngine(t *testing.T) {
+	tmp := t.TempDir()
+	store, err := OpenStore(filepath.Join(tmp, "db.json.gz"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now()
+	first, p := store.UpsertCandidate(Candidate{Host: "8.8.4.4", Port: 8080, Protocol: "http", Source: "first-feed"}, now)
+	if !first {
+		t.Fatal("missing first candidate")
+	}
+	_, _ = store.UpsertCandidate(Candidate{Host: "1.1.1.1", Port: 80, Protocol: "http", Source: "first-feed"}, now)
+	if err := store.ApplyValidation(p.Key, true, time.Millisecond, "8.8.4.4", "", now, 80); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Close(); err != nil {
+		t.Fatal(err)
+	}
+	restored, err := OpenStore(filepath.Join(tmp, "db.json.gz"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer restored.Close()
+	cfg := Config{Workers: 2, QueueSize: 4, ExportDir: filepath.Join(tmp, "exports")}
+	e := NewEngine(cfg, restored)
+	e.sourceMu.RLock()
+	defer e.sourceMu.RUnlock()
+	var found bool
+	for _, src := range e.sources {
+		if src.Name == "first-feed" {
+			found = true
+			if src.NovelSeen != 2 || src.NovelConfirmed != 1 || src.VerifiedYieldPct != 50 {
+				t.Fatalf("restarted source-quality attribution incorrect: %+v", src)
+			}
+		}
+	}
+	if !found {
+		t.Fatal("source quality not restored")
 	}
 }

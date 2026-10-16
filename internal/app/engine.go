@@ -27,7 +27,8 @@ type Engine struct {
 	store     *Store
 	validator *Validator
 	events    *EventBuffer
-	queue     chan string
+	queue     chan string // discovery and routine dead-proxy checks
+	urgent    chan string // rechecks of proven-live proxies
 	startedAt time.Time
 	cycleKick chan struct{}
 
@@ -43,6 +44,9 @@ type Engine struct {
 	cycles                    atomic.Int64
 	successes                 atomic.Int64
 	failures                  atomic.Int64
+	confirming                atomic.Int64
+	transientRecoveries       atomic.Int64
+	confirmedLosses           atomic.Int64
 	newlyAlive                atomic.Int64
 	lostAlive                 atomic.Int64
 	newlyDiscovered           atomic.Int64
@@ -69,10 +73,35 @@ func NewEngine(cfg Config, store *Store) *Engine {
 		validator:       NewValidator(cfg),
 		events:          NewEventBuffer(512),
 		queue:           make(chan string, cfg.QueueSize),
+		urgent:          make(chan string, max(cfg.Workers*8, cfg.QueueSize/4)),
 		startedAt:       time.Now(),
 		cycleKick:       make(chan struct{}, 1),
 		scheduled:       make(map[string]struct{}),
 		sourceLastFetch: make(map[string]time.Time),
+	}
+	// Rebuild persisted source effectiveness from true initial-source
+	// attribution. Restarts must not erase hard-earned validation evidence.
+	origins := make(map[string]*SourceStatus)
+	for _, p := range store.Snapshot() {
+		name := p.OriginSource
+		if name == "" || name == "history" {
+			continue
+		}
+		q := origins[name]
+		if q == nil {
+			q = &SourceStatus{Name: name}
+			origins[name] = q
+		}
+		q.NovelSeen++
+		if p.EverAlive {
+			q.NovelConfirmed++
+		}
+	}
+	for _, q := range origins {
+		if q.NovelSeen > 0 {
+			q.VerifiedYieldPct = 100 * float64(q.NovelConfirmed) / float64(q.NovelSeen)
+		}
+		e.sources = append(e.sources, *q)
 	}
 	e.gitStatus.Store("idle")
 	e.cyclePhase.Store("starting")
@@ -95,13 +124,28 @@ func (e *Engine) Run(ctx context.Context) error {
 		}
 	}()
 
+	// Validation no longer blocks harvesting or export. The source fetch
+	// loop is serialized; export uses its own lock and 30s ticker.
+	go e.exportLoop(ctx)
+	go func() {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(4 * time.Second):
+			if err := e.ExportAndPush(ctx); err != nil {
+				log.Printf("initial export: %v", err)
+			}
+		}
+	}()
 	if e.cfg.Continuous {
 		go e.continuousLoop(ctx)
 	} else {
 		go e.harvestLoop(ctx)
-		go e.exportLoop(ctx)
-		go func() { _ = e.Harvest(ctx) }()
-		go func() { time.Sleep(4 * time.Second); _ = e.ExportAndPush(ctx) }()
+		go func() {
+			if err := e.Harvest(ctx); err != nil {
+				log.Printf("initial harvest: %v", err)
+			}
+		}()
 	}
 
 	<-ctx.Done()
@@ -110,52 +154,132 @@ func (e *Engine) Run(ctx context.Context) error {
 }
 
 func (e *Engine) worker(ctx context.Context) {
+	urgentStreak := 0
 	for {
-		select {
-		case <-ctx.Done():
-			return
-		case key := <-e.queue:
-			p, ok := e.store.Get(key)
-			if !ok {
-				e.unschedule(key)
-				continue
+		// Three priority checks followed by a discovery check, if available.
+		// Preserve capacity for discovery without allowing bulk feeds to starve
+		// rechecks of known-live proxies.
+		var key string
+		var got bool
+		if urgentStreak >= 3 {
+			select {
+			case key = <-e.queue:
+				got = true
+				urgentStreak = 0
+			default:
 			}
-			e.inFlight.Add(1)
-			vctx, cancel := context.WithTimeout(ctx, e.cfg.Timeout+2*time.Second)
-			res := e.validator.Validate(vctx, p)
-			cancel()
-			now := time.Now()
+		}
+		if !got && urgentStreak < 3 {
+			select {
+			case key = <-e.urgent:
+				got = true
+				urgentStreak++
+			default:
+			}
+		}
+		if !got {
+			select {
+			case <-ctx.Done():
+				return
+			case key = <-e.urgent:
+				urgentStreak++
+			case key = <-e.queue:
+				urgentStreak = 0
+			}
+		}
+		if ctx.Err() != nil {
+			return
+		}
+		p, ok := e.store.Get(key)
+		if !ok {
+			e.unschedule(key)
+			continue
+		}
+		e.inFlight.Add(1)
+		res, attempts, confirmed := e.validateWithConfirmation(ctx, p)
+		now := time.Now()
+		if res.OK {
+			e.successes.Add(1)
+		} else {
+			e.failures.Add(1)
+		}
+		// The initial failed attempt is real network work, even if the
+		// confirming attempt recovers. Counters represent attempts.
+		if attempts > 1 {
 			if res.OK {
-				e.successes.Add(1)
-				if !p.Alive {
-					e.newlyAlive.Add(1)
-				}
+				e.failures.Add(1)
+				e.transientRecoveries.Add(1)
 			} else {
 				e.failures.Add(1)
-				if p.Alive {
-					e.lostAlive.Add(1)
-				}
 			}
-			if err := e.store.ApplyValidation(key, res.OK, res.Latency, res.ExitIP, res.Error, now, e.cfg.GoldScore); err == nil {
-				if updated, found := e.store.Get(key); found {
-					if res.OK {
-						currentGold := updated.Gold(e.cfg.GoldScore)
-						e.events.Add(ProxyEvent{Time: now.UTC(), Address: updated.Address(),
-							Protocol: updated.Protocol, Score: updated.Score, LatencyMS: updated.LatencyMS,
-							Kind: "verified", Gold: currentGold, NewlyGold: currentGold && !p.Gold(e.cfg.GoldScore)})
-					} else if p.Alive {
-						e.events.Add(ProxyEvent{Time: now.UTC(), Address: updated.Address(),
-							Protocol: updated.Protocol, Score: updated.Score, LatencyMS: updated.LatencyMS, Kind: "lost"})
-					}
-				}
-			}
-			e.inFlight.Add(-1)
-			e.unschedule(key)
 		}
+		if err := e.store.ApplyValidation(key, res.OK, res.Latency, res.ExitIP, res.Error, now, e.cfg.GoldScore); err == nil {
+			if updated, found := e.store.Get(key); found {
+				if res.OK {
+					if !p.EverAlive {
+						e.creditNewVerifiedSource(p.OriginSource)
+					}
+					if !p.Alive {
+						e.newlyAlive.Add(1)
+					}
+					gold := updated.Gold(e.cfg.GoldScore)
+					e.events.Add(ProxyEvent{Time: now.UTC(), Address: updated.Address(),
+						Protocol: updated.Protocol, Score: updated.Score, LatencyMS: updated.LatencyMS,
+						Kind: "verified", Gold: gold, NewlyGold: gold && !p.Gold(e.cfg.GoldScore)})
+				} else if p.Alive {
+					e.lostAlive.Add(1)
+					if confirmed {
+						e.confirmedLosses.Add(1)
+					}
+					e.events.Add(ProxyEvent{Time: now.UTC(), Address: updated.Address(),
+						Protocol: updated.Protocol, Score: updated.Score, LatencyMS: updated.LatencyMS, Kind: "lost"})
+				}
+			}
+		}
+		e.inFlight.Add(-1)
+		e.unschedule(key)
 	}
 }
 
-func (e *Engine) enqueue(key string) bool {
+// Only recheck previously verified Alive endpoints. An isolated network
+// timeout must not immediately demote a proxy, but no unverified endpoint
+// becomes Alive and a twice-failed proxy is removed normally.
+func (e *Engine) validateWithConfirmation(ctx context.Context, p ProxyRecord) (ValidationResult, int, bool) {
+	vctx, cancel := context.WithTimeout(ctx, e.cfg.Timeout+2*time.Second)
+	first := e.validator.Validate(vctx, p)
+	cancel()
+	if first.OK || !p.Alive || ctx.Err() != nil || !retryableValidationFailure(first.Error) {
+		return first, 1, false
+	}
+	e.confirming.Add(1)
+	defer e.confirming.Add(-1)
+	// Small bounded gap avoids reusing the same transient congestion burst.
+	select {
+	case <-ctx.Done():
+		return first, 1, false
+	case <-time.After(400 * time.Millisecond):
+	}
+	retryCfg := e.cfg
+	if retryCfg.Timeout < 8*time.Second {
+		retryCfg.Timeout = 8 * time.Second
+	}
+	confirmCtx, confirmCancel := context.WithTimeout(ctx, retryCfg.Timeout+2*time.Second)
+	second := NewValidator(retryCfg).Validate(confirmCtx, p)
+	confirmCancel()
+	return second, 2, true
+}
+func retryableValidationFailure(message string) bool {
+	msg := strings.ToLower(message)
+	if strings.Contains(msg, "unauthenticated") || strings.Contains(msg, "invalid probe") ||
+		strings.Contains(msg, "unsupported protocol") || strings.Contains(msg, "invalid challenge") {
+		return false
+	}
+	return true
+}
+
+func (e *Engine) enqueue(key string) bool { return e.enqueuePriority(key, false) }
+
+func (e *Engine) enqueuePriority(key string, priority bool) bool {
 	e.schedMu.Lock()
 	if _, ok := e.scheduled[key]; ok {
 		e.schedMu.Unlock()
@@ -163,8 +287,12 @@ func (e *Engine) enqueue(key string) bool {
 	}
 	e.scheduled[key] = struct{}{}
 	e.schedMu.Unlock()
+	target := e.queue
+	if priority && e.urgent != nil {
+		target = e.urgent
+	}
 	select {
-	case e.queue <- key:
+	case target <- key:
 		return true
 	default:
 		e.unschedule(key)
@@ -226,11 +354,13 @@ func (e *Engine) harvestOnce(ctx context.Context, force bool) (HarvestSummary, e
 	e.sourceFetchMu.Lock()
 	for _, src := range sources {
 		interval := src.RefreshInterval()
-		if h, ok := historical[src.Name]; ok && h.Fetches >= 3 {
-			if h.YieldPct >= 20 && interval > 6*time.Minute {
+		// Prefer feeds proven to discover new proxies that subsequently pass
+		// signed validation. Mere address volume and shared live proxies do
+		// not qualify as evidence of source effectiveness.
+		if h, ok := historical[src.Name]; ok && h.Fetches >= 3 && h.NovelSeen >= 150 {
+			if h.VerifiedYieldPct >= 0.8 && interval > 10*time.Minute {
 				interval = interval / 2
-			}
-			if h.YieldPct < 1 && interval < 2*time.Hour {
+			} else if h.VerifiedYieldPct < 0.05 && interval < 4*time.Hour {
 				interval = interval * 2
 			}
 		}
@@ -243,20 +373,37 @@ func (e *Engine) harvestOnce(ctx context.Context, force bool) (HarvestSummary, e
 	e.sourceFetchMu.Unlock()
 	results, statuses := HarvestSources(ctx, due, e.cfg.SourceConcurrency)
 	summary := HarvestSummary{Sources: len(due)}
-	for _, cands := range results {
+	newBySource := make(map[string]int)
+	names := make([]string, 0, len(results))
+	for name := range results {
+		names = append(names, name)
+	}
+	sort.Strings(names) // deterministic initial source attribution, no map luck
+	for _, name := range names {
+		cands := results[name]
 		summary.Fetched += len(cands)
 		for _, c := range cands {
 			isNew, rec := e.store.UpsertCandidate(c, now)
 			if isNew {
 				summary.New++
+				newBySource[name]++
 				e.newlyDiscovered.Add(1)
 			}
 			if isNew || e.shouldQueue(rec, now) {
-				if e.enqueue(rec.Key) {
-					summary.Queued++
+				if rec.Alive {
+					if e.enqueuePriority(rec.Key, true) {
+						summary.Queued++
+					}
+				} else if len(e.queue) < cap(e.queue)/2 {
+					if e.enqueue(rec.Key) {
+						summary.Queued++
+					}
 				}
 			}
 		}
+	}
+	for i := range statuses {
+		statuses[i].NewCandidates = newBySource[statuses[i].Name]
 	}
 	e.mergeSourceStatuses(statuses)
 	e.harvests.Add(1)
@@ -279,22 +426,14 @@ func (e *Engine) mergeSourceStatuses(statuses []SourceStatus) {
 	}
 	for _, st := range statuses {
 		old, seen := byName[st.Name]
-		if seen {
-			st.Fetches = old.Fetches + 1
-		} else {
+		st.Fetches = old.Fetches + 1
+		if !seen {
 			st.Fetches = 1
 		}
-		raw := 0.0
-		if st.Unique > 0 {
-			raw = 100 * float64(st.NewCandidates+st.KnownAlive) / float64(st.Unique)
-			if raw > 100 {
-				raw = 100
-			}
-		}
-		if seen {
-			st.YieldPct = .7*old.YieldPct + .3*raw
-		} else {
-			st.YieldPct = raw
+		st.NovelSeen = old.NovelSeen + int64(st.NewCandidates)
+		st.NovelConfirmed = old.NovelConfirmed
+		if st.NovelSeen > 0 {
+			st.VerifiedYieldPct = 100 * float64(st.NovelConfirmed) / float64(st.NovelSeen)
 		}
 		byName[st.Name] = st
 	}
@@ -302,6 +441,26 @@ func (e *Engine) mergeSourceStatuses(statuses []SourceStatus) {
 	for _, st := range byName {
 		e.sources = append(e.sources, st)
 	}
+}
+
+func (e *Engine) creditNewVerifiedSource(source string) {
+	if source == "" || source == "history" {
+		return
+	}
+	e.sourceMu.Lock()
+	defer e.sourceMu.Unlock()
+	for i := range e.sources {
+		st := &e.sources[i]
+		if st.Name == source {
+			st.NovelConfirmed++
+			if st.NovelSeen > 0 {
+				st.VerifiedYieldPct = 100 * float64(st.NovelConfirmed) / float64(st.NovelSeen)
+			}
+			return
+		}
+	}
+	// Checks can finish before the initial harvest status merge.
+	e.sources = append(e.sources, SourceStatus{Name: source, NovelConfirmed: 1})
 }
 
 func (e *Engine) Harvest(ctx context.Context) error {
@@ -321,62 +480,33 @@ func (e *Engine) KickCycle() {
 	}
 }
 
+// continuousLoop fetches on a configured cadence irrespective of validation
+// queue depth. The former waitForDrain design could stall fresh data for
+// many minutes while tens of thousands of dead candidates were checked.
 func (e *Engine) continuousLoop(ctx context.Context) {
-	backoff := time.Duration(0)
+	interval := e.cfg.HarvestInterval
+	if interval < time.Minute {
+		interval = time.Minute
+	}
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
 	for {
-		select {
-		case <-ctx.Done():
+		if ctx.Err() != nil {
 			return
-		default:
 		}
-
 		e.cyclePhase.Store("harvesting")
-		force := e.forceHarvest.Swap(false)
-		summary, err := e.harvestOnce(ctx, force)
+		_, err := e.harvestOnce(ctx, e.forceHarvest.Swap(false))
 		if err != nil {
 			log.Printf("harvest: %v", err)
 		}
-
 		e.cyclePhase.Store("validating")
-		if err := e.waitForDrain(ctx); err != nil {
-			return
-		}
-
-		e.cyclePhase.Store("exporting")
-		if err := e.ExportAndPush(ctx); err != nil {
-			log.Printf("export: %v", err)
-		}
 		e.cycles.Add(1)
 		e.lastCycleEnd.Store(time.Now().Unix())
-
-		// If the last harvest produced work, start the next harvest immediately.
-		// A no-work cycle backs off briefly so unchanged public feeds are not hammered
-		// in a zero-benefit tight loop. H/KickCycle bypasses that backoff.
-		if err == nil && (summary.New > 0 || summary.Queued > 0) {
-			backoff = 0
-			e.cyclePhase.Store("cycling")
-			continue
-		}
-		if backoff == 0 {
-			backoff = e.cfg.CycleBackoffMin
-		} else {
-			backoff *= 2
-			if backoff > e.cfg.CycleBackoffMax {
-				backoff = e.cfg.CycleBackoffMax
-			}
-		}
-		e.cyclePhase.Store("idle-backoff")
-		t := time.NewTimer(backoff)
 		select {
 		case <-ctx.Done():
-			t.Stop()
 			return
+		case <-ticker.C:
 		case <-e.cycleKick:
-			if !t.Stop() {
-				<-t.C
-			}
-			backoff = 0
-		case <-t.C:
 		}
 	}
 }
@@ -412,44 +542,76 @@ func (e *Engine) harvestLoop(ctx context.Context) {
 }
 
 func (e *Engine) recheckLoop(ctx context.Context) {
-	t := time.NewTicker(time.Minute)
+	t := time.NewTicker(2 * time.Minute)
 	defer t.Stop()
+	sweep := func() {
+		now := time.Now()
+		records := e.store.Snapshot()
+		alive := make([]ProxyRecord, 0, 4096)
+		untested := make([]ProxyRecord, 0, e.cfg.Workers*10)
+		dead := make([]ProxyRecord, 0, e.cfg.Workers*2)
+		for _, p := range records {
+			if !e.shouldQueue(p, now) {
+				continue
+			}
+			switch {
+			case p.Alive:
+				alive = append(alive, p)
+			case p.LastChecked.IsZero():
+				if len(untested) < e.cfg.Workers*10 {
+					untested = append(untested, p)
+				}
+			default:
+				if len(dead) < e.cfg.Workers*2 {
+					dead = append(dead, p)
+				}
+			}
+		}
+		// Urgent rechecks ordered oldest-first so arbitrary map iteration
+		// cannot perpetually postpone some healthy endpoints.
+		sort.Slice(alive, func(i, j int) bool { return alive[i].LastChecked.Before(alive[j].LastChecked) })
+		for _, p := range alive {
+			if ctx.Err() != nil {
+				return
+			}
+			if len(e.urgent) >= cap(e.urgent) {
+				break
+			}
+			e.enqueuePriority(p.Key, true)
+		}
+		// Limit one sweep's admissions; newly discovered records get first
+		// chance, with a small dead-proxy exploration budget behind them.
+		sort.Slice(untested, func(i, j int) bool { return untested[i].FirstSeen.After(untested[j].FirstSeen) })
+		maxNew := e.cfg.Workers * 10
+		if maxNew > len(untested) {
+			maxNew = len(untested)
+		}
+		for i := 0; i < maxNew; i++ {
+			if ctx.Err() != nil || len(e.queue) >= cap(e.queue)/2 {
+				break
+			}
+			e.enqueue(untested[i].Key)
+		}
+		maxDead := e.cfg.Workers * 2
+		if maxDead > len(dead) {
+			maxDead = len(dead)
+		}
+		// Pick overdue dead endpoints by oldest last check to avoid repeats.
+		sort.Slice(dead, func(i, j int) bool { return dead[i].LastChecked.Before(dead[j].LastChecked) })
+		for i := 0; i < maxDead; i++ {
+			if ctx.Err() != nil || len(e.queue) >= cap(e.queue)/2 {
+				break
+			}
+			e.enqueue(dead[i].Key)
+		}
+	}
+	// Do not fill 15,000 slots before any first-harvest data can flow.
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-t.C:
-			now := time.Now()
-			records := e.store.Snapshot()
-			alive := make([]string, 0, 4096)
-			untested := make([]string, 0, 4096)
-			dead := make([]string, 0, 8192)
-			for _, p := range records {
-				if !e.shouldQueue(p, now) {
-					continue
-				}
-				switch {
-				case p.Alive:
-					alive = append(alive, p.Key)
-				case p.LastChecked.IsZero():
-					untested = append(untested, p.Key)
-				default:
-					dead = append(dead, p.Key)
-				}
-			}
-			// Active proxy freshness first, then new candidates, then aged dead
-			// entries. Harvest still enqueues newly discovered addresses directly.
-			for _, list := range [][]string{alive, untested, dead} {
-				for _, key := range list {
-					if ctx.Err() != nil {
-						return
-					}
-					if len(e.queue) >= cap(e.queue) {
-						break
-					}
-					e.enqueue(key)
-				}
-			}
+			sweep()
 		}
 	}
 }
@@ -621,7 +783,12 @@ func (e *Engine) Stats() Stats {
 		Protocols:                 map[string]int{},
 		AliveProtocols:            map[string]int{},
 		GoldProtocols:             map[string]int{},
-		Queue:                     len(e.queue),
+		Queue:                     len(e.queue) + len(e.urgent),
+		UrgentQueue:               len(e.urgent),
+		DiscoveryQueue:            len(e.queue),
+		Confirming:                e.confirming.Load(),
+		TransientRecoveries:       e.transientRecoveries.Load(),
+		ConfirmedLosses:           e.confirmedLosses.Load(),
 		InFlight:                  e.inFlight.Load(),
 		Workers:                   e.cfg.Workers,
 		Harvests:                  e.harvests.Load(),
@@ -691,6 +858,9 @@ func (e *Engine) Stats() Stats {
 	for i := range st.SourceStatus {
 		key := st.SourceStatus[i].Name
 		st.SourceStatus[i].KnownAlive = sourceAlive[key]
+		if st.SourceStatus[i].NovelSeen > 0 {
+			st.SourceStatus[i].VerifiedYieldPct = 100 * float64(st.SourceStatus[i].NovelConfirmed) / float64(st.SourceStatus[i].NovelSeen)
+		}
 		if sourceSeen[key] > 0 {
 			st.SourceStatus[i].YieldPct = 100 * float64(sourceAlive[key]) / float64(sourceSeen[key])
 		}

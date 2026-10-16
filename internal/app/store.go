@@ -120,7 +120,7 @@ func (s *Store) UpsertCandidate(c Candidate, now time.Time) (bool, ProxyRecord) 
 		}
 		return false, *p
 	}
-	p := &ProxyRecord{Key: key, Host: c.Host, Port: c.Port, Protocol: c.Protocol, Sources: []string{c.Source}, FirstSeen: now, LastSeen: now}
+	p := &ProxyRecord{Key: key, Host: c.Host, Port: c.Port, Protocol: c.Protocol, Sources: []string{c.Source}, OriginSource: c.Source, FirstSeen: now, LastSeen: now}
 	s.records[key] = p
 	s.dirty[key] = struct{}{}
 	return true, *p

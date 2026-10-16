@@ -27,6 +27,7 @@ type ProxyRecord struct {
 	Port                int       `json:"port"`
 	Protocol            string    `json:"protocol"`
 	Sources             []string  `json:"sources"`
+	OriginSource        string    `json:"origin_source,omitempty"`
 	FirstSeen           time.Time `json:"first_seen"`
 	LastSeen            time.Time `json:"last_seen"`
 	LastChecked         time.Time `json:"last_checked"`
@@ -131,6 +132,11 @@ type Stats struct {
 	FreshAlive                int            `json:"fresh_alive"`
 	GoldProtocols             map[string]int `json:"gold_protocols"`
 	Queue                     int            `json:"queue"`
+	UrgentQueue               int            `json:"urgent_queue"`
+	DiscoveryQueue            int            `json:"discovery_queue"`
+	Confirming                int64          `json:"confirming"`
+	TransientRecoveries       int64          `json:"transient_recoveries"`
+	ConfirmedLosses           int64          `json:"confirmed_losses"`
 	InFlight                  int64          `json:"in_flight"`
 	Workers                   int            `json:"workers"`
 	Harvests                  int64          `json:"harvests"`
@@ -153,18 +159,21 @@ type Stats struct {
 }
 
 type SourceStatus struct {
-	Name           string    `json:"name"`
-	LastFetch      time.Time `json:"last_fetch"`
-	Found          int       `json:"found"`
-	Unique         int       `json:"unique"`
-	NewCandidates  int       `json:"new_candidates"`
-	KnownAlive     int       `json:"known_alive"`
-	Fetches        int       `json:"fetches,omitempty"`
-	YieldPct       float64   `json:"yield_pct,omitempty"`
-	Error          string    `json:"error,omitempty"`
-	DurationMS     int64     `json:"duration_ms"`
-	RefreshSeconds int       `json:"refresh_seconds,omitempty"`
-	NextFetch      time.Time `json:"next_fetch,omitempty"`
+	Name             string    `json:"name"`
+	LastFetch        time.Time `json:"last_fetch"`
+	Found            int       `json:"found"`
+	Unique           int       `json:"unique"`
+	NewCandidates    int       `json:"new_candidates"`
+	NovelSeen        int64     `json:"novel_seen,omitempty"`
+	NovelConfirmed   int64     `json:"novel_confirmed,omitempty"`
+	VerifiedYieldPct float64   `json:"verified_yield_pct,omitempty"`
+	KnownAlive       int       `json:"known_alive"`
+	Fetches          int       `json:"fetches,omitempty"`
+	YieldPct         float64   `json:"yield_pct,omitempty"`
+	Error            string    `json:"error,omitempty"`
+	DurationMS       int64     `json:"duration_ms"`
+	RefreshSeconds   int       `json:"refresh_seconds,omitempty"`
+	NextFetch        time.Time `json:"next_fetch,omitempty"`
 }
 
 func SortRecords(records []ProxyRecord) {

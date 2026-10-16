@@ -300,6 +300,70 @@ cycle; a restart is not required. Some feeds may later become unavailable,
 so continue to evaluate novel *working* proxies, error rates, overlap and
 validation throughput instead of optimizing the feed-count number alone.
 
+## October 16 scheduler and validation optimization
+
+The VPS baseline with 329 feeds (before this deployment): **2 Neoverse-N1
+vCPUs, 11 GiB RAM, ~23% average total VPS CPU attributable to pscaper**
+over the current process uptime, with short sample ~37% of both vCPUs,
+~1.4 GiB process memory, 3.55 GiB historical cgroup peak, and a
+~6,500–10,500 candidate backlog. This is a measurement, not a 24-hour
+performance guarantee.
+
+The engine now reserves an independent high-priority queue for checks of
+currently Alive proxies. Workers consume priority jobs preferentially but
+retain discovery capacity (up to three urgent jobs before trying discovery).
+Bulk harvests cannot fill more than half the discovery channel at once.
+Periodic recheck sweeps run every two minutes, limit dead/untested admission,
+and avoid sorting hundreds of thousands of dead records; urgent Alive checks
+are sorted oldest-first. Worker count remains 120 and the VPS's systemd
+CPU/memory caps remain unchanged.
+
+Previously Alive endpoints that fail a **retryable** verification are marked
+as being confirmed *in flight*, not immediately declared lost. A second,
+independent signed challenge runs after a brief delay, with an 8-second
+confirmation timeout. A successful confirmation preserves Alive/Gold,
+while two failed attempts remove Alive normally. An invalid signature is
+not retried. `/api/live` exposes `confirming`,
+`transient_recoveries`, `confirmed_losses`, `urgent_queue`, and
+`discovery_queue` to distinguish network fluctuations from actual losses.
+The existing signed challenge security policy remains unchanged.
+
+The current VPS runs with `PSCAPER_CONTINUOUS=false`, which already runs
+harvesting and exports on independent timers. The continuous-mode loop has
+also been changed to avoid waiting for the validation queue to drain.
+Harvesting occurs every configured `PSCAPER_HARVEST_INTERVAL` even with a
+large validation backlog. Exporting occurs independently every configured
+`PSCAPER_EXPORT_INTERVAL` (30 seconds on this VPS), keeping the GitHub
+data publisher supplied with fresh local lists. The old continuous-mode loop previously waited for all queued checks to
+finish before its next cycle, whereas this VPS's non-continuous mode already
+used separate timers. The updated logic makes both modes independent of
+validation drain.
+
+Source novelty is now attributable to an explicit persisted `origin_source`
+on *newly discovered* endpoints. Only a first successful signed validation
+raises a source's `novel_confirmed` count. `novel_seen` and
+`verified_yield_pct` represent genuine novelty and confirmation, rather
+than counting shared addresses submitted by many publishers. Source ranking
+and adaptive refresh use this evidence after a sufficient number of source
+observations. Metrics are reconstructed from the persisted proxy database
+after a restart; older records without an original-source field are not
+falsely attributed. Existing `known_alive` remains an association count,
+not a count of marginally contributed working proxies.
+
+Tests include real local signed proxy responses, automatic retry after a
+transient error, no retry of a forged signature, queue admission despite
+backlog, mirror-safe novelty attribution, source-quality persistence, and
+nonblocking continuous harvest. Run `go test ./...` and `go test -race ./...`.
+
+Before deployment, the previously working application binary and settings
+were preserved under `recovery/optimization-20261016/`. To restore the
+pre-upgrade engine only (website unchanged):
+
+```bash
+cd /home/ubuntu/pscaper
+./scripts/rollback-engine-optimization.sh
+```
+
 ## Source-quality workflow
 
 `python3 scripts/audit-sources.py` performs a bounded parallel download of the feed URLs and reports HTTP status plus parseable public IPv4/port samples under `recovery/feed-audit.json`. This is a **format and availability audit**, not a claim that the proxies are working. Only the app's callback validator determines the live pool. Data sources change or disappear; re-run the audit when pruning or expanding sources.

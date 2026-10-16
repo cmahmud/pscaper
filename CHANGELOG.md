@@ -1,3 +1,21 @@
+## October 2026 — validation throughput and quality optimization
+
+- Separate reserved high-priority queue for known-live proxy rechecks;
+  discovery jobs cannot crowd them out, and workers retain fairness.
+- Confirm transient failures with a second, longer signed challenge before
+  demoting a previously Alive proxy; do not retry forged signatures.
+- Bounded recheck-sweep memory, two-minute recheck scheduler, and an
+  explicit per-harvest discovery queue limit.
+- Fixed actual new-candidate attribution to source names and recorded
+  persistent origin-source evidence of first successful verification.
+- Adaptive feed priorities use verified novel proxy yield rather than
+  duplicated or merely parsed address counts.
+- Removed the validation-drain dependency in continuous mode. The VPS is
+  already configured with non-continuous mode, which uses independent
+  harvesting and 30-second local export timers; that setting is preserved.
+- Added priority/confirmation/freshness metrics and integration/race tests.
+- Preserved pre-optimization release and added a one-command engine rollback.
+
 ## October 2026 — source-load safety adjustment
 
 - The first 329-feed harvest discovered roughly 18,700 new candidates and

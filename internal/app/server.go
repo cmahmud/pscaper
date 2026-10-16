@@ -112,7 +112,10 @@ func StartAPIServer(ctx context.Context, addr string, e *Engine) error {
 			"gold": s.Gold, "checked": s.Checked, "ever_alive": s.EverAlive,
 			"ever_gold": s.EverGold, "alive_protocols": s.AliveProtocols,
 			"avg_latency_ms": s.AvgLatencyMS, "fresh_alive": s.FreshAlive,
-			"queue": s.Queue, "in_flight": s.InFlight, "workers": s.Workers,
+			"queue": s.Queue, "urgent_queue": s.UrgentQueue, "discovery_queue": s.DiscoveryQueue,
+			"confirming": s.Confirming, "transient_recoveries": s.TransientRecoveries,
+			"confirmed_losses": s.ConfirmedLosses,
+			"in_flight":        s.InFlight, "workers": s.Workers,
 			"source_feeds": s.SourceFeeds, "source_errors": s.SourceErrors,
 			"last_harvest": s.LastHarvest, "last_export": s.LastExport,
 			"harvests": s.Harvests, "uptime_seconds": int64(time.Since(s.StartedAt).Seconds()),
@@ -200,22 +203,29 @@ func StartAPIServer(ctx context.Context, addr string, e *Engine) error {
 	mux.HandleFunc("GET /api/sources", func(w http.ResponseWriter, r *http.Request) {
 		s := e.Stats()
 		type source struct {
-			Name       string  `json:"name"`
-			Found      int     `json:"found"`
-			New        int     `json:"new"`
-			KnownAlive int     `json:"known_alive"`
-			YieldPct   float64 `json:"yield_pct"`
-			Error      bool    `json:"error"`
+			Name             string  `json:"name"`
+			Found            int     `json:"found"`
+			New              int     `json:"new"`
+			KnownAlive       int     `json:"known_alive"`
+			YieldPct         float64 `json:"yield_pct"`
+			VerifiedYieldPct float64 `json:"verified_yield_pct"`
+			NovelSeen        int64   `json:"novel_seen"`
+			NovelConfirmed   int64   `json:"novel_confirmed"`
+			Error            bool    `json:"error"`
 		}
 		entries := make([]source, 0, len(s.SourceStatus))
 		for _, v := range s.SourceStatus {
-			entries = append(entries, source{Name: v.Name, Found: v.Unique, New: v.NewCandidates, KnownAlive: v.KnownAlive, YieldPct: v.YieldPct, Error: v.Error != ""})
+			entries = append(entries, source{Name: v.Name, Found: v.Unique, New: v.NewCandidates, KnownAlive: v.KnownAlive, YieldPct: v.YieldPct, VerifiedYieldPct: v.VerifiedYieldPct,
+				NovelSeen: v.NovelSeen, NovelConfirmed: v.NovelConfirmed, Error: v.Error != ""})
 		}
 		sort.Slice(entries, func(i, j int) bool {
-			if entries[i].KnownAlive == entries[j].KnownAlive {
-				return entries[i].New > entries[j].New
+			if entries[i].NovelConfirmed != entries[j].NovelConfirmed {
+				return entries[i].NovelConfirmed > entries[j].NovelConfirmed
 			}
-			return entries[i].KnownAlive > entries[j].KnownAlive
+			if entries[i].KnownAlive != entries[j].KnownAlive {
+				return entries[i].KnownAlive > entries[j].KnownAlive
+			}
+			return entries[i].New > entries[j].New
 		})
 		if len(entries) > 20 {
 			entries = entries[:20]
