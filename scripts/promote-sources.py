@@ -25,10 +25,12 @@ def publisher(url):
  if u.hostname=='cdn.jsdelivr.net' and '/gh/' in u.path:return u.path.split('/gh/')[1].split('@')[0].lower()
  return u.hostname or ''
 def trusted_url(url):
- u=urllib.parse.urlparse(url)
- host=u.hostname or ''
- if u.scheme!='https' or u.username or u.password or u.port:return False
- return host in {'raw.githubusercontent.com','cdn.jsdelivr.net','api.proxyscrape.com','openproxylist.xyz','proxyspace.pro','databay.com'} or host.endswith('.github.io')
+ try:
+  u=urllib.parse.urlparse(url)
+  host=u.hostname or ''
+  if u.scheme!='https' or u.username or u.password or u.port not in (None,443):return False
+  return host in {'raw.githubusercontent.com','cdn.jsdelivr.net','api.proxyscrape.com','openproxylist.xyz','proxyspace.pro','databay.com'} or host.endswith('.github.io')
+ except (TypeError,ValueError):return False
 def main():
  ap=argparse.ArgumentParser()
  ap.add_argument('--apply',action='store_true')

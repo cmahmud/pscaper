@@ -12,6 +12,7 @@ import pathlib
 import re
 import time
 import urllib.parse
+import urllib.error
 import urllib.request
 
 ROOT=pathlib.Path(__file__).resolve().parents[1]
@@ -25,9 +26,24 @@ links=[
  ('gfp-socks5','https://raw.githubusercontent.com/gfpcom/free-proxy-list/main/sources/socks5.txt'),
 ]
 headers={'User-Agent':'pscaper-source-audit/2.0','Accept':'text/plain,application/json;q=0.9'}
+ALLOWED_HOSTS={'raw.githubusercontent.com','cdn.jsdelivr.net','api.proxyscrape.com','openproxylist.xyz','proxyspace.pro','databay.com'}
+def safe_public_feed(url):
+ try:
+  u=urllib.parse.urlparse(url)
+  if u.scheme!='https' or not u.hostname or u.username or u.password:return False
+  if u.port not in (None,443):return False
+  return u.hostname in ALLOWED_HOSTS or u.hostname.endswith('.github.io')
+ except (TypeError,ValueError):return False
+class RestrictedRedirect(urllib.request.HTTPRedirectHandler):
+ def redirect_request(self,req,fp,code,msg,headers,newurl):
+  if not safe_public_feed(newurl):
+   raise urllib.error.HTTPError(req.full_url,code,'untrusted redirect destination',headers,fp)
+  return super().redirect_request(req,fp,code,msg,headers,newurl)
+opener=urllib.request.build_opener(RestrictedRedirect())
+
 def get(url,timeout=12):
  req=urllib.request.Request(url,headers=headers)
- with urllib.request.urlopen(req,timeout=timeout) as res:
+ with opener.open(req,timeout=timeout) as res:
   code=res.status
   return code,res.read(256*1024)
 base=json.loads(SRC.read_text())
@@ -45,9 +61,7 @@ for tag,url in links:
   for protocol,raw in rows:
    if not isinstance(raw,str):continue
    u=urllib.parse.urlparse(raw.strip())
-   if u.scheme!='https' or not u.netloc or u.username or u.password:continue
-   host=u.hostname or ''
-   if not (host=='raw.githubusercontent.com' or host=='cdn.jsdelivr.net' or host.endswith('.github.io') or host in {'api.proxyscrape.com','openproxylist.xyz','proxyspace.pro','databay.com','proxylist.geonode.com','proxyspace.pro'}):continue
+   if not safe_public_feed(raw.strip()):continue
    if '/wiki/' in u.path or u.path.endswith(('.csv','.json','.md','.toml','.yaml','.yml')):continue
    key=(protocol,u.geturl().lower())
    if key in existing:continue
@@ -61,7 +75,7 @@ def audit(data):
  row={**data,'status':0,'valid':0,'sample_lines':0,'duration_ms':0,'sample_keys':[],'error':''}
  try:
   request=urllib.request.Request(row['url'],headers=headers)
-  with urllib.request.urlopen(request,timeout=12) as res:
+  with opener.open(request,timeout=12) as res:
    row['status']=res.status
    if 'application/json' in res.headers.get('Content-Type',''):raise ValueError('JSON response unsupported')
    buf=res.read(128*1024)
