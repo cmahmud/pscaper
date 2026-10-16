@@ -131,6 +131,7 @@ type Stats struct {
 	AvgLatencyMS              int64          `json:"avg_latency_ms"`
 	FreshAlive                int            `json:"fresh_alive"`
 	GoldProtocols             map[string]int `json:"gold_protocols"`
+	ValidationAttempts        int64          `json:"validation_attempts"`
 	Queue                     int            `json:"queue"`
 	UrgentQueue               int            `json:"urgent_queue"`
 	DiscoveryQueue            int            `json:"discovery_queue"`

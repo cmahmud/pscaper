@@ -364,6 +364,44 @@ cd /home/ubuntu/pscaper
 ./scripts/rollback-engine-optimization.sh
 ```
 
+## October 16 — pool quality, recovery, and honest telemetry (v1.3.2)
+
+The backend treats **Alive** as a result of signed validation, never a guess
+based on a source feed. A recently verified proxy that was then confirmed
+lost receives an extra bounded recovery check after five minutes, for at most
+four hours after its last success and only while its failure count is small.
+Authentication/signature failures, stale records, and repeatedly failing
+proxies are not fast-tracked. A two-minute scheduler sweep admits at most
+half a worker batch of these recovery attempts per run **after** existing
+Alive priority checks, without starving new discovery. A candidate only
+returns to Alive after another successful signed verification.
+
+The dashboard now distinguishes an online scanner from proxy-pool performance
+by showing an independently computed one-hour Alive percentage trend.
+The Scanner's **Attempts** counter counts actual validation attempts during
+the current process, including confirmation retries, instead of labeling the
+lifetime number of unique checked endpoints as session work. "Activated"
+includes newly verified and recovered records, while "Lost" counts exits
+from Alive. The Sources tab shows new proxies originally sourced from a feed
+that have ever passed validation and its confirmed unique yield; addresses
+also carried by other feeds do not count as distinct source contributions.
+
+API aggregate statistics are cached for up to four seconds across dashboard,
+source rankings, and exports, avoiding repeated full scans of hundreds of
+thousands of proxy records. This is a short-lived aggregate cache and does
+not change source persistence, export semantics, or the existing API schema.
+
+Before deployment, the known-good executable and V2 dashboard were backed
+up under `recovery/quality-pool-20261016/`. Use
+`./scripts/rollback-pool-quality.sh` to restore both. The previous smooth
+terminal dashboard is also tracked in
+`site/backups/v2-before-pool-trend-20261016.html` and can be restored on its
+own with `./scripts/rollback-dashboard.sh v2-current`.
+
+These changes are intended to reduce needless CPU work and accelerate
+**genuine** proxy recoveries. They do not artificially boost the Alive count
+or guarantee higher proxy availability; public proxies can fail permanently.
+
 ## Source-quality workflow
 
 `python3 scripts/audit-sources.py` performs a bounded parallel download of the feed URLs and reports HTTP status plus parseable public IPv4/port samples under `recovery/feed-audit.json`. This is a **format and availability audit**, not a claim that the proxies are working. Only the app's callback validator determines the live pool. Data sources change or disappear; re-run the audit when pruning or expanding sources.

@@ -1,3 +1,16 @@
+## October 2026 — v1.3.2 pool health and recovery
+
+- Prioritize controlled follow-up checks for recently verified proxies that
+  subsequently failed, without counting them Alive before validation passes.
+- Preserve normal exponential backoff for persistently dead endpoints and
+  never fast-track authentication/signature failures.
+- Correct the scanner's session attempt count and source-yield presentation.
+- Show one-hour Alive trends separately from system uptime in the one-screen
+  charcoal dashboard, preserving original animations and terminal feed.
+- Share a four-second aggregate cache across stats, sources and dashboard
+  requests to reduce repeated full database scans.
+- Add tests, verified version bump, new dashboard backup and unified rollback.
+
 ## October 2026 — validation throughput and quality optimization
 
 - Separate reserved high-priority queue for known-live proxy rechecks;

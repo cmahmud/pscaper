@@ -39,6 +39,9 @@ type Engine struct {
 	sourceFetchMu   sync.Mutex
 	sourceLastFetch map[string]time.Time
 	exportMu        sync.Mutex
+	statsMu         sync.Mutex
+	statsAt         time.Time
+	statsCache      Stats
 
 	harvests                  atomic.Int64
 	cycles                    atomic.Int64
@@ -313,12 +316,35 @@ func (e *Engine) scheduledCount() int {
 	return n
 }
 
+// recoverableRecentlyAlive limits accelerated retries to endpoints with a
+// demonstrated recent success and a small number of subsequent failures.
+// A retry never makes a proxy Alive until it passes signed validation again.
+func (e *Engine) recoverableRecentlyAlive(rec ProxyRecord, now time.Time) bool {
+	if rec.Alive || !rec.EverAlive || rec.LastChecked.IsZero() ||
+		rec.LastSuccess.IsZero() || rec.ConsecutiveFailures > 3 {
+		return false
+	}
+	age := now.Sub(rec.LastSuccess)
+	if age < 0 || age > 4*time.Hour {
+		return false
+	}
+	if !retryableValidationFailure(rec.LastError) {
+		return false
+	}
+	return now.Sub(rec.LastChecked) >= 5*time.Minute
+}
+
 func (e *Engine) shouldQueue(rec ProxyRecord, now time.Time) bool {
 	if rec.LastChecked.IsZero() {
 		return true
 	}
 	if rec.Alive {
 		return now.Sub(rec.LastChecked) >= e.cfg.AliveRecheck
+	}
+	// A recently working endpoint gets an earlier, bounded opportunity to
+	// recover; never relabel an endpoint Alive without a successful check.
+	if e.recoverableRecentlyAlive(rec, now) {
+		return true
 	}
 	// Stale repeatedly failing proxies get exponential backoff,
 	// while recently refreshed source entries retain the normal retry time.
@@ -548,6 +574,7 @@ func (e *Engine) recheckLoop(ctx context.Context) {
 		now := time.Now()
 		records := e.store.Snapshot()
 		alive := make([]ProxyRecord, 0, 4096)
+		recovery := make([]ProxyRecord, 0, e.cfg.Workers*4)
 		untested := make([]ProxyRecord, 0, e.cfg.Workers*10)
 		dead := make([]ProxyRecord, 0, e.cfg.Workers*2)
 		for _, p := range records {
@@ -557,6 +584,10 @@ func (e *Engine) recheckLoop(ctx context.Context) {
 			switch {
 			case p.Alive:
 				alive = append(alive, p)
+			case e.recoverableRecentlyAlive(p, now):
+				if len(recovery) < e.cfg.Workers*4 {
+					recovery = append(recovery, p)
+				}
 			case p.LastChecked.IsZero():
 				if len(untested) < e.cfg.Workers*10 {
 					untested = append(untested, p)
@@ -578,6 +609,22 @@ func (e *Engine) recheckLoop(ctx context.Context) {
 				break
 			}
 			e.enqueuePriority(p.Key, true)
+		}
+		// Recovery budget: recently working proxies that failed confirmation
+		// get another chance after five minutes. Keep active rechecks first,
+		// and cap recovery work so discovery stays productive.
+		sort.Slice(recovery, func(i, j int) bool {
+			return recovery[i].LastSuccess.After(recovery[j].LastSuccess)
+		})
+		maxRecovery := max(12, e.cfg.Workers/2)
+		if maxRecovery > len(recovery) {
+			maxRecovery = len(recovery)
+		}
+		for i := 0; i < maxRecovery; i++ {
+			if ctx.Err() != nil || len(e.urgent) >= cap(e.urgent)/2 {
+				break
+			}
+			e.enqueuePriority(recovery[i].Key, true)
 		}
 		// Limit one sweep's admissions; newly discovered records get first
 		// chance, with a small dead-proxy exploration budget behind them.
@@ -778,6 +825,13 @@ func gitPush(ctx context.Context, dir, remote, branch string) (bool, error) {
 }
 
 func (e *Engine) Stats() Stats {
+	// Share expensive O(database-size) aggregate scans across the website,
+	// exports, and multiple API clients for a short, bounded interval.
+	e.statsMu.Lock()
+	defer e.statsMu.Unlock()
+	if !e.statsAt.IsZero() && time.Since(e.statsAt) < 4*time.Second {
+		return e.statsCache
+	}
 	records := e.store.Snapshot()
 	st := Stats{
 		Protocols:                 map[string]int{},
@@ -790,6 +844,7 @@ func (e *Engine) Stats() Stats {
 		TransientRecoveries:       e.transientRecoveries.Load(),
 		ConfirmedLosses:           e.confirmedLosses.Load(),
 		InFlight:                  e.inFlight.Load(),
+		ValidationAttempts:        e.successes.Load() + e.failures.Load(),
 		Workers:                   e.cfg.Workers,
 		Harvests:                  e.harvests.Load(),
 		Cycles:                    e.cycles.Load(),
@@ -879,6 +934,8 @@ func (e *Engine) Stats() Stats {
 	if latencyCount > 0 {
 		st.AvgLatencyMS = latencyTotal / latencyCount
 	}
+	e.statsCache = st
+	e.statsAt = time.Now()
 	return st
 }
 

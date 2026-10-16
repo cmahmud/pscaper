@@ -716,3 +716,61 @@ func TestPersistedOriginEffectivenessSurvivesNewEngine(t *testing.T) {
 		t.Fatal("source quality not restored")
 	}
 }
+
+func TestRecentlyAliveFailureRecoveryScheduling(t *testing.T) {
+	now := time.Now()
+	e := &Engine{cfg: Config{AliveRecheck: 15 * time.Minute, DeadRecheck: 2 * time.Hour}}
+	p := ProxyRecord{
+		Alive: false, EverAlive: true, LastChecked: now.Add(-6 * time.Minute),
+		LastSuccess: now.Add(-20 * time.Minute), LastError: "context deadline exceeded",
+		ConsecutiveFailures: 2,
+	}
+	if !e.recoverableRecentlyAlive(p, now) || !e.shouldQueue(p, now) {
+		t.Fatal("recently successful proxy with two failures should receive a recovery check")
+	}
+	p.LastChecked = now.Add(-3 * time.Minute)
+	if e.shouldQueue(p, now) {
+		t.Fatal("recovering too frequently")
+	}
+	p.LastChecked = now.Add(-6 * time.Minute)
+	p.LastSuccess = now.Add(-5 * time.Hour)
+	if e.recoverableRecentlyAlive(p, now) || e.shouldQueue(p, now) {
+		t.Fatal("aged-out proxy must use normal dead recheck cadence")
+	}
+	p.LastSuccess = now.Add(-20 * time.Minute)
+	p.LastError = "unauthenticated probe signature"
+	if e.recoverableRecentlyAlive(p, now) || e.shouldQueue(p, now) {
+		t.Fatal("invalid authentication must never trigger accelerated recovery")
+	}
+	p.LastError = "network timeout"
+	p.ConsecutiveFailures = 4
+	if e.recoverableRecentlyAlive(p, now) || e.shouldQueue(p, now) {
+		t.Fatal("repeatedly failing proxy must obey normal backoff")
+	}
+}
+
+func TestStatsCacheRefreshesWithoutChangingDataSemantics(t *testing.T) {
+	dir := t.TempDir()
+	store, err := OpenStore(filepath.Join(dir, "db.json.gz"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	e := &Engine{store: store, cfg: Config{GoldScore: 80}, startedAt: time.Now()}
+	before := e.Stats()
+	if before.Total != 0 {
+		t.Fatalf("expected empty store: %+v", before)
+	}
+	_, _ = store.UpsertCandidate(Candidate{Host: "1.1.1.1", Port: 8080, Protocol: "http", Source: "test"}, time.Now())
+	cached := e.Stats()
+	if cached.Total != 0 {
+		t.Fatal("aggregate cache not used for brief interval")
+	}
+	e.statsMu.Lock()
+	e.statsAt = time.Now().Add(-10 * time.Second)
+	e.statsMu.Unlock()
+	fresh := e.Stats()
+	if fresh.Total != 1 {
+		t.Fatal("aggregate cache failed to refresh")
+	}
+}

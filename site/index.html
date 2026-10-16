@@ -138,6 +138,10 @@ h1 span{color:#7ee4af}
 @media(max-width:899px){.board{grid-template-columns:1fr;grid-template-rows:280px 215px 245px 190px}.chartpanel,.protocols,.proxyterminal,.activity{grid-column:1;grid-row:auto}.term-list{gap:5px}.term-row{min-height:26px}}
 @media(max-width:560px){.term-row{grid-template-columns:43px minmax(0,1fr) 43px 35px 45px;gap:5px;font-size:9px}.term-row .term-lat{display:none}.proxyterminal{padding:11px}.termhint{display:none}}
 @media(prefers-reduced-motion:reduce){.term-row.gold.burst,.term-row.gold.burst:after,.term-row.enter{animation:none!important}}
+
+.pool-trend{white-space:nowrap;font-size:10px;font-weight:700;color:#adb4b2}
+.pool-trend.down{color:#eea0a4}.pool-trend.up{color:#99e6b2}
+@media(max-width:1120px){.pool-trend{display:none}}
 </style>
 </head>
 <body>
@@ -146,7 +150,7 @@ h1 span{color:#7ee4af}
  <div class="brand"><div class="logo" aria-hidden="true">p</div><span class="wordmark">pscaper</span><span class="brand-sub">PROXY OBSERVATORY</span></div>
  <nav class="header-right" aria-label="Links"><a class="headlink" href="https://github.com/cmahmud/pscaper" target="_blank" rel="noopener">SOURCE ↗</a><a class="headlink" href="https://github.com/cmahmud/proxies" target="_blank" rel="noopener">DATA ↗</a><a class="headlink" href="/api/v1/proxies?limit=100" target="_blank" rel="noopener">API ↗</a><span id="on" class="on"><span class="led"></span><span id="onlabel">CONNECTING</span></span></nav>
 </header>
-<div class="intro"><div class="title-group"><div class="eyebrow">Real-time monitoring / public proxies</div><h1>Live <span>network</span> telemetry.</h1></div><div class="session"><span>REFRESH <strong>5s</strong></span><span class="vertical"></span><span>FEEDS <strong id="feeds">—</strong></span><span class="vertical"></span><span>AVG <strong id="latency">—</strong></span></div></div>
+<div class="intro"><div class="title-group"><div class="eyebrow">Real-time monitoring / public proxies</div><h1>Live <span>network</span> telemetry.</h1></div><div class="session"><span>REFRESH <strong>5s</strong></span><span class="vertical"></span><span>FEEDS <strong id="feeds">—</strong></span><span class="vertical"></span><span>AVG <strong id="latency">—</strong></span><span class="vertical"></span><span id="pool-trend" class="pool-trend" title="Change in confirmed Alive proxies over the last hour. Separate from system uptime.">POOL 1H —</span></div></div>
 <section class="kpis" aria-label="Current proxy metrics">
  <article class="metric primary"><div class="kpihead">ALIVE <span class="hint">CURRENT</span></div><div class="kpival" id="alive">—</div><div class="kpifoot"><span id="plus" class="kpipill neutral">+0</span><span id="minus" class="kpipill negative">−0</span><span>this interval</span></div></article>
  <article class="metric"><div class="kpihead">GOLD <span class="hint">VERIFIED ×2</span></div><div class="kpival" id="gold">—</div><div class="kpifoot"><span id="golddelta" class="kpipill neutral">±0</span><span>net change</span></div></article>
@@ -178,20 +182,20 @@ h1 span{color:#7ee4af}
  <div class="protorow"><span class="pname">SOCKS5</span><div class="track"><b id="bar-socks5"></b></div><span class="pval" id="num-socks5">—</span></div>
  </div><div class="sourcesview" id="sourceview" hidden><span class="mono-sub">Loading feed yields...</span></div><div class="sourcesview" id="asview" hidden><span class="mono-sub">Loading AS countries...</span></div></section>
 <section class="panel activity" aria-labelledby="acttitle"><div class="panelhead"><h2 id="acttitle">Scanner</h2><span class="tag">THIS SESSION</span></div><div class="activitybody">
- <div class="a good"><div class="alabel">Verified ↑</div><div class="avalue" id="verified">—</div></div>
+ <div class="a good"><div class="alabel" title="Alive activations and recoveries since service start">Activated ↑</div><div class="avalue" id="verified">—</div></div>
  <div class="a loss"><div class="alabel">Lost ↓</div><div class="avalue" id="lost">—</div></div>
- <div class="a"><div class="alabel">Checks</div><div class="avalue" id="checked">—</div></div>
- <div class="a"><div class="alabel">Queue</div><div class="avalue" id="queue">—</div></div>
+ <div class="a"><div class="alabel" title="Validation attempts this session, including confirmation retries">Attempts</div><div class="avalue" id="checked">—</div></div>
+ <div class="a"><div class="alabel" title="Scheduled validation tasks waiting for workers, not the number of discovered proxies">Pending</div><div class="avalue" id="queue">—</div></div>
  </div></section>
 </div>
 </main>
-<footer class="bottom"><div class="footleft"><span>pscaper v1.3.1</span><span><span id="feed-total">118 FEEDS</span> · <b id="errors">0 ERRORS</b></span><a class="footer-sync stale" id="publisher-link" href="https://github.com/cmahmud/proxies/commits/main" target="_blank" rel="noopener" title="Latest GitHub publishing status">SYNC CHECKING...</a></div><span id="updated" class="update">CONNECTING...</span></footer>
+<footer class="bottom"><div class="footleft"><span>pscaper v1.3.2</span><span><span id="feed-total">118 FEEDS</span> · <b id="errors">0 ERRORS</b></span><a class="footer-sync stale" id="publisher-link" href="https://github.com/cmahmud/proxies/commits/main" target="_blank" rel="noopener" title="Latest GitHub publishing status">SYNC CHECKING...</a></div><span id="updated" class="update">CONNECTING...</span></footer>
 </div>
 <script>
 (function(){
 'use strict';
 var get=function(id){return document.getElementById(id)}, nf=new Intl.NumberFormat('en-US'), prev=null, lastTime=0, series=[], ticks=0, requestInFlight=false, sessionOrigin=null, pendingAnimation={};
-var period='1h',sourcesLoaded=0,geoLoaded=0;
+var period='1h',sourcesLoaded=0,geoLoaded=0,poolTrendChecked=0;
 var reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 var fmt=function(n){return typeof n==='number'?nf.format(n):'—'};
 var pos=function(n){return '+'+fmt(Math.max(0,n))};
@@ -244,6 +248,25 @@ async function hydrate(){
  redraw();
  }catch(e){}
 }
+async function refreshPoolTrend(){
+ if(Date.now()-poolTrendChecked<50000)return;
+ poolTrendChecked=Date.now();
+ var node=get('pool-trend');
+ try{
+  var response=await fetch('/api/history?range=1h',{cache:'no-store'});
+  if(!response.ok)throw Error('history');
+  var rows=(await response.json()).filter(function(x){return x && Number.isFinite(x.alive) && Number.isFinite(Date.parse(x.time))});
+  if(rows.length<2)return;
+  var first=rows[0],last=rows[rows.length-1];
+  var duration=Date.parse(last.time)-Date.parse(first.time);
+  if(duration<45*60000 || first.alive<=0){node.textContent='POOL 1H —';return;}
+  var delta=100*(last.alive-first.alive)/first.alive;
+  node.classList.toggle('down',delta<=-5);
+  node.classList.toggle('up',delta>=5);
+  node.textContent='POOL 1H '+(delta>0?'+':delta<0?'−':'±')+Math.abs(delta).toFixed(1)+'%';
+  node.title='Confirmed Alive proxies: '+fmt(first.alive)+' → '+fmt(last.alive)+' over '+Math.round(duration/60000)+' minutes. This is pool performance, not service uptime.';
+ }catch(e){node.textContent='POOL 1H —'}
+}
 function updatePublisher(p){
  var node=get('publisher-link');
  if(!p||p.state!=='ok'||typeof p.age_seconds!=='number'||p.age_seconds<0){
@@ -266,8 +289,8 @@ async function loadSources(){
  feeds.slice(0,5).forEach(function(f){
   var row=document.createElement('div');row.className='sourceitem';
   var name=document.createElement('span');name.textContent=f.name||'unknown';name.title=name.textContent;
-  var count=document.createElement('span');count.className='counts';count.textContent=fmt(f.known_alive||0);count.title='Currently validated proxies in source sample';
-  var yieldText=document.createElement('span');yieldText.className='yield';yieldText.textContent=(Number(f.yield_pct)||0).toFixed(1)+'%';yieldText.title='Estimated source yield';
+  var count=document.createElement('span');count.className='counts';count.textContent=fmt(f.novel_confirmed||0);count.title='Genuinely new endpoints originally discovered by this source that have passed validation at least once';
+  var yieldText=document.createElement('span');yieldText.className='yield';yieldText.textContent=(Number(f.verified_yield_pct)||0).toFixed(2)+'%';yieldText.title='Newly confirmed unique proxy yield, not associations from copied lists';
   row.append(name,count,yieldText);view.append(row);
  });
  if(!feeds.length)view.textContent='No source metrics yet';
@@ -323,7 +346,7 @@ function apply(data){
  changeBadge('plus',plus,false);changeBadge('minus',-minus,true);changeBadge('found',found,false);changeBadge('golddelta',gd,true);changeBadge('everdelta',ed,true);
  var net=plus-minus;changeBadge('net',net,true);get('net').classList.toggle('red',net<0);
  get('verified').textContent=pos(data.newly_alive||0);get('lost').textContent='−'+fmt(data.lost_alive||0);
- get('checked').textContent=fmt(data.checked);get('queue').textContent=fmt(data.queue);get('feeds').textContent=fmt(data.source_feeds);get('feed-total').textContent=fmt(data.source_feeds)+' FEEDS';
+ get('checked').textContent=fmt(data.validation_attempts);get('queue').textContent=fmt(data.queue);get('feeds').textContent=fmt(data.source_feeds);get('feed-total').textContent=fmt(data.source_feeds)+' FEEDS';
  get('errors').textContent=fmt(data.source_errors)+' ERRORS';
  get('latency').textContent=fmt(data.avg_latency_ms||0)+'ms';updatePublisher(data.publishing);
  var protos=data.alive_protocols||{},max=Math.max(1,...Object.values(protos));
@@ -331,7 +354,7 @@ function apply(data){
  get('on').classList.remove('offline');get('onlabel').textContent='SYSTEM ONLINE';
  get('updated').textContent='UPDATED '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
  addPoint(data.time||new Date().toISOString(),data.alive);prev=data;ticks++;
- if(ticks%6===0){hydrate();loadSources();loadASN();}
+ if(ticks%6===0){hydrate();loadSources();loadASN();refreshPoolTrend();}
 }
 async function poll(){
  if(requestInFlight||document.hidden)return;
@@ -426,7 +449,7 @@ get('term-clear').addEventListener('click',function(){
 });
 termPoll();setInterval(termPoll,1800);setInterval(termTick,480);
 document.addEventListener('visibilitychange',function(){if(!document.hidden)termPoll()});
-poll();setTimeout(hydrate,800);setInterval(poll,5000);
+poll();setTimeout(hydrate,800);setTimeout(refreshPoolTrend,1200);setInterval(poll,5000);
 document.addEventListener('visibilitychange',function(){if(!document.hidden){poll();hydrate()}});
 })();
 </script>
