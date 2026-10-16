@@ -1,6 +1,7 @@
 package app
 
 import (
+	"compress/gzip"
 	"context"
 	"net/http"
 	"net/http/httptest"
@@ -390,5 +391,41 @@ func TestPublicSourceStatisticsUseCatalogWorkingRecords(t *testing.T) {
 	st := e.Stats()
 	if len(st.SourceStatus) != 1 || st.SourceStatus[0].KnownAlive != 1 || st.SourceStatus[0].YieldPct != 100 {
 		t.Fatalf("public catalog source quality is inaccurate: %+v", st.SourceStatus)
+	}
+}
+
+func TestOfflineASNLookupAndDatasetReload(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "as.tsv.gz")
+	put := func(asn string) {
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		gz := gzip.NewWriter(f)
+		_, err = gz.Write([]byte("16777216\t16777471\t" + asn + "\tUS\tTEST NETWORK\n"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := gz.Close(); err != nil {
+			t.Fatal(err)
+		}
+		if err := f.Close(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	put("13335")
+	db := NewASNDatabase(path)
+	if err := db.Reload(); err != nil {
+		t.Fatal(err)
+	}
+	v, ok := db.Lookup("1.0.0.1")
+	if !ok || v.ASN != 13335 || v.ASCountry != "US" {
+		t.Fatalf("unexpected metadata: %+v", v)
+	}
+	if _, ok := db.Lookup("127.0.0.1"); ok {
+		t.Fatal("unrouted address falsely matched")
+	}
+	if _, ok := db.Lookup("2001:4860:4860::8888"); ok {
+		t.Fatal("IPv6 incorrectly classified against IPv4 ASN map")
 	}
 }

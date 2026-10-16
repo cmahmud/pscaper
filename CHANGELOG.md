@@ -1,3 +1,12 @@
+## October 2026 — offline ASN enrichment
+
+- Added a compact project-local IPtoASN IPv4 dataset, efficient Go lookup,
+  and a verified daily update timer.
+- Exposed ASN registration country/number/description on proxy API results,
+  added ASN filters, public aggregate statistics and an AS GEO dashboard tab.
+- Retained strict separation between ASN country and actual proxy geolocation;
+  no per-proxy API calls or credentials required.
+
 ## October 2026 — collector intelligence and dashboard 2.0
 
 - Reclaimed over 4 GB of loose Git objects by a verified checkout refresh,

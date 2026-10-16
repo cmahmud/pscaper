@@ -124,12 +124,12 @@ h1 span{color:#7ee4af}
  <div class="chartfooter"><span id="chartfrom">Session initializing</span><span id="chartto">NOW</span></div>
 </section>
 <div class="rightside">
-<section class="panel protocols" aria-labelledby="protitle"><div class="panelhead"><h2 id="protitle">Coverage</h2><div class="tools" role="group" aria-label="Coverage panel"><button class="tool" data-panel="protocols" aria-pressed="true">PROTOCOLS</button><button class="tool" data-panel="sources" aria-pressed="false">SOURCES</button></div></div><div class="plist" id="protocolview">
+<section class="panel protocols" aria-labelledby="protitle"><div class="panelhead"><h2 id="protitle">Coverage</h2><div class="tools" role="group" aria-label="Coverage panel"><button class="tool" data-panel="protocols" aria-pressed="true">PROTOCOLS</button><button class="tool" data-panel="sources" aria-pressed="false">SOURCES</button><button class="tool" data-panel="asgeo" aria-pressed="false" title="Autonomous System registration country, not physical proxy location">AS GEO</button></div></div><div class="plist" id="protocolview">
  <div class="protorow"><span class="pname">HTTP</span><div class="track"><b id="bar-http"></b></div><span class="pval" id="num-http">—</span></div>
  <div class="protorow"><span class="pname">HTTPS</span><div class="track"><b id="bar-https"></b></div><span class="pval" id="num-https">—</span></div>
  <div class="protorow"><span class="pname">SOCKS4</span><div class="track"><b id="bar-socks4"></b></div><span class="pval" id="num-socks4">—</span></div>
  <div class="protorow"><span class="pname">SOCKS5</span><div class="track"><b id="bar-socks5"></b></div><span class="pval" id="num-socks5">—</span></div>
- </div><div class="sourcesview" id="sourceview" hidden><span class="mono-sub">Loading feed yields...</span></div></section>
+ </div><div class="sourcesview" id="sourceview" hidden><span class="mono-sub">Loading feed yields...</span></div><div class="sourcesview" id="asview" hidden><span class="mono-sub">Loading AS countries...</span></div></section>
 <section class="panel activity" aria-labelledby="acttitle"><div class="panelhead"><h2 id="acttitle">Scanner</h2><span class="tag">THIS SESSION</span></div><div class="activitybody">
  <div class="a good"><div class="alabel">Verified ↑</div><div class="avalue" id="verified">—</div></div>
  <div class="a loss"><div class="alabel">Lost ↓</div><div class="avalue" id="lost">—</div></div>
@@ -144,7 +144,7 @@ h1 span{color:#7ee4af}
 (function(){
 'use strict';
 var get=function(id){return document.getElementById(id)}, nf=new Intl.NumberFormat('en-US'), prev=null, lastTime=0, series=[], ticks=0, requestInFlight=false, sessionOrigin=null, pendingAnimation={};
-var period='1h',sourcesLoaded=0;
+var period='1h',sourcesLoaded=0,geoLoaded=0;
 var reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 var fmt=function(n){return typeof n==='number'?nf.format(n):'—'};
 var pos=function(n){return '+'+fmt(Math.max(0,n))};
@@ -235,12 +235,32 @@ document.querySelectorAll('[data-range]').forEach(function(el){
   hydrate();
  });
 });
+async function loadASN(){
+ if(get('asview').hidden)return;
+ if(Date.now()-geoLoaded<60000)return;
+ try{
+  var r=await fetch('/api/asn',{cache:'no-store'});if(!r.ok)throw Error('Unavailable');
+  var data=await r.json(),view=get('asview');
+  view.replaceChildren();
+  (data.as_countries||[]).slice(0,5).forEach(function(g){
+   var row=document.createElement('div');row.className='sourceitem';
+   var name=document.createElement('span');name.textContent='AS '+(g.code||'??');name.title='Autonomous system registration country, not verified physical location';
+   var count=document.createElement('span');count.className='counts';count.textContent=fmt(g.count||0);
+   var percent=document.createElement('span');percent.className='yield';percent.textContent=((g.count||0)*100/Math.max(1,data.identified||0)).toFixed(1)+'%';
+   row.append(name,count,percent);view.append(row);
+  });
+  if(!view.children.length)view.textContent='ASN data not yet available';
+  geoLoaded=Date.now();
+ }catch(e){get('asview').textContent='ASN data unavailable'}
+}
 document.querySelectorAll('[data-panel]').forEach(function(el){
  el.addEventListener('click',function(){
-  var isSource=el.dataset.panel==='sources';
-  get('sourceview').hidden=!isSource;get('protocolview').hidden=isSource;
+  var mode=el.dataset.panel,isSource=mode==='sources',isGeo=mode==='asgeo';
+  get('sourceview').hidden=!isSource;get('asview').hidden=!isGeo;
+  get('protocolview').hidden=isSource||isGeo;
   document.querySelectorAll('[data-panel]').forEach(function(x){x.setAttribute('aria-pressed',String(x===el))});
   if(isSource)loadSources();
+  if(isGeo)loadASN();
  });
 });
 function apply(data){
@@ -264,7 +284,7 @@ function apply(data){
  get('on').classList.remove('offline');get('onlabel').textContent='SYSTEM ONLINE';
  get('updated').textContent='UPDATED '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
  addPoint(data.time||new Date().toISOString(),data.alive);prev=data;ticks++;
- if(ticks%6===0){hydrate();loadSources();}
+ if(ticks%6===0){hydrate();loadSources();loadASN();}
 }
 async function poll(){
  if(requestInFlight||document.hidden)return;

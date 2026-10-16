@@ -1,0 +1,9 @@
+[Unit]
+Description=Daily pscaper IP-to-ASN refresh
+[Timer]
+OnCalendar=*-*-* 04:13:00 UTC
+RandomizedDelaySec=15m
+Persistent=true
+Unit=pscaper-intel.service
+[Install]
+WantedBy=timers.target

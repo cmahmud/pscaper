@@ -17,6 +17,24 @@ import (
 
 func StartAPIServer(ctx context.Context, addr string, e *Engine) error {
 	mux := http.NewServeMux()
+	intel := NewASNDatabase("data/intel/ip2asn-v4-u32.tsv.gz")
+	if err := intel.Reload(); err != nil {
+		log.Printf("ASN database unavailable: %v", err)
+	}
+	go func() {
+		t := time.NewTicker(time.Hour)
+		defer t.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-t.C:
+				if err := intel.Reload(); err != nil {
+					log.Printf("ASN refresh: %v", err)
+				}
+			}
+		}
+	}()
 	// All public routes below are explicitly allowlisted again by Nginx.
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-cache")
@@ -194,6 +212,60 @@ func StartAPIServer(ctx context.Context, addr string, e *Engine) error {
 		}
 		writeJSON(w, entries)
 	})
+	var geoMu sync.Mutex
+	var geoAt time.Time
+	var geoCache map[string]any
+	mux.HandleFunc("GET /api/asn", func(w http.ResponseWriter, r *http.Request) {
+		geoMu.Lock()
+		if geoCache == nil || time.Since(geoAt) > 90*time.Second {
+			c := map[string]int{}
+			a := map[uint32]int{}
+			found := 0
+			for _, p := range e.store.Snapshot() {
+				if !p.Alive {
+					continue
+				}
+				v, ok := intel.Lookup(p.Host)
+				if !ok {
+					continue
+				}
+				found++
+				if v.ASCountry != "" {
+					c[v.ASCountry]++
+				}
+				if v.ASN != 0 {
+					a[v.ASN]++
+				}
+			}
+			type group struct {
+				Code  string `json:"code"`
+				Count int    `json:"count"`
+			}
+			regions := make([]group, 0, len(c))
+			for name, n := range c {
+				regions = append(regions, group{Code: name, Count: n})
+			}
+			sort.Slice(regions, func(i, j int) bool { return regions[i].Count > regions[j].Count })
+			if len(regions) > 8 {
+				regions = regions[:8]
+			}
+			networks := make([]group, 0, len(a))
+			for code, n := range a {
+				networks = append(networks, group{Code: strconv.FormatUint(uint64(code), 10), Count: n})
+			}
+			sort.Slice(networks, func(i, j int) bool { return networks[i].Count > networks[j].Count })
+			if len(networks) > 8 {
+				networks = networks[:8]
+			}
+			geoCache = map[string]any{"as_countries": regions, "asns": networks, "identified": found,
+				"notice": "AS registration country is not a verified physical proxy location"}
+			geoAt = time.Now()
+		}
+		data := geoCache
+		geoMu.Unlock()
+		w.Header().Set("Cache-Control", "no-store")
+		writeJSON(w, data)
+	})
 	mux.HandleFunc("GET /api/v1/proxies", func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()
 		tier := strings.ToLower(q.Get("tier"))
@@ -209,6 +281,12 @@ func StartAPIServer(ctx context.Context, addr string, e *Engine) error {
 		minScore, _ := strconv.ParseFloat(q.Get("min_score"), 64)
 		maxLatency, _ := strconv.Atoi(q.Get("max_latency_ms"))
 		freshMinutes, _ := strconv.Atoi(q.Get("fresh_minutes"))
+		asCountry := strings.ToUpper(strings.TrimSpace(q.Get("as_country")))
+		asNumber, _ := strconv.Atoi(q.Get("asn"))
+		if len(asCountry) > 2 || asNumber < 0 {
+			http.Error(w, "invalid ASN filter", 400)
+			return
+		}
 		if minScore < 0 || minScore > 100 || maxLatency < 0 || freshMinutes < 0 || freshMinutes > 10080 {
 			http.Error(w, "invalid filter", 400)
 			return
@@ -242,6 +320,13 @@ func StartAPIServer(ctx context.Context, addr string, e *Engine) error {
 			if freshMinutes > 0 && (p.LastChecked.IsZero() || time.Since(p.LastChecked) > time.Duration(freshMinutes)*time.Minute) {
 				continue
 			}
+			if asCountry != "" || asNumber > 0 {
+				meta, ok := intel.Lookup(p.Host)
+				if !ok || (asCountry != "" && meta.ASCountry != asCountry) ||
+					(asNumber > 0 && meta.ASN != uint32(asNumber)) {
+					continue
+				}
+			}
 			selected = append(selected, p)
 		}
 		SortRecords(selected)
@@ -251,9 +336,11 @@ func StartAPIServer(ctx context.Context, addr string, e *Engine) error {
 		}
 		proxies := make([]map[string]any, 0, len(selected))
 		for _, p := range selected {
+			meta, _ := intel.Lookup(p.Host)
 			proxies = append(proxies, map[string]any{
 				"url": p.URI(), "protocol": p.Protocol, "host": p.Host, "port": p.Port,
 				"score": p.Score, "latency_ms": p.LatencyMS, "last_checked": p.LastChecked,
+				"asn": meta.ASN, "as_country": meta.ASCountry, "as_description": meta.Description,
 			})
 		}
 		if q.Get("format") == "txt" {

@@ -86,8 +86,9 @@ resides in `site/index.html`; public endpoints exposed via Nginx are:
 - `GET /api/v1/proxies?tier=alive&protocol=all&format=json&limit=1000` —
   public read-only proxy API, accepts alive/gold, http/https/socks4/socks5,
   JSON or TXT, limited to 5,000 per request. Optional `min_score`,
-  `max_latency_ms`, and `fresh_minutes` filters
-- `GET /api/sources` — best feeds by recently observed working-proxy yield, without revealing raw feed URLs
+  `max_latency_ms`, `fresh_minutes`, `as_country`, and `asn` filters
+- `GET /api/sources` — best feeds ranked by currently working proxy contributions and observed catalog yield (without exposing raw source URLs)
+- `GET /api/asn` — top ASN registration countries and networks for alive proxies
 - `GET /pool/{alive|gold|historical}/{filename}.txt` — strictly allowlisted
   read-only export files for the GitHub Actions publisher
 - `GET /pool/stats.json` — current exported machine telemetry
@@ -177,6 +178,32 @@ changing. Monitor repository size and API/push errors periodically.
 
 Use `systemctl list-timers pscaper-maintain.timer` and
 `journalctl -u pscaper-maintain.service -n 30` to inspect maintenance.
+
+## Offline IPv4 ASN and country data
+
+The project includes optional IP-to-ASN metadata supplied by
+[IPtoASN](https://iptoasn.com/) using its downloadable public-domain
+(PDDL 1.0) IPv4 unsigned-integer TSV database.
+
+- The gzip database is stored at
+  `data/intel/ip2asn-v4-u32.tsv.gz`, under the project tree and excluded
+  from Git. IPs are looked up locally by binary search; no per-proxy
+  requests are sent to a third party.
+- `pscaper-intel.timer` downloads and verifies a refreshed dataset daily.
+  The running Go process checks for refreshed data hourly.
+- `GET /api/asn` returns a cached distribution of **AS registration
+  countries** and autonomous systems among the currently alive list.
+- `GET /api/v1/proxies?as_country=US&asn=13335&limit=100` can filter
+  by AS registration country/number. API results also include
+  `asn`, `as_country`, and `as_description`.
+- The website offers an **AS GEO** compact tab, in addition to protocol
+  coverage and source quality. These countries reflect network/ASN
+  registration and **must not** be called precise physical proxy locations.
+
+The IPv4 feed does not label IPv6 addresses. GeoIP accuracy, exit location,
+anonymity tier, and working against arbitrary external destinations cannot
+be established from ASN data alone. Those require separate controlled
+measurements or an appropriately licensed location database.
 
 ## Source-quality workflow
 
