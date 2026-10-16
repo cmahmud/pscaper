@@ -1,0 +1,9 @@
+[Unit]
+Description=Weekly read-only pscaper source discovery audit
+[Timer]
+OnCalendar=Sat *-*-* 03:55:00 UTC
+RandomizedDelaySec=40m
+Persistent=true
+Unit=pscaper-source-research.service
+[Install]
+WantedBy=timers.target

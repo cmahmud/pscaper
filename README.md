@@ -5,7 +5,7 @@ Go-based public-proxy feed harvester, independent validator, scoring engine, his
 ## Deployment status and sources
 
 - Latest recovered application version: **1.3.1** (with October 2026 deployment hardening).
-- **126 configured feeds** after adding eight more audited URLs (four from Proxmint, three from Relayglass, and one SOCKS4 feed from ProxyScraper) to the previous 118. These are candidate publishers, not proof that every published proxy is alive.
+- **329 configured feed URLs**, including 203 additional audited endpoints from 83 newly represented repository/domain identifiers (previously 126). These are not 329 independent organizations, and they do not guarantee a larger Alive pool; all candidate proxies still undergo independent validation.
 - Feed protocols: HTTP, HTTPS, SOCKS4, SOCKS5. Source-specific refresh schedules are retained.
 - Sources are only *candidates*; a candidate is not **alive** until it passes the application's outbound-forwarding callback probe.
 - Reservoir sampling inspects the bounded upstream feed and retains **2,000 representative candidates** per fetch by default (up to 10,000 with `max_candidates`). This avoids repeatedly collecting only the beginning of huge feeds.
@@ -221,6 +221,21 @@ cd /home/ubuntu/pscaper
 ./scripts/rollback-dashboard.sh
 ```
 
+The October 16 V2 terminal layout is separately backed up as
+`site/backups/v2-before-flow-20261016.html`. To restore the original
+dashboard run `./scripts/rollback-dashboard.sh v1`; to restore the V2
+dashboard **before** the smoother-flow enhancement run
+`./scripts/rollback-dashboard.sh v2`. The no-argument script defaults to V1.
+
+The current terminal polls its verified event API about every 1.8 seconds
+and animates **one real event every 480 ms** instead of inserting a burst of
+rows. A short bounded queue favors recent events; stale results are skipped
+rather than replaying minutes of proxy history. FLIP/Web Animations moves
+existing rows smoothly as one enters, while Gold-transition shimmer remains
+event-driven. Pause and Clear work without adding scrolling, and reduced
+motion is respected. These are live preview events, not a guarantee that
+every single validation event is visible.
+
 The rollback script first preserves the current dashboard in ignored
 `recovery/ui-rollbacks/`, then copies the known-good original into
 `site/index.html`. The Go app serves this file for each request, so no
@@ -247,6 +262,43 @@ mirrored publisher duplicates. Being a healthy *feed* means it provides
 parseable addresses; only the pscaper callback validator can classify
 proxies as Alive or Gold. New feeds run with refresh intervals of
 10–30 minutes rather than hammering publishers.
+
+## Curated source expansion and ongoing discovery
+
+The October 16 expansion increased the configured feed list from **126 to 329**.
+A bounded offline audit examined **609 new candidate URLs** referenced by two
+publicly maintained proxy-source indexes: maximilianfeix/proxy-scraper and
+gfpcom/free-proxy-list. **332** returned at least six parseable public
+IP:port addresses. Only **203 URLs** were promoted, representing **83 newly
+configured repository/domain identifiers**, after publisher grouping, URL and
+sample-content deduplication and an existing-source check.
+
+New feeds have tighter limits than legacy feeds: **at most 250 candidates per
+fetch, an 8 MiB response cap, and a two-hour base refresh interval**. The
+engine's existing adaptive source yield ranking can update refresh behavior
+after sufficient observations. All feeds are re-validated independently
+against pscaper's own signed callback endpoints. Extra feed URLs do not equal
+extra working proxies; mirrors, stale lists and overlapping publishers are
+common. Scaling to 1,000 *distinct productive publishers* will require
+additional discovery and format support, not just 1,000 file links.
+
+The original 126-entry configuration was copied before promotion to
+`recovery/source-backups/sources-before-extended-*.json` on the VPS.
+The manually operated pipeline is:
+
+```bash
+cd /home/ubuntu/pscaper
+python3 scripts/research-sources.py       # bounded audit; writes recovery/ report
+python3 scripts/promote-sources.py        # dry-run: preview safe additions
+python3 scripts/promote-sources.py --apply # backs up current config first
+```
+
+The weekly `pscaper-source-research.timer` reruns the audit and updates the
+local report, but **does not automatically promote unknown hosts**.
+New sources are picked up when the running collector enters its next harvest
+cycle; a restart is not required. Some feeds may later become unavailable,
+so continue to evaluate novel *working* proxies, error rates, overlap and
+validation throughput instead of optimizing the feed-count number alone.
 
 ## Source-quality workflow
 

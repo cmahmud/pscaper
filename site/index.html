@@ -116,7 +116,7 @@ h1 span{color:#7ee4af}
 .term-live.off{color:#a0a5a8}
 .term-live.off:before{background:#777;box-shadow:none}
 .term-actions{display:flex;align-items:center;gap:5px}
-.term-list{flex:1;min-height:0;display:flex;flex-direction:column;gap:3px;justify-content:flex-start;overflow:hidden;padding-top:7px}
+.term-list{flex:1;min-height:0;display:flex;flex-direction:column;gap:3px;justify-content:flex-start;overflow:hidden;padding-top:7px;contain:layout paint}
 .term-row{position:relative;display:grid;grid-template-columns:60px minmax(0,1fr) 58px 53px 46px 51px;align-items:center;gap:7px;flex:none;min-height:23px;padding:4px 7px;background:#1b1e20;border-left:2px solid transparent;border-radius:3px;font:10px/1.2 ui-monospace,SFMono-Regular,monospace;transition:background .35s}
 .term-row .term-time,.term-protocol,.term-lat{color:#8c9597}
 .term-row .term-addr{color:#d3dbd9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
@@ -126,7 +126,7 @@ h1 span{color:#7ee4af}
 .term-row.gold .term-addr,.term-row.gold .term-score,.term-row.gold .term-status{color:#f2d48f}
 .term-row.lost{border-left-color:#b36068}
 .term-row.lost .term-status,.term-row.lost .term-score{color:#ee989f}
-.term-row.enter{animation:term-enter .38s ease-out both}
+.term-row.enter{animation:term-enter .42s cubic-bezier(.2,.8,.2,1) both}
 .term-row.gold.burst{animation:term-gold 1.5s ease-out both}
 .term-row.gold.burst:after{content:"✦";position:absolute;right:16%;top:0;color:#ffe7aa;font-size:15px;pointer-events:none;animation:term-spark 1.2s ease-out both}
 .term-empty{color:#848a90;font:11px ui-monospace,monospace;padding-top:13px}
@@ -344,12 +344,14 @@ async function poll(){
  finally{requestInFlight=false}
 }
 
-// Terminal is fed exclusively by signed, successful server-side validation
-// outcomes. Never render fabricated proxy addresses or Gold statuses.
+// One verified result enters every 480ms; never fabricate proxy events.
 var termCursor=0,termPaused=false,termBusy=false,termInitialized=false;
-var termRows=get('term-list');
+var termPending=[],termRows=get('term-list');
 function termEvent(ev,animate){
  if(!ev||!['verified','lost'].includes(ev.kind)||!ev.address||!ev.protocol)return;
+ var previous=Array.from(termRows.querySelectorAll('.term-row')).map(function(row){
+  return {row:row,top:row.getBoundingClientRect().top};
+ });
  var row=document.createElement('div');
  var isGold=ev.kind==='verified'&&ev.gold===true;
  row.className='term-row'+(isGold?' gold':'')+(ev.kind==='lost'?' lost':'')+(animate?' enter':'')+(animate&&ev.newly_gold===true&&isGold?' burst':'');
@@ -362,41 +364,68 @@ function termEvent(ev,animate){
   ['term-score',typeof ev.score==='number'?ev.score.toFixed(1):'—'],
   ['term-status',ev.kind==='lost'?'− LOST':isGold?'✦ GOLD':'● ALIVE']
  ];
- entries.forEach(function(pair){var sp=document.createElement('span');sp.className=pair[0];sp.textContent=pair[1];if(pair[0]==='term-addr'){sp.title='Click to copy '+pair[1];sp.addEventListener('click',function(){if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(pair[1]).catch(function(){})})}row.append(sp)});
+ entries.forEach(function(pair){
+  var sp=document.createElement('span');sp.className=pair[0];sp.textContent=pair[1];
+  if(pair[0]==='term-addr'){
+   sp.title='Click to copy '+pair[1];
+   sp.addEventListener('click',function(){if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(pair[1]).catch(function(){})});
+  }
+  row.append(sp);
+ });
  if(ev.newly_gold===true&&isGold&&!reduced)row.title='Newly qualified Gold proxy';
  termRows.prepend(row);
  while(termRows.children.length>5)termRows.lastElementChild.remove();
+ if(!reduced&&animate&&typeof row.animate==='function'){
+  requestAnimationFrame(function(){
+   previous.forEach(function(old){
+    if(!old.row.isConnected||typeof old.row.animate!=='function')return;
+    var dy=old.top-old.row.getBoundingClientRect().top;
+    if(Math.abs(dy)>0.5)old.row.animate(
+      [{transform:'translateY('+dy+'px)'},{transform:'translateY(0)'}],
+      {duration:395,easing:'cubic-bezier(.2,.8,.2,1)'});
+   });
+  });
+ }
 }
 async function termPoll(){
- if(termBusy||termPaused||document.hidden)return;
+ if(termBusy||document.hidden)return;
  termBusy=true;
+ var ctrl=new AbortController(),timeout=setTimeout(function(){ctrl.abort()},4200);
  try{
-  var ctrl=new AbortController(), timeout=setTimeout(function(){ctrl.abort()},4300);
-  var response=await fetch('/api/events?after='+encodeURIComponent(termCursor)+'&limit=12',{cache:'no-store',signal:ctrl.signal});
-  clearTimeout(timeout);
+  var response=await fetch('/api/events?after='+encodeURIComponent(termCursor)+'&limit=40',
+     {cache:'no-store',signal:ctrl.signal});
   if(!response.ok)throw Error('Event API '+response.status);
   var data=await response.json(),items=Array.isArray(data.events)?data.events:[];
   if(Number.isFinite(data.cursor)&&data.cursor<termCursor){
-    termCursor=0;termInitialized=false;termRows.replaceChildren();
+   termCursor=0;termPending.length=0;termInitialized=false;termRows.replaceChildren();
   }
-  if(!termInitialized&&items.length){termRows.replaceChildren();termInitialized=true}
-  // Server returns ascending IDs; prepend in ascending order for newest-first display.
-  items.forEach(function(ev){if(ev.id>termCursor){termEvent(ev,termInitialized)}});
+  items.forEach(function(ev){if(ev.id>termCursor&&['verified','lost'].includes(ev.kind))termPending.push(ev)});
   if(Number.isFinite(data.cursor))termCursor=Math.max(termCursor,data.cursor);
-  get('term-live').classList.remove('off');
-  get('term-live').textContent='STREAMING';
- }catch(e){get('term-live').classList.add('off');get('term-live').textContent='RECONNECTING'}
- finally{termBusy=false}
+  // Live preview, not an exhaustive log: discard stale backlog so rows
+  // always represent recent real validation outcomes.
+  if(termPending.length>28)termPending=termPending.slice(-28);
+  get('term-live').classList.toggle('off',termPaused);
+  get('term-live').textContent=termPaused?'PAUSED':'STREAMING';
+ }catch(e){
+  get('term-live').classList.add('off');get('term-live').textContent='RECONNECTING';
+ }finally{clearTimeout(timeout);termBusy=false}
+}
+function termTick(){
+ if(termPaused||document.hidden||!termPending.length)return;
+ if(!termInitialized){termRows.replaceChildren();termInitialized=true}
+ termEvent(termPending.shift(),true);
 }
 get('term-pause').addEventListener('click',function(){
  termPaused=!termPaused;this.textContent=termPaused?'RESUME':'PAUSE';
  this.setAttribute('aria-pressed',String(termPaused));get('term-live').textContent=termPaused?'PAUSED':'STREAMING';
 });
 get('term-clear').addEventListener('click',function(){
- termRows.replaceChildren();termInitialized=false;
- var placeholder=document.createElement('div');placeholder.className='term-empty';placeholder.textContent='Waiting for the next validation...';termRows.append(placeholder);
+ termRows.replaceChildren();termPending.length=0;termInitialized=false;
+ var placeholder=document.createElement('div');placeholder.className='term-empty';
+ placeholder.textContent='Waiting for the next validation...';termRows.append(placeholder);
 });
-termPoll();setInterval(termPoll,2200);
+termPoll();setInterval(termPoll,1800);setInterval(termTick,480);
+document.addEventListener('visibilitychange',function(){if(!document.hidden)termPoll()});
 poll();setTimeout(hydrate,800);setInterval(poll,5000);
 document.addEventListener('visibilitychange',function(){if(!document.hidden){poll();hydrate()}});
 })();

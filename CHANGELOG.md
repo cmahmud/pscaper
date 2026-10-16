@@ -1,3 +1,18 @@
+## October 2026 — source expansion and smooth terminal streaming
+
+- Audited 609 previously unconfigured URLs from curated source indexes:
+  332 yielded parseable candidate lists, 203 distinct healthy URLs were
+  promoted from 83 newly represented repository/domain identifiers.
+- Expanded configured feeds from 126 to 329, with strict 250-candidate,
+  8-MiB and two-hour refresh limits for new sources to protect the VPS.
+- Added reproducible, read-only research reporting and controlled manual
+  promotion, plus a weekly audit timer without automatic untrusted promotion.
+- Smoothed the V2 live terminal to render one verified result every 480 ms
+  instead of inserting a batch all at once; added bounded queuing, smooth
+  existing-row movement and preserved new-Gold animation.
+- Committed a second rollback backup for the pre-flow V2 layout; rollback
+  script now supports v1 (original) and v2 (before smooth streaming).
+
 ## October 2026 — V2 minimal live terminal and expanded feeds
 
 - Added eight independently sampled candidate feed URLs from Proxmint,
