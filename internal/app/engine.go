@@ -100,11 +100,31 @@ func NewEngine(cfg Config, store *Store) *Engine {
 			q.NovelConfirmed++
 		}
 	}
-	for _, q := range origins {
-		if q.NovelSeen > 0 {
-			q.VerifiedYieldPct = 100 * float64(q.NovelConfirmed) / float64(q.NovelSeen)
+	sources, err := LoadSources(cfg.SourcesFile)
+	if err == nil && len(sources) > 0 {
+		seen := make(map[string]bool, len(sources))
+		for _, src := range sources {
+			if seen[src.Name] {
+				continue
+			}
+			seen[src.Name] = true
+			q := origins[src.Name]
+			if q == nil {
+				q = &SourceStatus{Name: src.Name}
+			}
+			if q.NovelSeen > 0 {
+				q.VerifiedYieldPct = 100 * float64(q.NovelConfirmed) / float64(q.NovelSeen)
+			}
+			e.sources = append(e.sources, *q)
 		}
-		e.sources = append(e.sources, *q)
+	} else {
+		// Keep historical-only fixtures/tests functional without a sources file.
+		for _, q := range origins {
+			if q.NovelSeen > 0 {
+				q.VerifiedYieldPct = 100 * float64(q.NovelConfirmed) / float64(q.NovelSeen)
+			}
+			e.sources = append(e.sources, *q)
+		}
 	}
 	e.gitStatus.Store("idle")
 	e.cyclePhase.Store("starting")

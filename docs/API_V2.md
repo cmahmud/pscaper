@@ -1,6 +1,6 @@
 # pscaper Public API v2
 
-pscaper 1.4.0 keeps the old public endpoints working while introducing a
+pscaper 1.4.2 keeps the old public endpoints working while introducing a
 smaller, faster developer interface. The API is a **read-only** view of
 independently signed probe results, not a guarantee of availability to
 third-party destinations.

@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"os"
 	"strconv"
@@ -229,17 +230,42 @@ func parseCandidate(line, hint, source string) (Candidate, bool) {
 	return Candidate{}, false
 }
 
+// Special-purpose ranges which may pass IsGlobalUnicast but cannot act as
+// usable public forwarding endpoints. Precompiled prefixes avoid per-line
+// allocations when hundreds of thousands of proxy candidates are parsed.
+var publicProxyBogons = []netip.Prefix{
+	netip.MustParsePrefix("0.0.0.0/8"),
+	netip.MustParsePrefix("100.64.0.0/10"), // shared CGNAT addresses
+	netip.MustParsePrefix("192.0.0.0/24"),
+	netip.MustParsePrefix("192.0.2.0/24"), // TEST-NET-1
+	netip.MustParsePrefix("192.88.99.0/24"),
+	netip.MustParsePrefix("198.18.0.0/15"),   // benchmark networks
+	netip.MustParsePrefix("198.51.100.0/24"), // TEST-NET-2
+	netip.MustParsePrefix("203.0.113.0/24"),  // TEST-NET-3
+	netip.MustParsePrefix("224.0.0.0/4"),
+	netip.MustParsePrefix("240.0.0.0/4"),
+	netip.MustParsePrefix("2001:db8::/32"), // IPv6 documentation
+	netip.MustParsePrefix("2001:10::/28"),
+	netip.MustParsePrefix("2001:20::/28"),
+	netip.MustParsePrefix("2001:2::/48"), // IPv6 benchmarking
+}
+
 func validEndpoint(host string, port int) bool {
 	if port < 1 || port > 65535 {
 		return false
 	}
-	host = strings.Trim(host, "[]")
-	ip := net.ParseIP(host)
-	if ip == nil {
+	addr, err := netip.ParseAddr(strings.Trim(host, "[]"))
+	if err != nil {
 		return false
-	} // public-list engine deliberately accepts literal IPs only
-	if ip.IsUnspecified() || ip.IsLoopback() || ip.IsMulticast() || ip.IsPrivate() || ip.IsLinkLocalUnicast() {
+	} // public-list engine uses literal IPs only
+	addr = addr.Unmap()
+	if !addr.IsGlobalUnicast() || addr.IsPrivate() || addr.IsLinkLocalUnicast() {
 		return false
+	}
+	for _, prefix := range publicProxyBogons {
+		if prefix.Contains(addr) {
+			return false
+		}
 	}
 	return true
 }

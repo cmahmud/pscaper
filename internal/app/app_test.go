@@ -797,3 +797,45 @@ func TestHourlyHistoryChronologicalAcrossRestart(t *testing.T) {
 		}
 	}
 }
+
+func TestPublicProxyEndpointRejectsSpecialUseRanges(t *testing.T) {
+	invalid := []string{
+		"0.0.0.1", "127.0.0.1", "192.168.1.2", "10.0.0.1", "100.64.10.20",
+		"192.0.2.5", "198.51.100.11", "203.0.113.29", "198.18.1.2", "255.255.255.255",
+		"2001:db8::1", "2001:20::1", "fe80::1", "::1",
+	}
+	for _, host := range invalid {
+		if validEndpoint(host, 443) {
+			t.Errorf("special-use IP accepted: %s", host)
+		}
+		if _, ok := parseCandidate(host+":443", "http", "source"); ok && !strings.Contains(host, ":") {
+			t.Errorf("special-use candidate parsed: %s", host)
+		}
+	}
+	for _, host := range []string{"8.8.8.8", "1.1.1.1", "2606:4700:4700::1111"} {
+		if !validEndpoint(host, 443) {
+			t.Errorf("valid global address rejected: %s", host)
+		}
+	}
+}
+
+func TestConfiguredFeedCountAvailableBeforeFirstHarvest(t *testing.T) {
+	tmp := t.TempDir()
+	path := filepath.Join(tmp, "sources.json")
+	data := []byte(`[{"name":"new-feed","url":"https://example.com/a","protocol":"http"},
+  {"name":"not-yet-fetched","url":"https://example.com/b","protocol":"socks5"}]`)
+	if err := os.WriteFile(path, data, 0600); err != nil {
+		t.Fatal(err)
+	}
+	store, err := OpenStore(filepath.Join(tmp, "state.json.gz"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	cfg := Config{SourcesFile: path, ExportDir: filepath.Join(tmp, "exports"), Workers: 2, QueueSize: 8}
+	e := NewEngine(cfg, store)
+	got := e.Stats()
+	if got.SourceFeeds != 2 || got.SourceErrors != 0 {
+		t.Fatalf("must report configured feed count immediately after startup: %+v", got)
+	}
+}

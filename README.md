@@ -4,13 +4,45 @@ Go-based public-proxy feed harvester, independent validator, scoring engine, his
 
 ## Deployment status and sources
 
-- Current maintained application version: **1.4.0** (with October 2026 performance and API upgrades); recovered historical base was 1.3.1.
+- Current maintained application version: **1.4.2** (with October 2026 performance and API upgrades); recovered historical base was 1.3.1.
 - **329 configured feed URLs**, including 203 additional audited endpoints from 83 newly represented repository/domain identifiers (previously 126). These are not 329 independent organizations, and they do not guarantee a larger Alive pool; all candidate proxies still undergo independent validation.
 - Feed protocols: HTTP, HTTPS, SOCKS4, SOCKS5. Source-specific refresh schedules are retained.
 - Sources are only *candidates*; a candidate is not **alive** until it passes the application's outbound-forwarding callback probe.
 - Reservoir sampling inspects the bounded upstream feed and retains **2,000 representative candidates** per fetch by default (up to 10,000 with `max_candidates`). This avoids repeatedly collecting only the beginning of huge feeds.
 - Historical proxy totals recovered from `cmahmud/proxies` (223,440 discovered, 49,559 ever-alive, 1,587 ever-Gold at restoration). Historical TXT files are under `exports/historical/` and not tracked here.
 - Verified working upstream examples: [ProxyScrape](https://github.com/ProxyScrape/free-proxy-list), [Litport](https://github.com/litportnet/free-proxy-list), [Proxio](https://github.com/proxio-io/proxy-list), [Moleway](https://github.com/Moleway/Free-Proxy-List) and additional independently checked publishers in `config/sources.json`.
+
+## v1.4.2 — startup telemetry and responsive Intelligence controls
+
+The list of configured source feeds is now read at application startup and
+combined with persisted source-yield evidence. **All 329 configured feeds
+appear immediately**, including before the first asynchronous harvest returns;
+a temporary lower feed count no longer implies feeds disappeared. The source
+metrics still report a feed's fetch error only after it is actually fetched.
+
+On narrower desktop viewports the Coverage tabs wrap inside their existing
+panel instead of overflowing the one-screen charcoal grid. Mobile layouts
+remain separately responsive and may scroll as before.
+
+## v1.4.1 — network-quality filters and observability
+
+- Source parsing rejects non-routable special-purpose IPv4/IPv6 networks
+  including CGNAT, benchmark subnets, TEST-NET documentation blocks and
+  special-use IPv6 prefixes. Actual global-unicast literals remain valid.
+  This prevents wasting validator time on endpoints that cannot reach public
+  services; it does not guarantee more working proxies.
+- A project-scoped `pscaper-cloudflare-check.timer` reviews official
+  Cloudflare edge CIDR lists weekly **without modifying nginx**. A difference
+  appears in the service journal for manual review.
+- `scripts/observe-performance.py` collects bounded, read-only one-minute
+  samples of CPU/RAM, Alive/Gold, queues and GitHub publishing for a chosen
+  interval, keeping all observation records inside the ignored
+  `data/telemetry/` project directory. The one-hour v1.4 upgrade watch is
+  recorded as `data/telemetry/v14-performance-hour.jsonl`.
+- Previous v1.4.0 executable is kept under
+  `recovery/api-v2-20261016/pscaper.v14-before-bogon`; restore it using
+  `scripts/rollback-proxy-filter.sh`. The full v1.3.2 rollback remains
+  available via `scripts/rollback-api-v2.sh`.
 
 ## v1.4.0 — API, backend efficiency and Intelligence frontend
 

@@ -1,3 +1,20 @@
+## October 2026 — v1.4.2 initial state and responsive dashboard
+
+- Initialize source-status inventory from all configured feeds, preserving
+  persisted verified-yield metrics, before the first live harvest.
+- Keep the four Coverage tabs within their single-screen panel at narrower
+  desktop widths, without adding new content or additional scrollbars.
+- Add test for correct immediate feed reporting on startup.
+
+## October 2026 — v1.4.1 source reliability and sustained observation
+
+- Exclude common special-purpose, non-public IPv4/IPv6 address blocks at
+  the candidate parsing boundary; added explicit regression coverage.
+- Add a weekly read-only Cloudflare edge IP integrity check, without
+  automatic Nginx reloads or trust-list mutation.
+- Add a bounded one-hour CPU/RAM/queue/pool/publishing observation script.
+- Preserve the verified v1.4.0 binary for immediate parser-only rollback.
+
 ## October 2026 — v1.4.0 API and frontend intelligence
 
 - Added a cached, sorted Alive-only API index shared by v1 and v2 to avoid

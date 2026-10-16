@@ -1,0 +1,9 @@
+[Unit]
+Description=Weekly pscaper Cloudflare real-IP range integrity check
+[Timer]
+OnCalendar=Mon *-*-* 04:20:00 UTC
+RandomizedDelaySec=30m
+Persistent=true
+Unit=pscaper-cloudflare-check.service
+[Install]
+WantedBy=timers.target
