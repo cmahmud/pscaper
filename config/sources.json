@@ -768,1624 +768,1624 @@
     "name": "discovery-tuanminpay-live-proxy-http-1",
     "url": "https://raw.githubusercontent.com/TuanMinPay/live-proxy/master/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-fyvri-fresh-proxy-list-http-1",
     "url": "https://raw.githubusercontent.com/fyvri/fresh-proxy-list/archive/storage/classic/https.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-fyvri-fresh-proxy-list-http-2",
     "url": "https://raw.githubusercontent.com/fyvri/fresh-proxy-list/archive/storage/classic/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-thespeedx-proxy-list-http-1",
     "url": "https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-sunny9577-proxy-scraper-http-1",
     "url": "https://raw.githubusercontent.com/sunny9577/proxy-scraper/master/proxies.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-andigwandi-free-proxy-http-1",
     "url": "https://raw.githubusercontent.com/andigwandi/free-proxy/main/proxy_list.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-sevenworksdev-proxy-list-http-1",
     "url": "https://raw.githubusercontent.com/SevenworksDev/proxy-list/main/proxies/unknown.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-themiralay-proxy-list-world-http-1",
     "url": "https://raw.githubusercontent.com/themiralay/Proxy-List-World/master/data.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-hookzof-socks5-list-socks4-1",
     "url": "https://raw.githubusercontent.com/hookzof/socks5_list/master/proxy.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-tuanminpay-live-proxy-socks5-1",
     "url": "https://raw.githubusercontent.com/TuanMinPay/live-proxy/master/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-fyvri-fresh-proxy-list-socks5-1",
     "url": "https://raw.githubusercontent.com/fyvri/fresh-proxy-list/archive/storage/classic/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-sevenworksdev-proxy-list-socks5-1",
     "url": "https://raw.githubusercontent.com/SevenworksDev/proxy-list/main/proxies/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-zevtyardt-proxy-list-http-1",
     "url": "https://raw.githubusercontent.com/zevtyardt/proxy-list/main/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-sevenworksdev-proxy-list-http-2",
     "url": "https://raw.githubusercontent.com/SevenworksDev/proxy-list/main/proxies/https.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-tuanminpay-live-proxy-socks4-1",
     "url": "https://raw.githubusercontent.com/TuanMinPay/live-proxy/master/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-fyvri-fresh-proxy-list-socks4-1",
     "url": "https://raw.githubusercontent.com/fyvri/fresh-proxy-list/archive/storage/classic/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-gitrecon1455-fresh-proxy-list-http-1",
     "url": "https://raw.githubusercontent.com/gitrecon1455/fresh-proxy-list/refs/heads/main/proxylist.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-dinoz0rg-proxy-list-socks5-1",
     "url": "https://raw.githubusercontent.com/dinoz0rg/proxy-list/main/scraped_proxies/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-dinoz0rg-proxy-list-socks4-1",
     "url": "https://raw.githubusercontent.com/dinoz0rg/proxy-list/main/scraped_proxies/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-dinoz0rg-proxy-list-http-1",
     "url": "https://raw.githubusercontent.com/dinoz0rg/proxy-list/main/scraped_proxies/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-arteffkod-socks4-http-1",
     "url": "https://raw.githubusercontent.com/ArteffKod/socks4/main/socks4%20proxy",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-proxyspace-pro-http-1",
     "url": "https://proxyspace.pro/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-thespeedx-proxy-list-socks5-1",
     "url": "https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-thespeedx-proxy-list-socks4-1",
     "url": "https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-saisuiu-lionkings-http-proxys-prox-http-1",
     "url": "https://raw.githubusercontent.com/saisuiu/Lionkings-Http-Proxys-Proxies/refs/heads/main/free.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-casa-ls-proxy-list-http-1",
     "url": "https://raw.githubusercontent.com/casa-ls/proxy-list/refs/heads/main/http",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-vann-dev-proxy-list-http-1",
     "url": "https://raw.githubusercontent.com/Vann-Dev/proxy-list/main/proxies/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-hendrikbgr-free-proxy-repo-http-1",
     "url": "https://raw.githubusercontent.com/hendrikbgr/Free-Proxy-Repo/master/proxy_list.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-vakhov-fresh-proxy-list-http-1",
     "url": "https://raw.githubusercontent.com/vakhov/fresh-proxy-list/master/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-volkansah-auto-proxy-fetcher-http-1",
     "url": "https://raw.githubusercontent.com/VolkanSah/Auto-Proxy-Fetcher/refs/heads/main/proxies.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-elliottophellia-proxylist-http-1",
     "url": "https://raw.githubusercontent.com/elliottophellia/proxylist/master/results/pmix_checked.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-mrmarble-proxy-list-http-1",
     "url": "https://raw.githubusercontent.com/MrMarble/proxy-list/main/all.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-berkay-digital-proxy-scraper-http-1",
     "url": "https://raw.githubusercontent.com/berkay-digital/Proxy-Scraper/refs/heads/main/proxies.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-vakhov-fresh-proxy-list-socks4-1",
     "url": "https://raw.githubusercontent.com/vakhov/fresh-proxy-list/master/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-stormsia-proxy-list-socks5-1",
     "url": "https://raw.githubusercontent.com/stormsia/proxy-list/main/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-stormsia-proxy-list-http-1",
     "url": "https://raw.githubusercontent.com/stormsia/proxy-list/main/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-vann-dev-proxy-list-socks5-1",
     "url": "https://raw.githubusercontent.com/Vann-Dev/proxy-list/main/proxies/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-vann-dev-proxy-list-http-2",
     "url": "https://raw.githubusercontent.com/Vann-Dev/proxy-list/main/proxies/https.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-parserpp-ip-ports-http-1",
     "url": "https://raw.githubusercontent.com/parserpp/ip_ports/refs/heads/main/proxyinfo.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-vann-dev-proxy-list-socks4-1",
     "url": "https://raw.githubusercontent.com/Vann-Dev/proxy-list/main/proxies/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-stormsia-proxy-list-socks4-1",
     "url": "https://raw.githubusercontent.com/stormsia/proxy-list/main/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-vakhov-fresh-proxy-list-socks5-1",
     "url": "https://raw.githubusercontent.com/vakhov/fresh-proxy-list/master/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-zebbern-proxy-scraper-http-1",
     "url": "https://raw.githubusercontent.com/zebbern/Proxy-Scraper/main/https.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-anonym0uswork1221-free-proxies-socks5-1",
     "url": "https://raw.githubusercontent.com/Anonym0usWork1221/Free-Proxies/main/proxy_files/socks5_proxies.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-nguyenduytan-ndt-proxy-scraper-socks5-1",
     "url": "https://raw.githubusercontent.com/nguyenduytan/NDT-Proxy-Scraper/main/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-zebbern-proxy-scraper-http-2",
     "url": "https://raw.githubusercontent.com/zebbern/Proxy-Scraper/main/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-tsprnay-proxy-lists-http-1",
     "url": "https://raw.githubusercontent.com/Tsprnay/Proxy-lists/master/proxies/https.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-javadbazokar-proxy-list-http-1",
     "url": "https://raw.githubusercontent.com/javadbazokar/PROXY-List/main/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-fifzzsenze-master-proxy-http-1",
     "url": "https://raw.githubusercontent.com/FifzzSENZE/Master-Proxy/master/proxies/https.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-cheagjihvg-simple-proxylist-socks5-1",
     "url": "https://raw.githubusercontent.com/Cheagjihvg/simple-proxylist/main/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-mohammedcha-proxripper-http-1",
     "url": "https://raw.githubusercontent.com/Mohammedcha/ProxRipper/main/full_proxies/https.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-riommo-proxyfree-socks4-1",
     "url": "https://raw.githubusercontent.com/RioMMO/ProxyFree/main/SOCKS4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-murongpig-proxy-master-socks5-1",
     "url": "https://raw.githubusercontent.com/MuRongPIG/Proxy-Master/main/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-murongpig-proxy-master-http-1",
     "url": "https://raw.githubusercontent.com/MuRongPIG/Proxy-Master/main/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-riommo-proxyfree-http-1",
     "url": "https://raw.githubusercontent.com/RioMMO/ProxyFree/main/HTTP.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-murongpig-proxy-master-socks4-1",
     "url": "https://raw.githubusercontent.com/MuRongPIG/Proxy-Master/main/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-sevenworksdev-proxy-list-socks4-1",
     "url": "https://raw.githubusercontent.com/SevenworksDev/proxy-list/main/proxies/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-pwnx0-proxy-socks5-1",
     "url": "https://raw.githubusercontent.com/pwnx0/proxy/main/proxies/source/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-tsprnay-proxy-lists-http-2",
     "url": "https://raw.githubusercontent.com/Tsprnay/Proxy-lists/master/proxies/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-tsprnay-proxy-lists-socks5-1",
     "url": "https://raw.githubusercontent.com/Tsprnay/Proxy-lists/master/proxies/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-pwnx0-proxy-socks4-1",
     "url": "https://raw.githubusercontent.com/pwnx0/proxy/main/proxies/source/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-tsprnay-proxy-lists-socks4-1",
     "url": "https://raw.githubusercontent.com/Tsprnay/Proxy-lists/master/proxies/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-pwnx0-proxy-http-1",
     "url": "https://raw.githubusercontent.com/pwnx0/proxy/main/proxies/source/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-fifzzsenze-master-proxy-socks5-1",
     "url": "https://raw.githubusercontent.com/FifzzSENZE/Master-Proxy/master/proxies/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-tianndev-free-proxy-http-1",
     "url": "https://raw.githubusercontent.com/Tianndev/free-proxy/main/proxy/all.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-fifzzsenze-master-proxy-socks4-1",
     "url": "https://raw.githubusercontent.com/FifzzSENZE/Master-Proxy/master/proxies/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-fifzzsenze-master-proxy-http-2",
     "url": "https://raw.githubusercontent.com/FifzzSENZE/Master-Proxy/master/proxies/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-i-am-unbekannt-blitzproxy-http-1",
     "url": "https://raw.githubusercontent.com/i-am-unbekannt/BLITZPROXY/main/raw-files/raw-http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-nguyenduytan-ndt-proxy-scraper-http-1",
     "url": "https://raw.githubusercontent.com/nguyenduytan/NDT-Proxy-Scraper/main/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-javadbazokar-proxy-list-http-2",
     "url": "https://raw.githubusercontent.com/javadbazokar/PROXY-List/main/https.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-cheagjihvg-simple-proxylist-http-1",
     "url": "https://raw.githubusercontent.com/Cheagjihvg/simple-proxylist/main/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-zevtyardt-proxy-list-socks4-1",
     "url": "https://raw.githubusercontent.com/zevtyardt/proxy-list/main/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-zevtyardt-proxy-list-socks5-1",
     "url": "https://raw.githubusercontent.com/zevtyardt/proxy-list/main/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-cheagjihvg-simple-proxylist-socks4-1",
     "url": "https://raw.githubusercontent.com/Cheagjihvg/simple-proxylist/main/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-mohammedcha-proxripper-http-2",
     "url": "https://raw.githubusercontent.com/Mohammedcha/ProxRipper/main/full_proxies/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-pwnx0-proxy-http-2",
     "url": "https://raw.githubusercontent.com/pwnx0/proxy/main/proxies/source/https.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-wyattowalsh-proxywhirl-http-1",
     "url": "https://raw.githubusercontent.com/wyattowalsh/proxywhirl/main/docs/proxy-lists/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-vmheaven-vmheaven-io-free-proxy-li-http-1",
     "url": "https://raw.githubusercontent.com/vmheaven/VMHeaven.io-Free-Proxy-List/main/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-tianndev-free-proxy-http-2",
     "url": "https://raw.githubusercontent.com/Tianndev/free-proxy/main/proxy/https.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-anonym0uswork1221-free-proxies-http-1",
     "url": "https://raw.githubusercontent.com/Anonym0usWork1221/Free-Proxies/main/proxy_files/http_proxies.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-casa-ls-proxy-list-socks5-1",
     "url": "https://raw.githubusercontent.com/casa-ls/proxy-list/refs/heads/main/socks5",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-casals-ar-proxy-list-socks5-1",
     "url": "https://raw.githubusercontent.com/casals-ar/proxy-list/refs/heads/main/socks5",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-openproxylist-xyz-http-1",
     "url": "https://openproxylist.xyz/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-theriturajps-proxy-list-http-1",
     "url": "https://raw.githubusercontent.com/theriturajps/proxy-list/main/proxies.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-openproxylist-xyz-socks5-1",
     "url": "https://openproxylist.xyz/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-riyoway-proxies-http-1",
     "url": "https://raw.githubusercontent.com/Riyoway/Proxies/master/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-noctiro-getproxy-http-1",
     "url": "https://raw.githubusercontent.com/noctiro/getproxy/master/file/all.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-noctiro-getproxy-socks5-1",
     "url": "https://raw.githubusercontent.com/noctiro/getproxy/master/file/socks5_with_protocol.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-solispirit-proxy-list-http-1",
     "url": "https://raw.githubusercontent.com/SoliSpirit/proxy-list/main/https.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-casa-ls-proxy-list-socks4-1",
     "url": "https://raw.githubusercontent.com/casa-ls/proxy-list/refs/heads/main/socks4",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-casals-ar-proxy-list-socks4-1",
     "url": "https://raw.githubusercontent.com/casals-ar/proxy-list/refs/heads/main/socks4",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-nguyenduytan-ndt-proxy-scraper-socks4-1",
     "url": "https://raw.githubusercontent.com/nguyenduytan/NDT-Proxy-Scraper/main/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-tianndev-free-proxy-socks5-1",
     "url": "https://raw.githubusercontent.com/Tianndev/free-proxy/main/proxy/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-dpangestuw-free-proxy-socks5-1",
     "url": "https://raw.githubusercontent.com/dpangestuw/Free-PROXY/main/socks5_proxies.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-proxygenerator1-proxygenerator-http-1",
     "url": "https://raw.githubusercontent.com/proxygenerator1/ProxyGenerator/main/ALL/ALL.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-shubhamshendre-free-proxies-socks5-1",
     "url": "https://raw.githubusercontent.com/shubhamshendre/Free-Proxies/main/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-argh94-proxy-list-http-1",
     "url": "https://raw.githubusercontent.com/Argh94/Proxy-List/main/HTTP.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-z3a4-free-proxy-list-socks5-1",
     "url": "https://raw.githubusercontent.com/z3a4/free-proxy-list/main/proxies/unchecked/socks5-proxies.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-riyoway-proxies-http-2",
     "url": "https://raw.githubusercontent.com/Riyoway/Proxies/master/all.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-z3a4-free-proxy-list-http-1",
     "url": "https://raw.githubusercontent.com/z3a4/free-proxy-list/main/proxies/unchecked/http-proxies.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-openproxylist-xyz-socks4-1",
     "url": "https://openproxylist.xyz/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-tianndev-free-proxy-socks4-1",
     "url": "https://raw.githubusercontent.com/Tianndev/free-proxy/main/proxy/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-noctiro-getproxy-socks4-1",
     "url": "https://raw.githubusercontent.com/noctiro/getproxy/master/file/socks4_with_protocol.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-proxyspace-pro-socks4-1",
     "url": "https://proxyspace.pro/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-proxyspace-pro-socks5-1",
     "url": "https://proxyspace.pro/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-vmheaven-vmheaven-io-free-proxy-li-http-2",
     "url": "https://raw.githubusercontent.com/vmheaven/VMHeaven.io-Free-Proxy-List/main/https.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-dpangestuw-free-proxy-http-1",
     "url": "https://raw.githubusercontent.com/dpangestuw/Free-PROXY/main/http_proxies.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-i-am-unbekannt-blitzproxy-http-2",
     "url": "https://raw.githubusercontent.com/i-am-unbekannt/BLITZPROXY/main/out-files/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-i-am-unbekannt-blitzproxy-socks5-1",
     "url": "https://raw.githubusercontent.com/i-am-unbekannt/BLITZPROXY/main/out-files/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-z3a4-free-proxy-list-socks4-1",
     "url": "https://raw.githubusercontent.com/z3a4/free-proxy-list/main/proxies/unchecked/socks4-proxies.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-ipparrot-proxy-ips-http-1",
     "url": "https://raw.githubusercontent.com/IPParrot/proxy_ips/main/proxies/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-dinoz0rg-proxy-list-http-2",
     "url": "https://raw.githubusercontent.com/dinoz0rg/proxy-list/main/checked_proxies/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-zebbern-proxy-scraper-socks4-1",
     "url": "https://raw.githubusercontent.com/zebbern/Proxy-Scraper/main/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-dpangestuw-free-proxy-socks4-1",
     "url": "https://raw.githubusercontent.com/dpangestuw/Free-PROXY/main/socks4_proxies.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-ch4120n-ch4120n-proxy-list-socks5-1",
     "url": "https://raw.githubusercontent.com/Ch4120N/Ch4120N-Proxy-List/master/proxies/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-api-proxyscrape-com-socks5-1",
     "url": "https://api.proxyscrape.com/v4/free-proxy-list/get?request=display_proxies&proxy_format=ipport&format=text&protocol=socks5",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-riyoway-proxies-socks5-1",
     "url": "https://raw.githubusercontent.com/Riyoway/Proxies/master/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-proxy-free-free-proxy-list-socks5-1",
     "url": "https://raw.githubusercontent.com/proxy-free/free-proxy-list/main/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-shubhamshendre-free-proxies-http-1",
     "url": "https://raw.githubusercontent.com/shubhamshendre/Free-Proxies/main/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-ipparrot-proxy-ips-socks5-1",
     "url": "https://raw.githubusercontent.com/IPParrot/proxy_ips/main/proxies/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-fmw86-free-proxy-pool-socks5-1",
     "url": "https://raw.githubusercontent.com/fmw86/free-proxy-pool/main/socks5_alive.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-zebbern-proxy-scraper-socks5-1",
     "url": "https://raw.githubusercontent.com/zebbern/Proxy-Scraper/main/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-pxys-io-dailyproxylist-http-1",
     "url": "https://raw.githubusercontent.com/Pxys-io/DailyProxyList/master/working_proxies.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-proxygenerator1-proxygenerator-socks5-1",
     "url": "https://raw.githubusercontent.com/proxygenerator1/ProxyGenerator/main/ForAnonymity/elite/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-i-am-unbekannt-blitzproxy-socks4-1",
     "url": "https://raw.githubusercontent.com/i-am-unbekannt/BLITZPROXY/main/out-files/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-noarche-proxylist-socks5-sock4-exp-http-1",
     "url": "https://raw.githubusercontent.com/noarche/proxylist-socks5-sock4-exported-updates/main/connect-online.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-ipparrot-proxy-ips-socks4-1",
     "url": "https://raw.githubusercontent.com/IPParrot/proxy_ips/main/proxies/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-trio666-proxy-checker-socks5-1",
     "url": "https://raw.githubusercontent.com/trio666/proxy-checker/main/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-vmheaven-vmheaven-io-free-proxy-li-socks4-1",
     "url": "https://raw.githubusercontent.com/vmheaven/VMHeaven.io-Free-Proxy-List/main/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-nikolait-free-proxy-list-http-1",
     "url": "https://raw.githubusercontent.com/NikolaiT/free-proxy-list/main/proxies/http_working.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-sunny9577-github-io-http-1",
     "url": "https://sunny9577.github.io/proxy-scraper/proxies.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-nikolait-free-proxy-list-socks5-1",
     "url": "https://raw.githubusercontent.com/NikolaiT/free-proxy-list/main/proxies/socks5_working.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-argh94-proxy-list-socks5-1",
     "url": "https://raw.githubusercontent.com/Argh94/Proxy-List/main/SOCKS5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-proxygenerator1-proxygenerator-http-2",
     "url": "https://raw.githubusercontent.com/proxygenerator1/ProxyGenerator/main/ForAnonymity/elite/https.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-vmheaven-vmheaven-io-free-proxy-li-socks5-1",
     "url": "https://raw.githubusercontent.com/vmheaven/VMHeaven.io-Free-Proxy-List/main/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-cb-x2-jun-proxy-lists-http-1",
     "url": "https://raw.githubusercontent.com/CB-X2-Jun/proxy-lists/main/proxy.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-proxy-free-free-proxy-list-http-1",
     "url": "https://raw.githubusercontent.com/proxy-free/free-proxy-list/main/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-casals-ar-proxy-list-http-1",
     "url": "https://raw.githubusercontent.com/casals-ar/proxy-list/refs/heads/main/http",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-wyattowalsh-proxywhirl-socks5-1",
     "url": "https://raw.githubusercontent.com/wyattowalsh/proxywhirl/main/docs/proxy-lists/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-z3a4-free-proxy-list-http-2",
     "url": "https://raw.githubusercontent.com/z3a4/free-proxy-list/main/proxies/unchecked/https-proxies.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-ch4120n-ch4120n-proxy-list-http-1",
     "url": "https://raw.githubusercontent.com/Ch4120N/Ch4120N-Proxy-List/master/proxies/all.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-bes-js-public-proxy-list-http-1",
     "url": "https://raw.githubusercontent.com/Bes-js/public-proxy-list/main/proxies.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-trio666-proxy-checker-http-1",
     "url": "https://raw.githubusercontent.com/trio666/proxy-checker/main/all.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-api-proxyscrape-com-http-1",
     "url": "https://api.proxyscrape.com/v4/free-proxy-list/get?request=display_proxies&proxy_format=ipport&format=text&protocol=http",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-hendrikbgr-free-proxy-repo-socks4-1",
     "url": "https://raw.githubusercontent.com/hendrikbgr/Free-Proxy-Repo/refs/heads/master/proxy_list.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-shubhamshendre-free-proxies-socks4-1",
     "url": "https://raw.githubusercontent.com/shubhamshendre/Free-Proxies/main/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-anonym0uswork1221-free-proxies-socks4-1",
     "url": "https://raw.githubusercontent.com/Anonym0usWork1221/Free-Proxies/main/proxy_files/socks4_proxies.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-noarche-proxylist-socks5-sock4-exp-socks5-1",
     "url": "https://raw.githubusercontent.com/noarche/proxylist-socks5-sock4-exported-updates/main/socks5-online.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-argh94-proxy-list-socks4-1",
     "url": "https://raw.githubusercontent.com/Argh94/Proxy-List/main/SOCKS4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-api-proxyscrape-com-http-2",
     "url": "https://api.proxyscrape.com/v3/free-proxy-list/get?request=displayproxies&protocol=http&proxy_format=ipport&format=text&timeout=20000",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-riyoway-proxies-socks4-1",
     "url": "https://raw.githubusercontent.com/Riyoway/Proxies/master/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-gnxd3rftt2we-bulk-socks-proxy-list-socks5-1",
     "url": "https://raw.githubusercontent.com/gnxD3RfTT2WE/bulk-socks-proxy-list/main/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-gnxd3rftt2we-proxy-list-plain-text-socks5-1",
     "url": "https://raw.githubusercontent.com/gnxD3RfTT2WE/proxy-list-plain-text/main/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-fmw86-free-proxy-pool-http-1",
     "url": "https://raw.githubusercontent.com/fmw86/free-proxy-pool/main/http_alive.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-krokmazagaga-http-proxy-list-http-1",
     "url": "https://raw.githubusercontent.com/krokmazagaga/http-proxy-list/main/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-im-razvan-proxy-list-socks5-1",
     "url": "https://raw.githubusercontent.com/im-razvan/proxy_list/main/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-ch4120n-ch4120n-proxy-list-socks4-1",
     "url": "https://raw.githubusercontent.com/Ch4120N/Ch4120N-Proxy-List/master/proxies/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-nikolait-free-proxy-list-socks4-1",
     "url": "https://raw.githubusercontent.com/NikolaiT/free-proxy-list/main/proxies/socks4_working.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-proxyspace-pro-http-2",
     "url": "https://proxyspace.pro/https.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-elliottophellia-proxylist-socks5-1",
     "url": "https://raw.githubusercontent.com/elliottophellia/proxylist/master/results/socks5/global/socks5_checked.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-gnxd3rftt2we-github-proxy-list-socks4-1",
     "url": "https://raw.githubusercontent.com/gnxD3RfTT2WE/github-proxy-list/main/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-proxygenerator1-proxygenerator-socks4-1",
     "url": "https://raw.githubusercontent.com/proxygenerator1/ProxyGenerator/main/ForAnonymity/elite/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-fmw86-free-proxy-pool-socks5-2",
     "url": "https://raw.githubusercontent.com/fmw86/free-proxy-pool/main/socks5_fast.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-noarche-proxylist-socks5-sock4-exp-socks4-1",
     "url": "https://raw.githubusercontent.com/noarche/proxylist-socks5-sock4-exported-updates/main/socks4-online.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-noarche-proxylist-socks5-sock4-exp-http-2",
     "url": "https://raw.githubusercontent.com/noarche/proxylist-socks5-sock4-exported-updates/main/http-online.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-api-proxyscrape-com-socks4-1",
     "url": "https://api.proxyscrape.com/v4/free-proxy-list/get?request=display_proxies&proxy_format=ipport&format=text&protocol=socks4",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-proxy-free-free-proxy-list-socks4-1",
     "url": "https://raw.githubusercontent.com/proxy-free/free-proxy-list/main/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-xnuvers007-free-proxy-http-1",
     "url": "https://raw.githubusercontent.com/Xnuvers007/free-proxy/main/proxy_scheme.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-ipparrot-proxy-ips-http-2",
     "url": "https://raw.githubusercontent.com/IPParrot/proxy_ips/main/proxies/https.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-access-at-proxy-list-socks4-1",
     "url": "https://raw.githubusercontent.com/Access-At/proxy-list/main/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-blacksnowdot0-proxy-pulse-socks5-1",
     "url": "https://raw.githubusercontent.com/BlacKSnowDot0/Proxy-Pulse/main/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-blacksnowdot0-proxy-pulse-socks4-1",
     "url": "https://raw.githubusercontent.com/BlacKSnowDot0/Proxy-Pulse/main/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-398001-proxyslist-socks5-1",
     "url": "https://raw.githubusercontent.com/398001/ProxysList/main/socks5_working.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-trio666-proxy-checker-socks4-1",
     "url": "https://raw.githubusercontent.com/trio666/proxy-checker/main/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-azestkingscrown-free-proxy-list-http-1",
     "url": "https://raw.githubusercontent.com/azestkingscrown/Free_Proxy_List/main/working_proxies.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-anutmagang-free-highquality-proxy--http-1",
     "url": "https://raw.githubusercontent.com/anutmagang/Free-HighQuality-Proxy-Socks/main/results/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-nikolait-free-proxy-list-http-2",
     "url": "https://raw.githubusercontent.com/NikolaiT/free-proxy-list/main/proxies/https_working.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-fmw86-free-proxy-pool-http-2",
     "url": "https://raw.githubusercontent.com/fmw86/free-proxy-pool/main/http_fast.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-398001-proxyslist-socks4-1",
     "url": "https://raw.githubusercontent.com/398001/ProxysList/main/socks4_working.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-blacksnowdot0-proxy-pulse-http-1",
     "url": "https://raw.githubusercontent.com/BlacKSnowDot0/Proxy-Pulse/main/all.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-rianilham28-proxian-http-1",
     "url": "https://raw.githubusercontent.com/rianilham28/proxian/main/out/proxies.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-claude89757-free-https-proxies-http-1",
     "url": "https://raw.githubusercontent.com/claude89757/free_https_proxies/main/https_proxies.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-elliottophellia-proxylist-socks4-1",
     "url": "https://raw.githubusercontent.com/elliottophellia/proxylist/master/results/socks4/global/socks4_checked.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-claude89757-free-https-proxies-http-2",
     "url": "https://raw.githubusercontent.com/claude89757/free_https_proxies/main/isz_https_proxies.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-lonekingcode-free-proxy-db-http-1",
     "url": "https://raw.githubusercontent.com/LoneKingCode/free-proxy-db/main/proxies/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-wyattowalsh-proxywhirl-http-2",
     "url": "https://raw.githubusercontent.com/wyattowalsh/proxywhirl/main/docs/proxy-lists/https.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-argh94-proxyprowler-socks5-1",
     "url": "https://raw.githubusercontent.com/Argh94/ProxyProwler/main/proxy_output/SOCKS5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-twj0-subseek-http-1",
     "url": "https://raw.githubusercontent.com/twj0/subseek/master/data/china_proxies/raw_china_proxies.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-morawskidotmy-youtube-proxies-http-1",
     "url": "https://raw.githubusercontent.com/morawskidotmy/youtube-proxies/main/youtube-proxies.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-vadim287-free-proxy-socks4-1",
     "url": "https://raw.githubusercontent.com/Vadim287/free-proxy/refs/heads/main/proxies/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-b4mbo-o-check-free-proxy-socks5-1",
     "url": "https://raw.githubusercontent.com/b4mbo-o/Check-Free-Proxy/main/alive_socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-wyattowalsh-proxywhirl-socks4-1",
     "url": "https://raw.githubusercontent.com/wyattowalsh/proxywhirl/main/docs/proxy-lists/socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-argh94-proxyprowler-socks4-1",
     "url": "https://raw.githubusercontent.com/Argh94/ProxyProwler/main/proxy_output/SOCKS4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-blacksnowdot0-proxy-pulse-http-2",
     "url": "https://raw.githubusercontent.com/BlacKSnowDot0/Proxy-Pulse/main/https.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-b4mbo-o-check-free-proxy-http-1",
     "url": "https://raw.githubusercontent.com/b4mbo-o/Check-Free-Proxy/main/alive_http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-lucasjustinudin-free-highquality-p-http-1",
     "url": "https://raw.githubusercontent.com/lucasjustinudin/Free-HighQuality-Proxy-Socks/main/output/by_protocol/http.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-b4mbo-o-check-free-proxy-socks4-1",
     "url": "https://raw.githubusercontent.com/b4mbo-o/Check-Free-Proxy/main/alive_socks4.txt",
     "protocol": "socks4",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-xigmadev-proxy-http-1",
     "url": "https://raw.githubusercontent.com/XigmaDev/proxy/main/proxies.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-lonekingcode-free-proxy-db-http-2",
     "url": "https://raw.githubusercontent.com/LoneKingCode/free-proxy-db/main/proxies/all.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-xnuvers007-free-proxy-http-2",
     "url": "https://raw.githubusercontent.com/Xnuvers007/free-proxy/main/proxy_scheme_active.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-vadim287-free-proxy-socks5-1",
     "url": "https://raw.githubusercontent.com/Vadim287/free-proxy/refs/heads/main/proxies/socks5.txt",
     "protocol": "socks5",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-anonym0uswork1221-free-proxies-http-2",
     "url": "https://raw.githubusercontent.com/Anonym0usWork1221/Free-Proxies/main/proxy_files/https_proxies.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   },
   {
     "name": "discovery-vakhov-fresh-proxy-list-http-2",
     "url": "https://raw.githubusercontent.com/vakhov/fresh-proxy-list/master/https.txt",
     "protocol": "http",
-    "refresh_seconds": 7200,
-    "max_candidates": 250,
+    "refresh_seconds": 3600,
+    "max_candidates": 100,
     "max_bytes_mb": 8
   }
 ]

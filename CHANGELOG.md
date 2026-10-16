@@ -1,10 +1,19 @@
+## October 2026 — source-load safety adjustment
+
+- The first 329-feed harvest discovered roughly 18,700 new candidates and
+  briefly filled the validation queue to near its configured capacity.
+- Tuned the newly added 203 feeds to 100 sampled candidates per one-hour
+  refresh rather than 250 per two-hour refresh, smoothing admission without
+  increasing the scraper's workers or CPU budget.
+- Maintained a project-local configuration backup before applying changes.
+
 ## October 2026 — source expansion and smooth terminal streaming
 
 - Audited 609 previously unconfigured URLs from curated source indexes:
   332 yielded parseable candidate lists, 203 distinct healthy URLs were
   promoted from 83 newly represented repository/domain identifiers.
-- Expanded configured feeds from 126 to 329, with strict 250-candidate,
-  8-MiB and two-hour refresh limits for new sources to protect the VPS.
+- Expanded configured feeds from 126 to 329, with strict 100-candidate,
+  8-MiB and one-hour refresh limits for new sources to protect the VPS.
 - Added reproducible, read-only research reporting and controlled manual
   promotion, plus a weekly audit timer without automatic untrusted promotion.
 - Smoothed the V2 live terminal to render one verified result every 480 ms

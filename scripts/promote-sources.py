@@ -61,8 +61,8 @@ def main():
   n=per_type[(group,proto)]+1
   name=f'discovery-{raw}-{proto}-{n}'
   if name in (u['name'] for u in current):continue
-  selected.append({'name':name,'url':url,'protocol':proto,'refresh_seconds':7200,
-     'max_candidates':250,'max_bytes_mb':8})
+  selected.append({'name':name,'url':url,'protocol':proto,'refresh_seconds':3600,
+     'max_candidates':100,'max_bytes_mb':8})
   used_urls.add(url.lower())
   publisher_count[group]+=1
   per_type[(group,proto)]+=1

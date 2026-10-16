@@ -273,8 +273,8 @@ IP:port addresses. Only **203 URLs** were promoted, representing **83 newly
 configured repository/domain identifiers**, after publisher grouping, URL and
 sample-content deduplication and an existing-source check.
 
-New feeds have tighter limits than legacy feeds: **at most 250 candidates per
-fetch, an 8 MiB response cap, and a two-hour base refresh interval**. The
+New feeds have tighter limits than legacy feeds: **at most 100 candidates per
+fetch, an 8 MiB response cap, and a one-hour base refresh interval**. The
 engine's existing adaptive source yield ranking can update refresh behavior
 after sufficient observations. All feeds are re-validated independently
 against pscaper's own signed callback endpoints. Extra feed URLs do not equal
@@ -320,3 +320,9 @@ The dedicated VPS publisher is active at 30-second intervals. The Go engine buil
 Free public proxies are untrusted, unstable and may intercept unencrypted traffic. **Never route authentication, personal or financial data through them.** The engine only reads configured public feeds (no internet-wide port scans). A working-proxy count is time-sensitive. Gold requires repeat validation, so it can initially be zero even if some Alive proxies have passed.
 
 Previous source revisions and the original v1.3.0 Git bundle remain backed up locally in `recovery/`.
+
+To protect live validation after the initial expansion revealed a burst of
+~18,700 newly discovered endpoints and a nearly full 15,000-item queue,
+the new 203 feeds were tuned from 250 candidates/2 hours to **100
+candidates/hour**. This lowers burst pressure while sampling source files
+more frequently; real working-proxy yield remains the success metric.
