@@ -80,7 +80,7 @@ func NewEngine(cfg Config, store *Store) *Engine {
 		startedAt:       time.Now(),
 		cycleKick:       make(chan struct{}, 1),
 		scheduled:       make(map[string]struct{}),
-		sourceLastFetch: make(map[string]time.Time),
+		sourceLastFetch: loadSourceFetchTimes(cfg.DataDir),
 	}
 	// Rebuild persisted source effectiveness from true initial-source
 	// attribution. Restarts must not erase hard-earned validation evidence.
@@ -124,6 +124,11 @@ func NewEngine(cfg Config, store *Store) *Engine {
 				q.VerifiedYieldPct = 100 * float64(q.NovelConfirmed) / float64(q.NovelSeen)
 			}
 			e.sources = append(e.sources, *q)
+		}
+	}
+	for i := range e.sources {
+		if checked := e.sourceLastFetch[e.sources[i].Name]; !checked.IsZero() {
+			e.sources[i].LastFetch = checked
 		}
 	}
 	e.gitStatus.Store("idle")
@@ -390,7 +395,6 @@ func (e *Engine) harvestOnce(ctx context.Context, force bool) (HarvestSummary, e
 		return HarvestSummary{}, err
 	}
 	now := time.Now()
-	due := make([]Source, 0, len(sources))
 	e.sourceMu.RLock()
 	historical := make(map[string]SourceStatus, len(e.sources))
 	for _, st := range e.sources {
@@ -398,31 +402,21 @@ func (e *Engine) harvestOnce(ctx context.Context, force bool) (HarvestSummary, e
 	}
 	e.sourceMu.RUnlock()
 	e.sourceFetchMu.Lock()
-	for _, src := range sources {
-		interval := src.RefreshInterval()
-		// Prefer feeds proven to discover new proxies that subsequently pass
-		// signed validation. Mere address volume and shared live proxies do
-		// not qualify as evidence of source effectiveness.
-		if h, ok := historical[src.Name]; ok {
-			decision := sourceConfidence(h)
-			switch decision.Recommendation {
-			case "prioritize":
-				if interval > 20*time.Minute {
-					interval /= 2
-				}
-			case "deprioritize":
-				if interval < 2*time.Hour {
-					interval *= 2
-				}
-			}
-		}
-		last := e.sourceLastFetch[src.Name]
-		if force || last.IsZero() || now.Sub(last) >= interval {
-			due = append(due, src)
-			e.sourceLastFetch[src.Name] = now
-		}
+	due := selectSourceBatch(sources, e.sourceLastFetch, historical, now, force, e.cfg.MaxFeedsPerHarvest)
+	for _, src := range due {
+		e.sourceLastFetch[src.Name] = now
 	}
 	e.sourceFetchMu.Unlock()
+	// Persist scheduling fairness across service restarts. This is a small,
+	// bounded state file separate from the durable proxy record journal.
+	if len(due) > 0 {
+		e.sourceFetchMu.Lock()
+		saveErr := saveSourceFetchTimes(e.cfg.DataDir, e.sourceLastFetch)
+		e.sourceFetchMu.Unlock()
+		if saveErr != nil {
+			log.Printf("source schedule checkpoint: %v", saveErr)
+		}
+	}
 	results, statuses := HarvestSources(ctx, due, e.cfg.SourceConcurrency)
 	summary := HarvestSummary{Sources: len(due)}
 	newBySource := make(map[string]int)

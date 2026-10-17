@@ -91,7 +91,19 @@ func HarvestSources(ctx context.Context, sources []Source, concurrency int) (map
 	if concurrency < 1 {
 		concurrency = 1
 	}
-	client := &http.Client{Timeout: 15 * time.Second, Transport: &http.Transport{
+	client := &http.Client{Timeout: 15 * time.Second, CheckRedirect: func(req *http.Request, via []*http.Request) error {
+		if len(via) == 0 || len(via) >= 4 || req.URL.Scheme != "https" {
+			return fmt.Errorf("unsafe source redirect")
+		}
+		// Only the originating publisher host is allowed to redirect;
+		// dynamically discovered feeds must not bounce into intranet hosts.
+		first := via[0].URL
+		if !strings.EqualFold(req.URL.Hostname(), first.Hostname()) ||
+			!trustedSourceRedirectHost(first.Hostname()) {
+			return fmt.Errorf("untrusted publisher redirect")
+		}
+		return nil
+	}, Transport: &http.Transport{
 		MaxIdleConns: concurrency * 2, MaxIdleConnsPerHost: 4, IdleConnTimeout: 30 * time.Second,
 	}}
 	sem := make(chan struct{}, concurrency)
@@ -140,6 +152,20 @@ func HarvestSources(ctx context.Context, sources []Source, concurrency int) (map
 // fetchSource retains the original feed as primary. Explicitly configured,
 // same-repository HTTPS jsDelivr URLs act as a fallback on transient failures.
 // Never fetch an arbitrary untrusted fallback destination.
+func trustedSourceRedirectHost(host string) bool {
+	host = strings.ToLower(strings.TrimSpace(host))
+	if strings.HasSuffix(host, ".github.io") && len(host) > len(".github.io") {
+		return true
+	}
+	switch host {
+	case "raw.githubusercontent.com", "cdn.jsdelivr.net",
+		"api.proxyscrape.com", "openproxylist.xyz", "proxyspace.pro",
+		"databay.com":
+		return true
+	}
+	return false
+}
+
 func fetchSource(ctx context.Context, client *http.Client, src Source) ([]Candidate, error) {
 	candidates, err := fetchSourceURL(ctx, client, src, src.URL)
 	if err == nil || src.FallbackURL == "" || !trustedFeedFallback(src.URL, src.FallbackURL) {
@@ -233,8 +259,16 @@ func fetchSourceURL(ctx context.Context, client *http.Client, src Source, target
 func parseCandidate(line, hint, source string) (Candidate, bool) {
 	line = strings.TrimSpace(strings.Trim(line, "\"',"))
 	proto := normalizeProtocol(hint)
-	if strings.Contains(line, "://") {
-		u, err := url.Parse(line)
+	// A number of current public feed publishers append columns or
+	// translated metadata after a URI, e.g.
+	// socks5://IP:PORT [verified 10 minutes ago]. Parse only the
+	// first token so the valid protocol URI isn't discarded.
+	uriToken := line
+	if fields := strings.Fields(line); len(fields) > 0 {
+		uriToken = fields[0]
+	}
+	if strings.Contains(uriToken, "://") {
+		u, err := url.Parse(uriToken)
 		if err == nil && u.Host != "" {
 			p := normalizeProtocol(u.Scheme)
 			if p == "" {

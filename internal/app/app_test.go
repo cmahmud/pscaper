@@ -23,6 +23,8 @@ func TestParseCandidate(t *testing.T) {
 	}{
 		{"1.2.3.4:8080", "http", "http", "1.2.3.4", 8080},
 		{"socks5://8.8.8.8:1080", "http", "socks5", "8.8.8.8", 1080},
+		{"socks5://8.8.8.8:1080    verified 10-17 13:24", "http", "socks5", "8.8.8.8", 1080},
+		{"http://1.1.1.1:8080	更新于 2026-10-17", "socks5", "http", "1.1.1.1", 8080},
 		{"45.225.89.145:999:Ecuador", "http", "http", "45.225.89.145", 999},
 	}
 	for _, tc := range cases {

@@ -24,6 +24,9 @@ links=[
  ('gfp-https','https://raw.githubusercontent.com/gfpcom/free-proxy-list/main/sources/https.txt'),
  ('gfp-socks4','https://raw.githubusercontent.com/gfpcom/free-proxy-list/main/sources/socks4.txt'),
  ('gfp-socks5','https://raw.githubusercontent.com/gfpcom/free-proxy-list/main/sources/socks5.txt'),
+ ('fmw-http','https://raw.githubusercontent.com/fmw86/free-proxy-pool/main/sources_http.txt'),
+ ('fmw-socks4','https://raw.githubusercontent.com/fmw86/free-proxy-pool/main/sources_socks4.txt'),
+ ('fmw-socks5','https://raw.githubusercontent.com/fmw86/free-proxy-pool/main/sources_socks5.txt'),
 ]
 headers={'User-Agent':'pscaper-source-audit/2.0','Accept':'text/plain,application/json;q=0.9'}
 ALLOWED_HOSTS={'raw.githubusercontent.com','cdn.jsdelivr.net','api.proxyscrape.com','openproxylist.xyz','proxyspace.pro','databay.com'}

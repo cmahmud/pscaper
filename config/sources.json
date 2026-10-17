@@ -2391,5 +2391,45 @@
     "refresh_seconds": 3600,
     "max_candidates": 100,
     "max_bytes_mb": 8
+  },
+  {
+    "name": "exp-watchttvv-free-proxy-list-http",
+    "url": "https://raw.githubusercontent.com/watchttvv/free-proxy-list/main/proxy.txt",
+    "protocol": "http",
+    "refresh_seconds": 3600,
+    "max_candidates": 75,
+    "max_bytes_mb": 8
+  },
+  {
+    "name": "exp-gnxd3rftt2we-socks-proxy-list-free-http",
+    "url": "https://raw.githubusercontent.com/gnxD3RfTT2WE/socks-proxy-list-free/main/http.txt",
+    "protocol": "http",
+    "refresh_seconds": 3600,
+    "max_candidates": 75,
+    "max_bytes_mb": 8
+  },
+  {
+    "name": "exp-gnxd3rftt2we-free-proxy-list-daily-http",
+    "url": "https://raw.githubusercontent.com/gnxD3RfTT2WE/free-proxy-list-daily/main/http.txt",
+    "protocol": "http",
+    "refresh_seconds": 3600,
+    "max_candidates": 75,
+    "max_bytes_mb": 8
+  },
+  {
+    "name": "exp-denisyoya-proxy-list-gamt-socks5",
+    "url": "https://raw.githubusercontent.com/Denisyoya/Proxy-List-Gamt/main/results/raw/txt/socks5.txt",
+    "protocol": "socks5",
+    "refresh_seconds": 3600,
+    "max_candidates": 75,
+    "max_bytes_mb": 8
+  },
+  {
+    "name": "exp-nguywnben-daily-proxy-updates-socks5",
+    "url": "https://raw.githubusercontent.com/nguywnben/daily-proxy-updates/main/proxies/socks5.txt",
+    "protocol": "socks5",
+    "refresh_seconds": 3600,
+    "max_candidates": 75,
+    "max_bytes_mb": 8
   }
 ]

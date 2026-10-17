@@ -77,6 +77,49 @@ saved under `recovery/api-v2-20261016/` (untracked). To revert the full
 change on the VPS, run `./scripts/rollback-api-v2.sh`. To restore only
 the previous dashboard, run `./scripts/rollback-dashboard.sh v132`.
 
+## v1.5.2 — paced, reviewable progress toward 10,000 feed URLs
+
+The user's 10,000 target refers to **distinct feeds to scrape**, not
+10,000 Alive proxies. This is a long-term source-discovery objective,
+not a counter to inflate with mirrors, dead URLs, or duplicate content.
+
+The first conservative admission phase increases the registry from
+329 to **334 independently audited URLs**. Each new feed was checked
+for valid public IP:port records, content overlap with other candidates,
+and previously unseen endpoints in the existing proxy database.
+A parser regression discovered during the first harvest was also repaired:
+protocol-prefixed proxy addresses followed by whitespace-separated human
+metadata are now recognized without admitting masked or invalid IP
+literals. All five new feeds subsequently passed the Go source fetcher's
+own candidate audit.
+
+The five admitted sources have `max_candidates=75`, a 1-hour refresh
+interval and at most 8 MiB downloaded per fetch. They still require
+pscaper's own signed proxy validation before joining the Alive pool.
+
+A new **bounded harvest selector** checks at most
+`PSCAPER_MAX_FEEDS_PER_HARVEST=120` due feeds per 15-minute cycle;
+the safety cap is 300. It prioritizes up to one-quarter of the fetch
+budget for proven productive publishers while giving the rest to
+oldest-overdue sources. Fetch timestamps are written atomically to
+`data/source-fetch-state.json` so large registries rotate fairly
+even after restarts. The default theoretical upper bound is
+120 × 96 = 11,520 source fetch slots per day, not 10,000 feeds
+refreshed each hour. Actual throughput depends on publisher response
+times and validation budget.
+
+Public feed redirects must stay HTTPS and on the original approved
+publisher host. The optional original/fallback system continues
+unchanged. The weekly **read-only** research audit now includes an
+additional public, protocol-separated source index, but new URLs are
+never automatically treated as approved feeds.
+
+Reviewed admission entries are described by
+`scripts/admit-reviewed-feeds.py`, with its latest private audit stored
+under `recovery/feed-scale-20261017/`. A full binary/config/dashboard
+rollback is `./scripts/rollback-v152.sh`. No other VPS services
+or resource limits were modified.
+
 ## v1.5.1 — resilient source loading and stricter quality decisions
 
 The four `fyvri/fresh-proxy-list` protocol feed URLs occasionally

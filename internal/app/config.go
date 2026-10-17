@@ -12,68 +12,70 @@ import (
 )
 
 type Config struct {
-	DataDir           string
-	SourcesFile       string
-	ExportDir         string
-	APIAddr           string
-	ProbeHost         string
-	ProbeHTTPAddr     string
-	ProbeHTTPSAddr    string
-	ProbeHTTPPort     int
-	ProbeHTTPSPort    int
-	ProbeToken        string
-	ProbeSigningKey   string
-	Workers           int
-	QueueSize         int
-	Timeout           time.Duration
-	HarvestInterval   time.Duration
-	AliveRecheck      time.Duration
-	DeadRecheck       time.Duration
-	ExportInterval    time.Duration
-	ArchiveInterval   time.Duration
-	Continuous        bool
-	CycleBackoffMin   time.Duration
-	CycleBackoffMax   time.Duration
-	FlushInterval     time.Duration
-	SourceConcurrency int
-	GoldScore         float64
-	GitPush           bool
-	GitRemote         string
-	GitBranch         string
+	DataDir            string
+	SourcesFile        string
+	ExportDir          string
+	APIAddr            string
+	ProbeHost          string
+	ProbeHTTPAddr      string
+	ProbeHTTPSAddr     string
+	ProbeHTTPPort      int
+	ProbeHTTPSPort     int
+	ProbeToken         string
+	ProbeSigningKey    string
+	Workers            int
+	QueueSize          int
+	Timeout            time.Duration
+	HarvestInterval    time.Duration
+	AliveRecheck       time.Duration
+	DeadRecheck        time.Duration
+	ExportInterval     time.Duration
+	ArchiveInterval    time.Duration
+	Continuous         bool
+	CycleBackoffMin    time.Duration
+	CycleBackoffMax    time.Duration
+	FlushInterval      time.Duration
+	SourceConcurrency  int
+	MaxFeedsPerHarvest int
+	GoldScore          float64
+	GitPush            bool
+	GitRemote          string
+	GitBranch          string
 }
 
 func LoadConfig() (Config, error) {
 	cwd, _ := os.Getwd()
 	dataDir := env("PSCAPER_DATA_DIR", filepath.Join(cwd, "data"))
 	cfg := Config{
-		DataDir:           dataDir,
-		SourcesFile:       env("PSCAPER_SOURCES", filepath.Join(cwd, "config", "sources.json")),
-		ExportDir:         env("PSCAPER_EXPORT_DIR", filepath.Join(cwd, "exports")),
-		APIAddr:           env("PSCAPER_API_ADDR", "127.0.0.1:8788"),
-		ProbeHost:         strings.TrimSpace(os.Getenv("PSCAPER_PUBLIC_HOST")),
-		ProbeHTTPAddr:     env("PSCAPER_PROBE_HTTP_ADDR", ":8787"),
-		ProbeHTTPSAddr:    env("PSCAPER_PROBE_HTTPS_ADDR", ":8789"),
-		ProbeHTTPPort:     envInt("PSCAPER_PROBE_HTTP_PORT", 8787),
-		ProbeHTTPSPort:    envInt("PSCAPER_PROBE_HTTPS_PORT", 8789),
-		ProbeToken:        strings.TrimSpace(os.Getenv("PSCAPER_PROBE_TOKEN")),
-		ProbeSigningKey:   strings.TrimSpace(os.Getenv("PSCAPER_PROBE_SIGNING_KEY")),
-		Workers:           envInt("PSCAPER_WORKERS", 3000),
-		QueueSize:         envInt("PSCAPER_QUEUE_SIZE", 3000000),
-		Timeout:           envDuration("PSCAPER_TIMEOUT", 6*time.Second),
-		HarvestInterval:   envDuration("PSCAPER_HARVEST_INTERVAL", 5*time.Minute),
-		AliveRecheck:      envDuration("PSCAPER_ALIVE_RECHECK", 5*time.Minute),
-		DeadRecheck:       envDuration("PSCAPER_DEAD_RECHECK", 30*time.Minute),
-		ExportInterval:    envDuration("PSCAPER_EXPORT_INTERVAL", 10*time.Minute),
-		ArchiveInterval:   envDuration("PSCAPER_ARCHIVE_INTERVAL", time.Hour),
-		Continuous:        envBool("PSCAPER_CONTINUOUS", true),
-		CycleBackoffMin:   envDuration("PSCAPER_CYCLE_BACKOFF_MIN", 5*time.Second),
-		CycleBackoffMax:   envDuration("PSCAPER_CYCLE_BACKOFF_MAX", 30*time.Second),
-		FlushInterval:     envDuration("PSCAPER_FLUSH_INTERVAL", 3*time.Second),
-		SourceConcurrency: envInt("PSCAPER_SOURCE_CONCURRENCY", 24),
-		GoldScore:         envFloat("PSCAPER_GOLD_SCORE", 80),
-		GitPush:           envBool("PSCAPER_GIT_PUSH", true),
-		GitRemote:         env("PSCAPER_GIT_REMOTE", "origin"),
-		GitBranch:         env("PSCAPER_GIT_BRANCH", "main"),
+		DataDir:            dataDir,
+		SourcesFile:        env("PSCAPER_SOURCES", filepath.Join(cwd, "config", "sources.json")),
+		ExportDir:          env("PSCAPER_EXPORT_DIR", filepath.Join(cwd, "exports")),
+		APIAddr:            env("PSCAPER_API_ADDR", "127.0.0.1:8788"),
+		ProbeHost:          strings.TrimSpace(os.Getenv("PSCAPER_PUBLIC_HOST")),
+		ProbeHTTPAddr:      env("PSCAPER_PROBE_HTTP_ADDR", ":8787"),
+		ProbeHTTPSAddr:     env("PSCAPER_PROBE_HTTPS_ADDR", ":8789"),
+		ProbeHTTPPort:      envInt("PSCAPER_PROBE_HTTP_PORT", 8787),
+		ProbeHTTPSPort:     envInt("PSCAPER_PROBE_HTTPS_PORT", 8789),
+		ProbeToken:         strings.TrimSpace(os.Getenv("PSCAPER_PROBE_TOKEN")),
+		ProbeSigningKey:    strings.TrimSpace(os.Getenv("PSCAPER_PROBE_SIGNING_KEY")),
+		Workers:            envInt("PSCAPER_WORKERS", 3000),
+		QueueSize:          envInt("PSCAPER_QUEUE_SIZE", 3000000),
+		Timeout:            envDuration("PSCAPER_TIMEOUT", 6*time.Second),
+		HarvestInterval:    envDuration("PSCAPER_HARVEST_INTERVAL", 5*time.Minute),
+		AliveRecheck:       envDuration("PSCAPER_ALIVE_RECHECK", 5*time.Minute),
+		DeadRecheck:        envDuration("PSCAPER_DEAD_RECHECK", 30*time.Minute),
+		ExportInterval:     envDuration("PSCAPER_EXPORT_INTERVAL", 10*time.Minute),
+		ArchiveInterval:    envDuration("PSCAPER_ARCHIVE_INTERVAL", time.Hour),
+		Continuous:         envBool("PSCAPER_CONTINUOUS", true),
+		CycleBackoffMin:    envDuration("PSCAPER_CYCLE_BACKOFF_MIN", 5*time.Second),
+		CycleBackoffMax:    envDuration("PSCAPER_CYCLE_BACKOFF_MAX", 30*time.Second),
+		FlushInterval:      envDuration("PSCAPER_FLUSH_INTERVAL", 3*time.Second),
+		SourceConcurrency:  envInt("PSCAPER_SOURCE_CONCURRENCY", 24),
+		MaxFeedsPerHarvest: envInt("PSCAPER_MAX_FEEDS_PER_HARVEST", 120),
+		GoldScore:          envFloat("PSCAPER_GOLD_SCORE", 80),
+		GitPush:            envBool("PSCAPER_GIT_PUSH", true),
+		GitRemote:          env("PSCAPER_GIT_REMOTE", "origin"),
+		GitBranch:          env("PSCAPER_GIT_BRANCH", "main"),
 	}
 	if cfg.ProbeToken == "" {
 		b := make([]byte, 18)
@@ -93,6 +95,11 @@ func LoadConfig() (Config, error) {
 	}
 	if cfg.QueueSize < cfg.Workers*2 {
 		cfg.QueueSize = cfg.Workers * 2
+	}
+	// Bound fetch bursts even if a future deployment misconfigures the
+	// source budget while scaling toward thousands of registered feeds.
+	if cfg.MaxFeedsPerHarvest > 300 {
+		cfg.MaxFeedsPerHarvest = 300
 	}
 	if cfg.CycleBackoffMin < time.Second {
 		cfg.CycleBackoffMin = time.Second

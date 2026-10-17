@@ -1,3 +1,21 @@
+## October 2026 — v1.5.2 gradual 10k feed registry scaling
+
+- Audited 46 candidate text sources and tested actual inventory overlap,
+  rejecting empty, duplicate, and already-covered publisher lists.
+- Added five evidence-backed sources, raising the real configured
+  registry from 329 to 334 (not counting CDN fallback mirrors).
+- Added configurable, bounded per-harvest source admission, rotating
+  oldest-due scheduling, a protected productive-source slice, and
+  atomic fetch-timestamp persistence across restarts.
+- Fixed handling of URI-prefixed proxy lines with trailing translated
+  text/metadata, confirmed against the five real newly admitted feeds.
+- Constrained source HTTP redirects to the originating publisher over
+  HTTPS; SSRF/redirect and scaling fairness tests cover these rules.
+- Expanded existing weekly read-only source index research, preserving
+  manual review/promotion of additional candidate URLs.
+- Preserved the previous binary/source registry, documented safe
+  rollback and retained all live probe/Gold criteria.
+
 ## October 2026 — v1.5.1 intermittent feed repair and source confidence
 
 - Added explicitly configured, same-repository HTTPS jsDelivr fallbacks for
