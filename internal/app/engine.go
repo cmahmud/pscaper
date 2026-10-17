@@ -403,11 +403,17 @@ func (e *Engine) harvestOnce(ctx context.Context, force bool) (HarvestSummary, e
 		// Prefer feeds proven to discover new proxies that subsequently pass
 		// signed validation. Mere address volume and shared live proxies do
 		// not qualify as evidence of source effectiveness.
-		if h, ok := historical[src.Name]; ok && h.Fetches >= 3 && h.NovelSeen >= 150 {
-			if h.VerifiedYieldPct >= 0.8 && interval > 10*time.Minute {
-				interval = interval / 2
-			} else if h.VerifiedYieldPct < 0.05 && interval < 4*time.Hour {
-				interval = interval * 2
+		if h, ok := historical[src.Name]; ok {
+			decision := sourceConfidence(h)
+			switch decision.Recommendation {
+			case "prioritize":
+				if interval > 20*time.Minute {
+					interval /= 2
+				}
+			case "deprioritize":
+				if interval < 2*time.Hour {
+					interval *= 2
+				}
 			}
 		}
 		last := e.sourceLastFetch[src.Name]
@@ -876,10 +882,21 @@ func (e *Engine) Stats() Stats {
 	if v := e.cyclePhase.Load(); v != nil {
 		st.CyclePhase, _ = v.(string)
 	}
+	var qualityObserved, qualityPassed [3]uint64
 	var latencyTotal, latencyCount int64
 	sourceSeen := make(map[string]int)
 	sourceAlive := make(map[string]int)
 	for _, p := range records {
+		if p.Quality != nil {
+			if !p.Quality.FirstAt.IsZero() &&
+				(st.QualityFirstAt.IsZero() || p.Quality.FirstAt.Before(st.QualityFirstAt)) {
+				st.QualityFirstAt = p.Quality.FirstAt
+			}
+			for i := 0; i < 3; i++ {
+				qualityObserved[i] += uint64(p.Quality.Observed[i])
+				qualityPassed[i] += uint64(p.Quality.Passed[i])
+			}
+		}
 		for _, name := range p.Sources {
 			sourceSeen[name]++
 			if p.Alive {
@@ -916,6 +933,11 @@ func (e *Engine) Stats() Stats {
 			st.Gold++
 			st.GoldProtocols[p.Protocol]++
 		}
+	}
+	st.SurvivalQuality = buildSurvivalCohorts(qualityObserved, qualityPassed)
+	for i, h := range survivalHorizons {
+		st.SurvivalQuality[i].Mature = !st.QualityFirstAt.IsZero() &&
+			time.Since(st.QualityFirstAt) >= h
 	}
 	st.Successes = e.successes.Load()
 	st.Failures = e.failures.Load()

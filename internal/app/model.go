@@ -45,6 +45,9 @@ type ProxyRecord struct {
 	Score               float64   `json:"score"`
 	PeakScore           float64   `json:"peak_score"`
 	LastError           string    `json:"last_error,omitempty"`
+	// v1.5 cohorts start on an actually successful signed check.
+	// Historic proxies are not retroactively credited with survival.
+	Quality *ProxySurvival `json:"quality,omitempty"`
 }
 
 func (p ProxyRecord) Address() string { return net.JoinHostPort(p.Host, fmt.Sprintf("%d", p.Port)) }
@@ -116,47 +119,49 @@ func scoreRecord(p *ProxyRecord, now time.Time) float64 {
 }
 
 type Stats struct {
-	Total                     int            `json:"total"`
-	Alive                     int            `json:"alive"`
-	Gold                      int            `json:"gold"`
-	EverAlive                 int            `json:"ever_alive"`
-	EverGold                  int            `json:"ever_gold"`
-	DeadNow                   int            `json:"dead_now"`
-	NeverAlive                int            `json:"never_alive"`
-	Checked                   int            `json:"checked"`
-	Successes                 int64          `json:"successes"`
-	Failures                  int64          `json:"failures"`
-	Protocols                 map[string]int `json:"protocols"`
-	AliveProtocols            map[string]int `json:"alive_protocols"`
-	AvgLatencyMS              int64          `json:"avg_latency_ms"`
-	FreshAlive                int            `json:"fresh_alive"`
-	GoldProtocols             map[string]int `json:"gold_protocols"`
-	ValidationAttempts        int64          `json:"validation_attempts"`
-	Queue                     int            `json:"queue"`
-	UrgentQueue               int            `json:"urgent_queue"`
-	DiscoveryQueue            int            `json:"discovery_queue"`
-	Confirming                int64          `json:"confirming"`
-	TransientRecoveries       int64          `json:"transient_recoveries"`
-	ConfirmedLosses           int64          `json:"confirmed_losses"`
-	InFlight                  int64          `json:"in_flight"`
-	Workers                   int            `json:"workers"`
-	Harvests                  int64          `json:"harvests"`
-	Cycles                    int64          `json:"cycles"`
-	CyclePhase                string         `json:"cycle_phase"`
-	NewThisHarvest            int64          `json:"new_this_harvest"`
-	QueuedThisHarvest         int64          `json:"queued_this_harvest"`
-	SourcesFetchedThisHarvest int64          `json:"sources_fetched_this_harvest"`
-	SourceFeeds               int            `json:"source_feeds"`
-	SourceErrors              int            `json:"source_errors"`
-	SourcesDue                int            `json:"sources_due"`
-	LastHarvest               time.Time      `json:"last_harvest"`
-	LastExport                time.Time      `json:"last_export"`
-	LastGitPush               time.Time      `json:"last_git_push"`
-	LastArchive               time.Time      `json:"last_archive"`
-	LastCycleEnd              time.Time      `json:"last_cycle_end"`
-	GitStatus                 string         `json:"git_status"`
-	StartedAt                 time.Time      `json:"started_at"`
-	SourceStatus              []SourceStatus `json:"sources"`
+	Total                     int               `json:"total"`
+	Alive                     int               `json:"alive"`
+	Gold                      int               `json:"gold"`
+	EverAlive                 int               `json:"ever_alive"`
+	EverGold                  int               `json:"ever_gold"`
+	DeadNow                   int               `json:"dead_now"`
+	NeverAlive                int               `json:"never_alive"`
+	Checked                   int               `json:"checked"`
+	Successes                 int64             `json:"successes"`
+	Failures                  int64             `json:"failures"`
+	Protocols                 map[string]int    `json:"protocols"`
+	AliveProtocols            map[string]int    `json:"alive_protocols"`
+	AvgLatencyMS              int64             `json:"avg_latency_ms"`
+	FreshAlive                int               `json:"fresh_alive"`
+	GoldProtocols             map[string]int    `json:"gold_protocols"`
+	ValidationAttempts        int64             `json:"validation_attempts"`
+	Queue                     int               `json:"queue"`
+	UrgentQueue               int               `json:"urgent_queue"`
+	DiscoveryQueue            int               `json:"discovery_queue"`
+	Confirming                int64             `json:"confirming"`
+	TransientRecoveries       int64             `json:"transient_recoveries"`
+	ConfirmedLosses           int64             `json:"confirmed_losses"`
+	InFlight                  int64             `json:"in_flight"`
+	Workers                   int               `json:"workers"`
+	Harvests                  int64             `json:"harvests"`
+	Cycles                    int64             `json:"cycles"`
+	CyclePhase                string            `json:"cycle_phase"`
+	NewThisHarvest            int64             `json:"new_this_harvest"`
+	QueuedThisHarvest         int64             `json:"queued_this_harvest"`
+	SourcesFetchedThisHarvest int64             `json:"sources_fetched_this_harvest"`
+	SourceFeeds               int               `json:"source_feeds"`
+	SourceErrors              int               `json:"source_errors"`
+	SourcesDue                int               `json:"sources_due"`
+	LastHarvest               time.Time         `json:"last_harvest"`
+	LastExport                time.Time         `json:"last_export"`
+	LastGitPush               time.Time         `json:"last_git_push"`
+	LastArchive               time.Time         `json:"last_archive"`
+	LastCycleEnd              time.Time         `json:"last_cycle_end"`
+	GitStatus                 string            `json:"git_status"`
+	StartedAt                 time.Time         `json:"started_at"`
+	QualityFirstAt            time.Time         `json:"quality_first_at,omitempty"`
+	SurvivalQuality           [3]SurvivalCohort `json:"survival_quality"`
+	SourceStatus              []SourceStatus    `json:"sources"`
 }
 
 type SourceStatus struct {

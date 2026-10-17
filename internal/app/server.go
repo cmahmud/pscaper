@@ -38,6 +38,7 @@ func StartAPIServer(ctx context.Context, addr string, e *Engine) error {
 	}()
 	registerAPIV2(mux, e, intel, index)
 	registerIntelligenceAPI(ctx, mux, e)
+	registerQualityAPI(mux, e, index, intel)
 	// All public routes below are explicitly allowlisted again by Nginx.
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-cache")

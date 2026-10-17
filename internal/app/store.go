@@ -125,6 +125,14 @@ func (s *Store) UpsertCandidate(c Candidate, now time.Time) (bool, ProxyRecord) 
 	s.dirty[key] = struct{}{}
 	return true, *p
 }
+func snapshotProxy(p *ProxyRecord) ProxyRecord {
+	copyRecord := *p
+	if p.Quality != nil {
+		c := *p.Quality
+		copyRecord.Quality = &c
+	}
+	return copyRecord
+}
 func (s *Store) Get(key string) (ProxyRecord, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -132,7 +140,7 @@ func (s *Store) Get(key string) (ProxyRecord, bool) {
 	if !ok {
 		return ProxyRecord{}, false
 	}
-	return *p, true
+	return snapshotProxy(p), true
 }
 func (s *Store) ApplyValidation(key string, ok bool, latency time.Duration, exitIP, errText string, now time.Time, goldThreshold float64) error {
 	s.mu.Lock()
@@ -141,6 +149,9 @@ func (s *Store) ApplyValidation(key string, ok bool, latency time.Duration, exit
 	if !exists {
 		return errors.New("proxy not found")
 	}
+	// Cohorts are updated only from real signed validation outcomes and
+	// persisted through the existing snapshot/journal.
+	updateQualityCohorts(p, ok, now)
 	p.LastChecked = now
 	p.RecentOutcomes <<= 1
 	if ok {
@@ -281,7 +292,7 @@ func (s *Store) Snapshot() []ProxyRecord {
 	defer s.mu.RUnlock()
 	out := make([]ProxyRecord, 0, len(s.records))
 	for _, p := range s.records {
-		out = append(out, *p)
+		out = append(out, snapshotProxy(p))
 	}
 	return out
 }
@@ -507,7 +518,7 @@ func (s *Store) AliveRecords() []ProxyRecord {
 	out := make([]ProxyRecord, 0, 4096)
 	for _, p := range s.records {
 		if p.Alive {
-			out = append(out, *p)
+			out = append(out, snapshotProxy(p))
 		}
 	}
 	return out

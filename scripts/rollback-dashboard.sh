@@ -8,7 +8,8 @@ case "$VERSION" in
  v2) SOURCE="$ROOT/site/backups/v2-before-flow-20261016.html" ;;
  v2-current) SOURCE="$ROOT/site/backups/v2-before-pool-trend-20261016.html" ;;
  v132) SOURCE="$ROOT/site/backups/v132-before-intelligence-20261016.html" ;;
- *) echo "Usage: $0 [v1|v2|v2-current|v132]" >&2; exit 2 ;;
+ v142) SOURCE="$ROOT/site/backups/v142-before-quality-20261017.html" ;;
+ *) echo "Usage: $0 [v1|v2|v2-current|v132|v142]" >&2; exit 2 ;;
 esac
 TARGET="$ROOT/site/index.html"
 [[ -f "$SOURCE" ]] || { echo 'Original dashboard backup missing' >&2; exit 1; }

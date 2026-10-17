@@ -156,6 +156,12 @@ h1 span{color:#7ee4af}
  .protocols .tool{font-size:8px;padding:4px 5px}
  .intelview{gap:5px 8px}
 }
+.intelview[hidden]{display:none!important}
+.intel-switch{grid-column:1/-1;display:flex;gap:5px;align-items:center;margin-top:-2px}
+.intel-switch button{font-size:9px;padding:4px 8px}
+.intelview{gap:5px 9px;padding-top:6px}
+.intelcell{gap:3px}
+.intelcell strong{font-size:clamp(15px,1.45vw,22px)}
 </style>
 </head>
 <body>
@@ -195,11 +201,12 @@ h1 span{color:#7ee4af}
  <div class="protorow"><span class="pname">SOCKS4</span><div class="track"><b id="bar-socks4"></b></div><span class="pval" id="num-socks4">—</span></div>
  <div class="protorow"><span class="pname">SOCKS5</span><div class="track"><b id="bar-socks5"></b></div><span class="pval" id="num-socks5">—</span></div>
  </div><div class="sourcesview" id="sourceview" hidden><span class="mono-sub">Loading feed yields...</span></div><div class="sourcesview" id="asview" hidden><span class="mono-sub">Loading AS countries...</span></div><div class="intelview" id="intelview" hidden>
-<div class="intelcell"><span>Checks / min</span><strong id="intel-rate">—</strong></div>
-<div class="intelcell"><span>Pass rate</span><strong id="intel-pass">—</strong></div>
-<div class="intelcell"><span>Recovered</span><strong class="green" id="intel-recovered">—</strong></div>
-<div class="intelcell"><span>Confirmed lost</span><strong class="red" id="intel-lost">—</strong></div>
-<div class="intel-caption" id="intel-caption">Measuring validation window…</div>
+<div class="intel-switch"><button class="tool selected" id="quality-mode" type="button" aria-pressed="true">QUALITY</button><button class="tool" id="activity-mode" type="button" aria-pressed="false">ACTIVITY</button></div>
+<div class="intelcell"><span id="quality-label-1">5m survival</span><strong id="intel-rate">—</strong></div>
+<div class="intelcell"><span id="quality-label-2">15m survival</span><strong id="intel-pass">—</strong></div>
+<div class="intelcell"><span id="quality-label-3">60m survival</span><strong class="green" id="intel-recovered">—</strong></div>
+<div class="intelcell"><span id="quality-label-4">Unique networks</span><strong id="intel-lost">—</strong></div>
+<div class="intel-caption" id="intel-caption">Collecting signed validation cohorts…</div>
 </div></section>
 <section class="panel activity" aria-labelledby="acttitle"><div class="panelhead"><h2 id="acttitle">Scanner</h2><span class="tag">THIS SESSION</span></div><div class="activitybody">
  <div class="a good"><div class="alabel" title="Alive activations and recoveries since service start">Activated ↑</div><div class="avalue" id="verified">—</div></div>
@@ -209,13 +216,13 @@ h1 span{color:#7ee4af}
  </div></section>
 </div>
 </main>
-<footer class="bottom"><div class="footleft"><span>pscaper v1.4.2</span><span><span id="feed-total">118 FEEDS</span> · <b id="errors">0 ERRORS</b></span><a class="footer-sync stale" id="publisher-link" href="https://github.com/cmahmud/proxies/commits/main" target="_blank" rel="noopener" title="Latest GitHub publishing status">SYNC CHECKING...</a></div><span id="updated" class="update">CONNECTING...</span></footer>
+<footer class="bottom"><div class="footleft"><span>pscaper v1.5.0</span><span><span id="feed-total">118 FEEDS</span> · <b id="errors">0 ERRORS</b></span><a class="footer-sync stale" id="publisher-link" href="https://github.com/cmahmud/proxies/commits/main" target="_blank" rel="noopener" title="Latest GitHub publishing status">SYNC CHECKING...</a></div><span id="updated" class="update">CONNECTING...</span></footer>
 </div>
 <script>
 (function(){
 'use strict';
 var get=function(id){return document.getElementById(id)}, nf=new Intl.NumberFormat('en-US'), prev=null, lastTime=0, series=[], ticks=0, requestInFlight=false, sessionOrigin=null, pendingAnimation={};
-var period='1h',sourcesLoaded=0,geoLoaded=0,intelLoaded=0,poolTrendChecked=0;
+var period='1h',sourcesLoaded=0,geoLoaded=0,intelLoaded=0,qualityLoaded=0,intelMode='quality',poolTrendChecked=0;
 var reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 var fmt=function(n){return typeof n==='number'?nf.format(n):'—'};
 var pos=function(n){return '+'+fmt(Math.max(0,n))};
@@ -337,8 +344,46 @@ document.querySelectorAll('[data-range]').forEach(function(el){
   hydrate();
  });
 });
+function switchIntel(mode){
+ intelMode=mode;
+ var isQuality=mode==='quality';
+ get('intel-lost').classList.toggle('red',!isQuality);
+ get('quality-mode').classList.toggle('selected',isQuality);
+ get('activity-mode').classList.toggle('selected',!isQuality);
+ get('quality-mode').setAttribute('aria-pressed',String(isQuality));
+ get('activity-mode').setAttribute('aria-pressed',String(!isQuality));
+ get('quality-label-1').textContent=isQuality?'5m survival':'Checks / min';
+ get('quality-label-2').textContent=isQuality?'15m survival':'Pass rate';
+ get('quality-label-3').textContent=isQuality?'60m survival':'Recovered';
+ get('quality-label-4').textContent=isQuality?'Unique networks':'Confirmed lost';
+ ['intel-rate','intel-pass','intel-recovered','intel-lost'].forEach(function(id){get(id).textContent='—'});
+ get('intel-caption').textContent=isQuality?'Collecting signed validation cohorts…':'Measuring validator activity…';
+ if(isQuality){qualityLoaded=0;loadQuality()}else{intelLoaded=0;loadIntel()}
+}
+get('quality-mode').addEventListener('click',function(){switchIntel('quality')});
+get('activity-mode').addEventListener('click',function(){switchIntel('activity')});
+async function loadQuality(){
+ if(get('intelview').hidden||intelMode!=='quality'||Date.now()-qualityLoaded<25000)return;
+ qualityLoaded=Date.now();
+ try {
+  var response=await fetch('/api/v2/quality',{cache:'no-store'});
+  if(!response.ok)throw Error('Quality endpoint unavailable');
+  var d=await response.json(),s=Array.isArray(d.survival)?d.survival:[];
+  for(var i=0;i<3;i++){
+   var cohort=s[i],target=['intel-rate','intel-pass','intel-recovered'][i];
+   var ready=cohort&&cohort.mature===true&&Number(cohort.samples)>=30&&Number.isFinite(cohort.rate_pct);
+   get(target).textContent=ready?cohort.rate_pct.toFixed(1)+'%':'—';
+   get(target).title=cohort?String(cohort.survived||0)+' survived of '+String(cohort.samples||0)+' observed activation cohorts':'No observation yet';
+  }
+  var networks=d.diversity&&d.diversity.unique_networks;
+  get('intel-lost').textContent=Number.isFinite(networks)?fmt(networks):'—';
+  get('intel-lost').title='Distinct IPv4 /24 or IPv6 /48 networks in currently verified Alive proxies';
+  var samples=s.length?s.map(function(x){return x.samples||0}):[];
+  get('intel-caption').textContent=d.status==='measured'?'Measured follow-up checks · not a forecast':(samples.some(function(n){return n>0})?'Early sample · waiting for ≥30 per window':'Learning from new signed checks · no estimates');
+ }catch(e){get('intel-caption').textContent='Quality measurements temporarily unavailable'}
+}
 async function loadIntel(){
- if(get('intelview').hidden || Date.now()-intelLoaded<12000)return;
+ if(get('intelview').hidden || intelMode!=='activity' || Date.now()-intelLoaded<12000)return;
  intelLoaded=Date.now();
  try{
   var response=await fetch('/api/v2/intelligence',{cache:'no-store'});
@@ -381,7 +426,7 @@ document.querySelectorAll('[data-panel]').forEach(function(el){
   document.querySelectorAll('[data-panel]').forEach(function(x){x.setAttribute('aria-pressed',String(x===el))});
   if(isSource)loadSources();
   if(isGeo)loadASN();
-  if(isIntel)loadIntel();
+  if(isIntel){if(intelMode==='quality')loadQuality();else loadIntel();}
  });
 });
 function apply(data){
@@ -406,7 +451,7 @@ function apply(data){
  get('updated').textContent='UPDATED '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
  addPoint(data.time||new Date().toISOString(),data.alive);prev=data;ticks++;
  if(ticks%6===0){hydrate();loadSources();loadASN();refreshPoolTrend();}
- if(ticks%3===0)loadIntel();
+ if(ticks%3===0){if(intelMode==='quality')loadQuality();else loadIntel();}
 }
 async function poll(){
  if(requestInFlight||document.hidden)return;

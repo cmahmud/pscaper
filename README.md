@@ -77,6 +77,26 @@ saved under `recovery/api-v2-20261016/` (untracked). To revert the full
 change on the VPS, run `./scripts/rollback-api-v2.sh`. To restore only
 the previous dashboard, run `./scripts/rollback-dashboard.sh v132`.
 
+## v1.5.0 — measured survival and source intelligence
+
+v1.5 adds [Proxy Quality documentation](docs/QUALITY_V15.md) and a read-only
+`/api/v2/quality` endpoint. Survival estimates are based on **actual signed
+follow-up validation results**, not guesses from elapsed time: 5-, 15-, and
+60-minute activation cohorts with unresolved milestones reported as pending.
+Quality counters persist with the existing proxy snapshot/journal and begin
+sampling from v1.5 without retroactively counting older proxies.
+
+The new live diversity metrics count distinct proxy IPs, IPv4 /24 or IPv6 /48
+networks, and registered ASNs. Automatic source refresh prioritization has
+stricter confidence gates based on verified *novel* contributions and keeps
+all sources enabled. Gold rules and resource budgets are unchanged.
+
+The existing one-screen dashboard adds **QUALITY / ACTIVITY** inside the INTEL
+panel rather than another card, keeping the live terminal, Gold animation and
+minimal charcoal styling. For a full engine/UI/site rollback:
+`./scripts/rollback-v15.sh`. The previous page alone is preserved in
+`site/backups/v142-before-quality-20261017.html`.
+
 ## Paths
 
 ```text

@@ -1,3 +1,18 @@
+## October 2026 — v1.5.0 real Proxy Quality Intelligence
+
+- Persistent activation cohorts measuring actual signed-validation survival
+  at 5/15/60 minutes; missing data stays pending and minimum sample sizes
+  prevent premature quality percentages.
+- Bounded read-only API for observed survival, unique IP/network/ASN
+  diversity, and evidence-gated source refresh classifications.
+- Source pacing requires stronger proof of newly validated unique proxies;
+  no source deletion, Gold-rule changes, or aggressive worker scaling.
+- Added nested QUALITY / ACTIVITY inside the existing INTEL panel; preserved
+  minimal one-screen desktop layout and animated real proxy terminal.
+- Added tests for cohort boundaries, observed failures, journal persistence,
+  thread-safe snapshots, source confidence, and API semantics; rollback and
+  release documentation are included.
+
 ## October 2026 — API release smoke checks
 
 - Added a repeatable read-only API compatibility, pagination and status test.
