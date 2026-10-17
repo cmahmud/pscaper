@@ -778,7 +778,8 @@
     "protocol": "http",
     "refresh_seconds": 3600,
     "max_candidates": 100,
-    "max_bytes_mb": 8
+    "max_bytes_mb": 8,
+    "fallback_url": "https://cdn.jsdelivr.net/gh/fyvri/fresh-proxy-list@archive/storage/classic/https.txt"
   },
   {
     "name": "discovery-fyvri-fresh-proxy-list-http-2",
@@ -786,7 +787,8 @@
     "protocol": "http",
     "refresh_seconds": 3600,
     "max_candidates": 100,
-    "max_bytes_mb": 8
+    "max_bytes_mb": 8,
+    "fallback_url": "https://cdn.jsdelivr.net/gh/fyvri/fresh-proxy-list@archive/storage/classic/http.txt"
   },
   {
     "name": "discovery-thespeedx-proxy-list-http-1",
@@ -850,7 +852,8 @@
     "protocol": "socks5",
     "refresh_seconds": 3600,
     "max_candidates": 100,
-    "max_bytes_mb": 8
+    "max_bytes_mb": 8,
+    "fallback_url": "https://cdn.jsdelivr.net/gh/fyvri/fresh-proxy-list@archive/storage/classic/socks5.txt"
   },
   {
     "name": "discovery-sevenworksdev-proxy-list-socks5-1",
@@ -890,7 +893,8 @@
     "protocol": "socks4",
     "refresh_seconds": 3600,
     "max_candidates": 100,
-    "max_bytes_mb": 8
+    "max_bytes_mb": 8,
+    "fallback_url": "https://cdn.jsdelivr.net/gh/fyvri/fresh-proxy-list@archive/storage/classic/socks4.txt"
   },
   {
     "name": "discovery-gitrecon1455-fresh-proxy-list-http-1",

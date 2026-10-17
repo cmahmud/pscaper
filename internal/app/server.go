@@ -208,14 +208,21 @@ func StartAPIServer(ctx context.Context, addr string, e *Engine) error {
 			VerifiedYieldPct float64 `json:"verified_yield_pct"`
 			NovelSeen        int64   `json:"novel_seen"`
 			NovelConfirmed   int64   `json:"novel_confirmed"`
+			NovelAlive       int     `json:"novel_alive"`
+			NovelSurvived15  int     `json:"novel_survived_15m"`
 			Error            bool    `json:"error"`
 		}
 		entries := make([]source, 0, len(s.SourceStatus))
 		for _, v := range s.SourceStatus {
 			entries = append(entries, source{Name: v.Name, Found: v.Unique, New: v.NewCandidates, KnownAlive: v.KnownAlive, YieldPct: v.YieldPct, VerifiedYieldPct: v.VerifiedYieldPct,
-				NovelSeen: v.NovelSeen, NovelConfirmed: v.NovelConfirmed, Error: v.Error != ""})
+				NovelSeen: v.NovelSeen, NovelConfirmed: v.NovelConfirmed,
+				NovelAlive: v.NovelAlive, NovelSurvived15: v.NovelSurvived15,
+				Error: v.Error != ""})
 		}
 		sort.Slice(entries, func(i, j int) bool {
+			if entries[i].NovelAlive != entries[j].NovelAlive {
+				return entries[i].NovelAlive > entries[j].NovelAlive
+			}
 			if entries[i].NovelConfirmed != entries[j].NovelConfirmed {
 				return entries[i].NovelConfirmed > entries[j].NovelConfirmed
 			}

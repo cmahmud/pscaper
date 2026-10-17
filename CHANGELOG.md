@@ -1,3 +1,19 @@
+## October 2026 — v1.5.1 intermittent feed repair and source confidence
+
+- Added explicitly configured, same-repository HTTPS jsDelivr fallbacks for
+  the four fyvri protocol lists. A transient GitHub raw 404/timeout now
+  triggers a bounded alternate fetch instead of treating the feed as dead.
+- Hardened fallback host/repository validation and redirect behavior.
+  Healthy primary feeds are still fetched first; candidate checks remain
+  independently validated and source count stays at 329.
+- Added `novel_alive` and `novel_survived_15m` to per-feed data to distinguish
+  verified contributions from copied listings and past successes.
+- Source cadence promotion now also requires four unique currently Alive
+  contributions and three demonstrated 15-minute survivors; this is
+  conservative and does not disable feeds or change Gold qualification.
+- Added unit tests for fallback recovery and attribution, a read-only
+  24-hour comparison script, and a full v1.5.0 rollback.
+
 ## October 2026 — v1.5.0 real Proxy Quality Intelligence
 
 - Persistent activation cohorts measuring actual signed-validation survival

@@ -98,7 +98,8 @@ func TestSourceEvidenceGates(t *testing.T) {
 	}{
 		{SourceStatus{Fetches: 4, NovelSeen: 300, NovelConfirmed: 30, VerifiedYieldPct: 10}, "learning"},
 		{SourceStatus{Fetches: 5, NovelSeen: 299, NovelConfirmed: 20, VerifiedYieldPct: 7}, "learning"},
-		{SourceStatus{Fetches: 5, NovelSeen: 400, NovelConfirmed: 9, VerifiedYieldPct: 2.25}, "prioritize"},
+		{SourceStatus{Fetches: 5, NovelSeen: 400, NovelConfirmed: 9, VerifiedYieldPct: 2.25, NovelAlive: 5, NovelSurvived15: 3}, "prioritize"},
+		{SourceStatus{Fetches: 5, NovelSeen: 400, NovelConfirmed: 9, VerifiedYieldPct: 2.25, NovelAlive: 5, NovelSurvived15: 0}, "normal"},
 		{SourceStatus{Fetches: 6, NovelSeen: 800, NovelConfirmed: 2, VerifiedYieldPct: .025}, "deprioritize"},
 		{SourceStatus{Fetches: 7, NovelSeen: 500, NovelConfirmed: 4, VerifiedYieldPct: .8}, "normal"},
 	}

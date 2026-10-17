@@ -22,6 +22,7 @@ import (
 type Source struct {
 	Name           string `json:"name"`
 	URL            string `json:"url"`
+	FallbackURL    string `json:"fallback_url,omitempty"`
 	Protocol       string `json:"protocol"`
 	RefreshSeconds int    `json:"refresh_seconds,omitempty"`
 	MaxBytesMB     int    `json:"max_bytes_mb,omitempty"`
@@ -71,6 +72,7 @@ func LoadSources(path string) ([]Source, error) {
 	for _, s := range src {
 		s.Name = strings.TrimSpace(s.Name)
 		s.URL = strings.TrimSpace(s.URL)
+		s.FallbackURL = strings.TrimSpace(s.FallbackURL)
 		s.Protocol = normalizeProtocol(s.Protocol)
 		if s.RefreshSeconds < 0 {
 			s.RefreshSeconds = 0
@@ -135,8 +137,50 @@ func HarvestSources(ctx context.Context, sources []Source, concurrency int) (map
 	return results, statuses
 }
 
+// fetchSource retains the original feed as primary. Explicitly configured,
+// same-repository HTTPS jsDelivr URLs act as a fallback on transient failures.
+// Never fetch an arbitrary untrusted fallback destination.
 func fetchSource(ctx context.Context, client *http.Client, src Source) ([]Candidate, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, src.URL, nil)
+	candidates, err := fetchSourceURL(ctx, client, src, src.URL)
+	if err == nil || src.FallbackURL == "" || !trustedFeedFallback(src.URL, src.FallbackURL) {
+		return candidates, err
+	}
+	alternateClient := *client
+	alternateClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		if req.URL.Scheme != "https" || req.URL.Hostname() != "cdn.jsdelivr.net" {
+			return fmt.Errorf("untrusted alternate feed redirect")
+		}
+		if len(via) >= 4 {
+			return fmt.Errorf("too many alternate redirects")
+		}
+		return nil
+	}
+	alternate, alternateErr := fetchSourceURL(ctx, &alternateClient, src, src.FallbackURL)
+	if alternateErr == nil {
+		return alternate, nil
+	}
+	return nil, fmt.Errorf("primary: %v; fallback: %w", err, alternateErr)
+}
+
+func trustedFeedFallback(primary, fallback string) bool {
+	first, err1 := url.Parse(primary)
+	next, err2 := url.Parse(fallback)
+	if err1 != nil || err2 != nil || first.Scheme != "https" || next.Scheme != "https" ||
+		!strings.EqualFold(first.Host, "raw.githubusercontent.com") ||
+		!strings.EqualFold(next.Host, "cdn.jsdelivr.net") ||
+		first.User != nil || next.User != nil || first.RawQuery != "" || next.RawQuery != "" {
+		return false
+	}
+	parts := strings.Split(strings.TrimPrefix(first.Path, "/"), "/")
+	if len(parts) < 5 || strings.Contains(parts[0], ".") || strings.Contains(parts[1], ".") {
+		return false
+	}
+	expected := "/gh/" + parts[0] + "/" + parts[1] + "@" + parts[2] + "/" + strings.Join(parts[3:], "/")
+	return next.Path == expected && next.Fragment == ""
+}
+
+func fetchSourceURL(ctx context.Context, client *http.Client, src Source, targetURL string) ([]Candidate, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, targetURL, nil)
 	if err != nil {
 		return nil, err
 	}

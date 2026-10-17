@@ -886,6 +886,8 @@ func (e *Engine) Stats() Stats {
 	var latencyTotal, latencyCount int64
 	sourceSeen := make(map[string]int)
 	sourceAlive := make(map[string]int)
+	novelAlive := make(map[string]int)
+	novelSurvived15 := make(map[string]int)
 	for _, p := range records {
 		if p.Quality != nil {
 			if !p.Quality.FirstAt.IsZero() &&
@@ -901,6 +903,16 @@ func (e *Engine) Stats() Stats {
 			sourceSeen[name]++
 			if p.Alive {
 				sourceAlive[name]++
+			}
+		}
+		// Count only genuinely attributed discoveries, not all the
+		// publisher mirrors that happen to contain the same address.
+		if p.OriginSource != "" && p.OriginSource != "history" {
+			if p.Alive {
+				novelAlive[p.OriginSource]++
+			}
+			if p.Quality != nil && p.Quality.Passed[1] > 0 {
+				novelSurvived15[p.OriginSource]++
 			}
 		}
 		st.Total++
@@ -955,6 +967,8 @@ func (e *Engine) Stats() Stats {
 	for i := range st.SourceStatus {
 		key := st.SourceStatus[i].Name
 		st.SourceStatus[i].KnownAlive = sourceAlive[key]
+		st.SourceStatus[i].NovelAlive = novelAlive[key]
+		st.SourceStatus[i].NovelSurvived15 = novelSurvived15[key]
 		if st.SourceStatus[i].NovelSeen > 0 {
 			st.SourceStatus[i].VerifiedYieldPct = 100 * float64(st.SourceStatus[i].NovelConfirmed) / float64(st.SourceStatus[i].NovelSeen)
 		}
@@ -962,6 +976,16 @@ func (e *Engine) Stats() Stats {
 			st.SourceStatus[i].YieldPct = 100 * float64(sourceAlive[key]) / float64(sourceSeen[key])
 		}
 	}
+	// Feed these measured contributions into the next bounded harvest
+	// planning pass. Values are overwritten from the live store on each
+	// stats refresh, not accumulated from mirrored publisher mentions.
+	e.sourceMu.Lock()
+	for i := range e.sources {
+		name := e.sources[i].Name
+		e.sources[i].NovelAlive = novelAlive[name]
+		e.sources[i].NovelSurvived15 = novelSurvived15[name]
+	}
+	e.sourceMu.Unlock()
 	st.SourceFeeds = len(st.SourceStatus)
 	now := time.Now()
 	for _, src := range st.SourceStatus {

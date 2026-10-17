@@ -77,6 +77,26 @@ saved under `recovery/api-v2-20261016/` (untracked). To revert the full
 change on the VPS, run `./scripts/rollback-api-v2.sh`. To restore only
 the previous dashboard, run `./scripts/rollback-dashboard.sh v132`.
 
+## v1.5.1 — resilient source loading and stricter quality decisions
+
+The four `fyvri/fresh-proxy-list` protocol feed URLs occasionally
+returned GitHub HTTP 404 even though their archive branch and files
+still existed. The canonical URLs remain, with verified same-repository
+HTTPS jsDelivr fallback URLs fetched **only** on primary errors. This
+keeps 329 configured feeds; invalid mirrors are not silently
+substituted. `/api/sources` now also identifies unique current Alive
+contributions and original discoveries that survived a measured
+15-minute check. Source prioritization requires enough current
+working/stable endpoints, not just historical success.
+
+For a current-state historical report, run
+`python3 scripts/health-compare.py --hours 24`. It reports sample
+coverage and flags any incomplete window; it does not infer missing
+samples or modify the VPS. To roll back the patched binary, source
+config, and dashboard together, use `./scripts/rollback-v151.sh`.
+The previous v1.5.0 runtime and configuration are preserved under
+`recovery/feed-quality-20261017/`.
+
 ## v1.5.0 — measured survival and source intelligence
 
 v1.5 adds [Proxy Quality documentation](docs/QUALITY_V15.md) and a read-only

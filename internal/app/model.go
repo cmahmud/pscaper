@@ -172,6 +172,8 @@ type SourceStatus struct {
 	NewCandidates    int       `json:"new_candidates"`
 	NovelSeen        int64     `json:"novel_seen,omitempty"`
 	NovelConfirmed   int64     `json:"novel_confirmed,omitempty"`
+	NovelAlive       int       `json:"novel_alive,omitempty"`
+	NovelSurvived15  int       `json:"novel_survived_15m,omitempty"`
 	VerifiedYieldPct float64   `json:"verified_yield_pct,omitempty"`
 	KnownAlive       int       `json:"known_alive"`
 	Fetches          int       `json:"fetches,omitempty"`

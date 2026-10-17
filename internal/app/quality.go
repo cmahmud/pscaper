@@ -148,10 +148,12 @@ func sourceConfidence(st SourceStatus) SourceConfidence {
 	if st.Fetches < 5 || st.NovelSeen < 300 {
 		return SourceConfidence{Recommendation: "learning", Evidence: "at least 5 fetches and 300 novel endpoints required"}
 	}
-	if st.NovelConfirmed >= 8 && st.VerifiedYieldPct >= 0.8 {
+	if st.NovelConfirmed >= 8 && st.VerifiedYieldPct >= 0.8 &&
+		st.NovelAlive >= 4 && st.NovelSurvived15 >= 3 {
 		return SourceConfidence{Recommendation: "prioritize", Evidence: strconv.FormatInt(st.NovelConfirmed, 10) + " distinct verified discoveries"}
 	}
-	if st.NovelSeen >= 800 && st.NovelConfirmed <= 2 && st.VerifiedYieldPct < 0.05 {
+	if st.NovelSeen >= 800 && st.NovelConfirmed <= 2 &&
+		st.VerifiedYieldPct < 0.05 && st.NovelAlive <= 1 {
 		return SourceConfidence{Recommendation: "deprioritize", Evidence: "low verified-novel yield after 800 new endpoints"}
 	}
 	return SourceConfidence{Recommendation: "normal", Evidence: "insufficient signal for cadence adjustment"}

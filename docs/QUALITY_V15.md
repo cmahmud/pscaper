@@ -51,6 +51,22 @@ The endpoint is read-only, rate-limited as telemetry, and reuses the
 existing four-second stats aggregate plus an approximately 12-second
 Alive-only diversity cache.
 
+### Patch v1.5.1 — verified source contribution and feed failover
+
+The per-source telemetry now reports `novel_alive` (originally found
+by that source and currently Alive) and `novel_survived_15m` (originally
+found there with an observed 15-minute survival success). Source
+priority requires >=4 currently Alive novel contributions and >=3
+15-minute survivors **in addition to** the existing sufficient-fetch,
+verified-novel contribution and yield gates. This protects against
+prioritizing a feed whose working endpoints have all disappeared.
+
+Four GitHub raw source URLs for `fyvri/fresh-proxy-list` now include
+equivalent HTTPS jsDelivr fallback URLs to handle intermittent GitHub
+404 responses. Fallback requests are restricted to the exact same
+repository, branch and path; the primary URL is still tried first.
+No new proxy is marked Alive without signed validation.
+
 ## Source pacing
 
 Productivity reflects *unique newly discovered proxies that later passed a
