@@ -1,0 +1,9 @@
+[Unit]
+Description=Synchronize static pscaper dashboard for Nginx
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/install -m 0644 -o root -g root /home/ubuntu/pscaper/site/index.html /var/www/pscaper/index.html
+TimeoutStartSec=15
+NoNewPrivileges=true
+ProtectSystem=full
+ReadWritePaths=/var/www/pscaper

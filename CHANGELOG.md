@@ -1,3 +1,18 @@
+## October 25, 2026 — v1.5.3 unresponsive backend / publisher recovery
+
+- Recovered unresponsive pscaper while preserving its gzip snapshot,
+  append-only journal, and publisher state.
+- Eliminated massive record-array allocations in frequent stats requests,
+  exports, compaction, startup source attribution and snapshot decoding.
+- Added concurrency and large-snapshot tests, including compaction while
+  other goroutines add new candidates; Go race tests pass.
+- Bounded Go managed heap with a pscaper-only memory-guard unit override.
+- Added pscaper-only, cooldown-limited HTTP health watchdog.
+- Decoupled static dashboard delivery from the backend with a protected
+  Nginx-served copy and file-change synchronization.
+- Restored publisher updates without inventing commits for unchanged lists.
+- Preserved the pre-fix state and rollback instructions.
+
 ## October 2026 — v1.5.2 gradual 10k feed registry scaling
 
 - Audited 46 candidate text sources and tested actual inventory overlap,

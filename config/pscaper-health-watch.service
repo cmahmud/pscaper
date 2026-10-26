@@ -1,0 +1,13 @@
+[Unit]
+Description=pscaper-only HTTP responsiveness watchdog
+After=network-online.target pscaper.service
+Wants=network-online.target
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/pscaper/healthwatch.sh
+TimeoutStartSec=40
+Nice=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=false
+ProtectSystem=full

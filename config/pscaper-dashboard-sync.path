@@ -1,0 +1,7 @@
+[Unit]
+Description=Update pscaper dashboard static copy when source HTML changes
+[Path]
+PathChanged=/home/ubuntu/pscaper/site/index.html
+Unit=pscaper-dashboard-sync.service
+[Install]
+WantedBy=multi-user.target

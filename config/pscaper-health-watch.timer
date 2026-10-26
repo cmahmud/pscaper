@@ -1,0 +1,10 @@
+[Unit]
+Description=Run pscaper responsiveness checks every three minutes
+[Timer]
+OnBootSec=5min
+OnUnitInactiveSec=3min
+AccuracySec=20s
+RandomizedDelaySec=10s
+Unit=pscaper-health-watch.service
+[Install]
+WantedBy=timers.target

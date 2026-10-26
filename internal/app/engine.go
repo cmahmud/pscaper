@@ -85,10 +85,10 @@ func NewEngine(cfg Config, store *Store) *Engine {
 	// Rebuild persisted source effectiveness from true initial-source
 	// attribution. Restarts must not erase hard-earned validation evidence.
 	origins := make(map[string]*SourceStatus)
-	for _, p := range store.Snapshot() {
+	store.VisitRecords(func(p *ProxyRecord) {
 		name := p.OriginSource
 		if name == "" || name == "history" {
-			continue
+			return
 		}
 		q := origins[name]
 		if q == nil {
@@ -99,7 +99,7 @@ func NewEngine(cfg Config, store *Store) *Engine {
 		if p.EverAlive {
 			q.NovelConfirmed++
 		}
-	}
+	})
 	sources, err := LoadSources(cfg.SourcesFile)
 	if err == nil && len(sources) > 0 {
 		seen := make(map[string]bool, len(sources))
@@ -849,10 +849,9 @@ func (e *Engine) Stats() Stats {
 	// exports, and multiple API clients for a short, bounded interval.
 	e.statsMu.Lock()
 	defer e.statsMu.Unlock()
-	if !e.statsAt.IsZero() && time.Since(e.statsAt) < 4*time.Second {
+	if !e.statsAt.IsZero() && time.Since(e.statsAt) < 8*time.Second {
 		return e.statsCache
 	}
-	records := e.store.Snapshot()
 	st := Stats{
 		Protocols:                 map[string]int{},
 		AliveProtocols:            map[string]int{},
@@ -882,7 +881,7 @@ func (e *Engine) Stats() Stats {
 	sourceAlive := make(map[string]int)
 	novelAlive := make(map[string]int)
 	novelSurvived15 := make(map[string]int)
-	for _, p := range records {
+	e.store.VisitRecords(func(p *ProxyRecord) {
 		if p.Quality != nil {
 			if !p.Quality.FirstAt.IsZero() &&
 				(st.QualityFirstAt.IsZero() || p.Quality.FirstAt.Before(st.QualityFirstAt)) {
@@ -939,7 +938,7 @@ func (e *Engine) Stats() Stats {
 			st.Gold++
 			st.GoldProtocols[p.Protocol]++
 		}
-	}
+	})
 	st.SurvivalQuality = buildSurvivalCohorts(qualityObserved, qualityPassed)
 	for i, h := range survivalHorizons {
 		st.SurvivalQuality[i].Mature = !st.QualityFirstAt.IsZero() &&

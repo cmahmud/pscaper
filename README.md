@@ -77,6 +77,40 @@ saved under `recovery/api-v2-20261016/` (untracked). To revert the full
 change on the VPS, run `./scripts/rollback-api-v2.sh`. To restore only
 the previous dashboard, run `./scripts/rollback-dashboard.sh v132`.
 
+## v1.5.3 — memory-stall recovery and dashboard resilience (October 25)
+
+The public site stopped responding after pscaper's 1.6+ million record
+database grew beyond the available memory budget. The process remained
+`active` in systemd, but its Go HTTP server stopped answering. With the
+engine stalled, scheduled GitHub publishing kept detecting unchanged
+exports and correctly skipped redundant commits.
+
+This release reduces database-wide temporary allocations: snapshot loading
+decodes JSON records one-by-one; the Stats aggregate walks the records
+without cloning them; regular exports materialize only URI history and the
+currently Alive pool; and 30-minute compaction streams the snapshot in
+bounded batches while allowing worker updates between batches. Source
+admission, validation and Gold qualification are unchanged.
+
+The dedicated pscaper systemd memory guard uses `GOGC=60` and
+`GOMEMLIMIT=3800MiB`; the service remains at its previous 4 GiB soft /
+6 GiB hard cgroup limits. A pscaper-only health watchdog performs three
+HTTP checks every three minutes and triggers a cooldown-limited restart
+only after a sustained failure (not during the first five minutes of boot).
+It does not restart Nginx or other VPS services.
+
+The fixed-size dashboard is served directly by Nginx from a dedicated
+`/var/www/pscaper/index.html` static copy, so a stalled backend no longer
+prevents the page from opening. A small systemd path service updates this
+copy automatically when `site/index.html` changes. Data panels may show
+unavailable while the backend recovers; they never fabricate metrics.
+
+The before-recovery executable, environment, site config, snapshot and
+journal are backed up in ignored `recovery/incident-20261025/`.
+Root-owned systemd watcher copies are installed in `/etc/systemd/system/`
+and the watchdog executable in `/usr/local/libexec/pscaper/`.
+These controls are scoped to pscaper.
+
 ## v1.5.2 — paced, reviewable progress toward 10,000 feed URLs
 
 The user's 10,000 target refers to **distinct feeds to scrape**, not

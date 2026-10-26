@@ -59,14 +59,30 @@ func (s *Store) loadSnapshot() error {
 	}
 	defer gz.Close()
 	dec := json.NewDecoder(gz)
-	var items []ProxyRecord
-	if err := dec.Decode(&items); err != nil && err != io.EOF {
+	opening, err := dec.Token()
+	if err == io.EOF {
+		return nil
+	}
+	if err != nil {
 		return err
 	}
-	for i := range items {
-		p := items[i]
-		normalizeHistory(&p)
-		s.records[p.Key] = &p
+	if opening != json.Delim('[') {
+		return fmt.Errorf("snapshot must be a JSON array")
+	}
+	for dec.More() {
+		p := new(ProxyRecord)
+		if err := dec.Decode(p); err != nil {
+			return err
+		}
+		normalizeHistory(p)
+		s.records[p.Key] = p
+	}
+	closing, err := dec.Token()
+	if err != nil {
+		return err
+	}
+	if closing != json.Delim(']') {
+		return fmt.Errorf("snapshot closing delimiter is invalid")
 	}
 	return nil
 }
@@ -287,6 +303,16 @@ func (s *Store) InitializeHistory(goldThreshold float64) {
 	}
 }
 
+// VisitRecords performs an allocation-free, read-locked walk of the store.
+// Callers must not mutate records, retain pointers, or call Store mutators.
+func (s *Store) VisitRecords(fn func(*ProxyRecord)) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	for _, p := range s.records {
+		fn(p)
+	}
+}
+
 func (s *Store) Snapshot() []ProxyRecord {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -333,15 +359,51 @@ func (s *Store) Compact() error {
 	}
 	s.ioMu.Lock()
 	defer s.ioMu.Unlock()
-	items := s.Snapshot()
+	// Snapshot key names are much smaller than copying every record
+	// including its source/quality arrays. Stream records in bounded chunks,
+	// releasing the reader lock between chunks so workers can validate.
+	s.mu.RLock()
+	keys := make([]string, 0, len(s.records))
+	for key := range s.records {
+		keys = append(keys, key)
+	}
+	s.mu.RUnlock()
 	tmp := s.snapshot + ".tmp"
-	f, err := os.OpenFile(tmp, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o600)
+	f, err := os.OpenFile(tmp, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
 	if err != nil {
 		return err
 	}
 	gz := gzip.NewWriter(f)
 	enc := json.NewEncoder(gz)
-	err = enc.Encode(items)
+	_, err = gz.Write([]byte("["))
+	for offset := 0; err == nil && offset < len(keys); offset += 1024 {
+		limit := offset + 1024
+		if limit > len(keys) {
+			limit = len(keys)
+		}
+		batch := make([]ProxyRecord, 0, limit-offset)
+		s.mu.RLock()
+		for _, key := range keys[offset:limit] {
+			if p, ok := s.records[key]; ok {
+				batch = append(batch, snapshotProxy(p))
+			}
+		}
+		s.mu.RUnlock()
+		for i := range batch {
+			if offset+i > 0 {
+				_, err = gz.Write([]byte(","))
+				if err != nil {
+					break
+				}
+			}
+			if err = enc.Encode(batch[i]); err != nil {
+				break
+			}
+		}
+	}
+	if err == nil {
+		_, err = gz.Write([]byte("]"))
+	}
 	if cerr := gz.Close(); err == nil {
 		err = cerr
 	}
@@ -366,9 +428,7 @@ func (s *Store) Compact() error {
 }
 
 func (s *Store) Export(dir string, goldThreshold float64) (map[string]int, error) {
-	records := s.Snapshot()
-	SortRecords(records)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := os.MkdirAll(dir, 0755); err != nil {
 		return nil, err
 	}
 	for _, sub := range []string{"alive", "gold", "historical"} {
@@ -380,7 +440,11 @@ func (s *Store) Export(dir string, goldThreshold float64) (map[string]int, error
 	alive := map[string][]string{}
 	gold := map[string][]string{}
 	var discovered, everAlive, everGold []string
-	for _, p := range records {
+	// Do not materialize/sort millions of full ProxyRecord structs to
+	// export a few thousand current Alive and Gold addresses. Historical
+	// unions are sorted by mergeHistoricalFile below.
+	live := make([]ProxyRecord, 0, 8192)
+	s.VisitRecords(func(p *ProxyRecord) {
 		discovered = append(discovered, p.URI())
 		if p.EverAlive || p.Successes > 0 {
 			everAlive = append(everAlive, p.URI())
@@ -388,9 +452,12 @@ func (s *Store) Export(dir string, goldThreshold float64) (map[string]int, error
 		if p.EverGold {
 			everGold = append(everGold, p.URI())
 		}
-		if !p.Alive {
-			continue
+		if p.Alive {
+			live = append(live, snapshotProxy(p))
 		}
+	})
+	SortRecords(live)
+	for _, p := range live {
 		alive[p.Protocol] = append(alive[p.Protocol], p.Address())
 		if p.Gold(goldThreshold) {
 			gold[p.Protocol] = append(gold[p.Protocol], p.Address())
